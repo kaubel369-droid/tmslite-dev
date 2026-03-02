@@ -1,0 +1,24 @@
+Role: Senior Full Stack Architect and Logistics Domain Expert.
+Task: Provide a technical blueprint and initial boilerplate code for a web application called TMSLite_dev, a lightweight Transportation Management System for freight brokers and small carriers.
+Core Requirements:
+1.Tech Stack: Use React (Vite) for the frontend, Node.js (Express) for the backend, and PostgreSQL (Prisma ORM) for the database.
+
+2.Key Features:
+  1.Load Management: Create/edit loads with fields for Origin, Destination, Weight, Freight Class (NMFC), and Payout.
+  2.Carrier Database: A directory to track carrier contact info, equipment types, and insurance status.
+  3.Real-time Tracking: A dashboard view that simulates GPS updates for active shipments.
+  4.Document Portal: Ability to upload and view BOLs (Bills of Lading) and Rate Confirmations.
+
+3.LTL & Advanced Integrations:
+  1.LTL Multi-Carrier Rating Engine: Design a service to fetch real-time LTL quotes from multiple carriers using their Freight LTL APIs   (e.g., FedEx Freight, Old Dominion, or aggregators like Banyan Technology).
+  2.AI Email Processing: Design a service that can extract load details (Origin, Destination, Rate, etc.) from an unstructured text email or a PDF attachment using a large language model.
+  3.Mobile-First UX: Ensure the frontend is mobile-responsive using Tailwind CSS, allowing drivers to upload Proof of Delivery (POD) via a smartphone camera.
+  4.Route Optimization: Integrate the Google Distance Matrix API to automatically calculate route mileage and Estimated Travel Time (ETT).
+
+4.Deliverables:
+  1.A Prisma Schema showing relationships between Shippers, Carriers, and Loads.
+  2.A list of RESTful API Endpoints, specifically including /api/rates/ltl for real-time pricing.
+  3.A Project Folder Structure.
+  4.A React Component example for an "LTL Quote Comparison" table where users can select the best rate from different carriers.
+
+Constraint: Focus on "Logistics UX"—ensure data tables are dense but readable and include status badges (e.g., "In Transit", "Delivered").
