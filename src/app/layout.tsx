@@ -28,6 +28,7 @@ export default function RootLayout({
             <div className="flex gap-6 font-medium text-sm text-slate-600">
               <Link href="/" className="hover:text-indigo-600 transition-colors">Rate Shop</Link>
               <Link href="/loads" className="hover:text-indigo-600 transition-colors">Load Board</Link>
+              <Link href="/customers" className="hover:text-indigo-600 transition-colors">Customers</Link>
             </div>
           </div>
         </nav>
