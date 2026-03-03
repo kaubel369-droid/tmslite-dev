@@ -20,14 +20,14 @@ create table public.organizations (
 alter table public.organizations enable row level security;
 
 -- Profiles linking to auth.users
-create type public.user_role as enum ('Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer', 'Broker', 'Dispatcher');
+create type public.user_role as enum ('Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer');
 
 create table public.profiles (
     id uuid references auth.users(id) on delete cascade primary key,
     org_id uuid references public.organizations(id) on delete set null,
     first_name text,
     last_name text,
-    role user_role default 'Broker'::user_role not null,
+    role user_role default 'Customer'::user_role not null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table public.profiles enable row level security;

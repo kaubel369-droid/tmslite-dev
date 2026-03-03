@@ -1,3 +1,5 @@
+
+Sample not used *******************************
 Role: Senior Full Stack Architect and Logistics Domain Expert.
 Task: Provide a technical blueprint and initial boilerplate code for a web application called TMSLite_dev, a lightweight Transportation Management System for freight brokers and small carriers.
 Core Requirements:
@@ -22,3 +24,35 @@ Core Requirements:
   4.A React Component example for an "LTL Quote Comparison" table where users can select the best rate from different carriers.
 
 Constraint: Focus on "Logistics UX"—ensure data tables are dense but readable and include status badges (e.g., "In Transit", "Delivered").
+************************************************
+
+Add 5 user roles to the application:
+1. Admin
+2. Supervisor
+3. Customer Service Rep
+4. Sales Rep
+5. Customer
+
+Add a new user with the following details:
+Name: Kevin Aubel
+Email: kaubel369@gmail.com
+Password: TMSLiteAdmin123%
+Role: Admin
+
+Create a new module for admin settings that is only visible to the admin role. 
+The following settings should be available:
+1. Add, edit, and delete users, roles, permissions, and settings
+2. email server settings
+
+Create a login page and make it the default page for the application.
+
+**************************************************
+Remove the Broker and Dispatcher roles from the application.
+
+Create a pop up data entry screen to add new user and edit existing user. 
+
+Make the user grid sortable and filterable by role. 
+
+***************************************************
+
+
