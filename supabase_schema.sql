@@ -20,7 +20,7 @@ create table public.organizations (
 alter table public.organizations enable row level security;
 
 -- Profiles linking to auth.users
-create type public.user_role as enum ('Admin', 'Broker', 'Dispatcher');
+create type public.user_role as enum ('Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer', 'Broker', 'Dispatcher');
 
 create table public.profiles (
     id uuid references auth.users(id) on delete cascade primary key,
@@ -31,6 +31,36 @@ create table public.profiles (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table public.profiles enable row level security;
+
+-- Permissions and Roles Mapping
+create table public.permissions (
+    id uuid default gen_random_uuid() primary key,
+    name text not null unique,
+    description text,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.permissions enable row level security;
+
+create table public.role_permissions (
+    id uuid default gen_random_uuid() primary key,
+    role public.user_role not null,
+    permission_id uuid references public.permissions(id) on delete cascade,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique(role, permission_id)
+);
+alter table public.role_permissions enable row level security;
+
+-- Global/Org Settings
+create table public.settings (
+    id uuid default gen_random_uuid() primary key,
+    org_id uuid references public.organizations(id) on delete cascade not null,
+    setting_key text not null,
+    setting_value jsonb not null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique(org_id, setting_key)
+);
+alter table public.settings enable row level security;
 
 -- Customers (CRM)
 create table public.customers (
@@ -139,6 +169,18 @@ create policy "Org isolation for loads" on public.loads
 -- Documents: scoped by org_id
 create policy "Org isolation for documents" on public.documents
   for all using (org_id = get_user_org_id());
+
+-- Settings: scoped by org_id
+create policy "Org isolation for settings" on public.settings
+  for all using (org_id = get_user_org_id());
+
+-- Permissions: read-only for all authenticated users
+create policy "Anyone can view permissions" on public.permissions
+  for select using (auth.role() = 'authenticated');
+
+-- Role Permissions: read-only for all authenticated users
+create policy "Anyone can view role_permissions" on public.role_permissions
+  for select using (auth.role() = 'authenticated');
 
 -- 5. Helper function for Symmetric Encryption via pgcrypto
 -- The standard pattern is to encrypt from the middle-tier (Next.js server edge) 
