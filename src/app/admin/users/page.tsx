@@ -1,4 +1,5 @@
 import { getServiceRoleClient } from '@/lib/supabase'
+import { createClient } from '@/utils/supabase/server'
 import UserGrid from './user-grid'
 
 export const dynamic = 'force-dynamic'
@@ -14,8 +15,9 @@ export default async function AdminUsersPage() {
     }
 
     // Get current admin user's org to assign to new users
-    const { data: adminAuth } = await supabase.auth.getUser()
-    const currentAdminProfile = profiles.find(p => p.id === adminAuth?.user?.id);
+    const userClient = await createClient()
+    const { data: { user } } = await userClient.auth.getUser()
+    const currentAdminProfile = profiles.find(p => p.id === user?.id);
     const currentOrgId = currentAdminProfile?.org_id;
 
     const enrichedUsers = users.users.map(u => {
