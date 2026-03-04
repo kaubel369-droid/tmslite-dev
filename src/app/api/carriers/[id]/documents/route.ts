@@ -45,12 +45,22 @@ export async function POST(request: Request, context: any) {
 
         const supabase = getServiceRoleClient();
 
-        // Generate a unique file path: carrier_id/timestamp_filename
+        // 1. Get carrier org_id first for RLS storage paths
+        const { data: carrierInfo, error: carrierError } = await supabase
+            .from('carriers')
+            .select('org_id')
+            .eq('id', id)
+            .single();
+
+        if (carrierError || !carrierInfo) throw new Error('Carrier not found');
+
+        // 2. Generate a unique file path: org_id/carrier_id/timestamp_filename
+        // This structure is required by the storage RLS policies
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${id}/${fileName}`;
+        const filePath = `${carrierInfo.org_id}/${id}/${fileName}`;
 
-        // Upload to storage
+        // 3. Upload to storage
         const { data: storageData, error: storageError } = await supabase
             .storage
             .from('carrier-documents')
@@ -61,20 +71,7 @@ export async function POST(request: Request, context: any) {
 
         if (storageError) throw storageError;
 
-        // Get carrier org_id
-        const { data: carrierInfo, error: carrierError } = await supabase
-            .from('carriers')
-            .select('org_id')
-            .eq('id', id)
-            .single();
-
-        if (carrierError || !carrierInfo) {
-            // Rollback storage if carrier not found
-            await supabase.storage.from('carrier-documents').remove([filePath]);
-            throw new Error('Carrier not found');
-        }
-
-        // Save metadata to database
+        // 4. Save metadata to database
         const { data: docData, error: docError } = await supabase
             .from('carrier_documents')
             .insert([{
@@ -82,7 +79,6 @@ export async function POST(request: Request, context: any) {
                 org_id: carrierInfo.org_id,
                 file_name: file.name,
                 file_path: filePath,
-                // uploaded_by would require user authcontext, skipping for now
             }])
             .select()
             .single();
