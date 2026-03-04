@@ -23,8 +23,8 @@ export default function EditCarrierPage() {
 
     // Data States
     const [formData, setFormData] = useState({
-        company_name: '', primary_contact: '', address: '', city: '', state: '', zip: '',
-        phone: '', email: '', website: '', status: 'Active', notes: '', credit_limit: '', payment_terms: 'Net 30',
+        company_name: '', address: '', city: '', state: '', zip: '',
+        phone: '', status: 'Active',
     });
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -48,8 +48,7 @@ export default function EditCarrierPage() {
                 const custData = await custRes.json();
                 setFormData({
                     ...custData.carrier,
-                    company_name: custData.carrier.name || '',
-                    credit_limit: custData.carrier.credit_limit?.toString() || ''
+                    company_name: custData.carrier.name || ''
                 });
 
                 // Fetch Contacts
@@ -88,7 +87,7 @@ export default function EditCarrierPage() {
             const res = await fetch(`/api/carriers/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, credit_limit: parseFloat(formData.credit_limit) || 0 }),
+                body: JSON.stringify(formData),
             });
             if (!res.ok) throw new Error('Failed to update carrier');
             router.refresh();
@@ -261,32 +260,13 @@ export default function EditCarrierPage() {
                                         </div>
                                     </div>
                                 </div>
-                                {/* Contact & Web */}
                                 <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Web</h2>
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Status</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact</label>
-                                            <input type="text" name="primary_contact" value={formData.primary_contact || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Main Phone</label>
                                             <input type="tel" name="phone" value={formData.phone || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Main Email</label>
-                                            <input type="email" name="email" value={formData.email || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
-                                            <input type="url" name="website" value={formData.website || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Account Status & Notes */}
-                                <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Account Details</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                                             <select name="status" value={formData.status} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -294,23 +274,6 @@ export default function EditCarrierPage() {
                                                 <option value="Credit Hold">Credit Hold</option>
                                                 <option value="Inactive">Inactive</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Credit Limit ($)</label>
-                                            <input type="number" name="credit_limit" value={formData.credit_limit} onChange={handleInfoChange} step="0.01" min="0" className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Payment Terms</label>
-                                            <select name="payment_terms" value={formData.payment_terms} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                                <option value="Prepaid">Prepaid</option>
-                                                <option value="Due on Receipt">Due on Receipt</option>
-                                                <option value="Net 15">Net 15</option>
-                                                <option value="Net 30">Net 30</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-3">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
-                                            <textarea name="notes" value={formData.notes || ''} onChange={handleInfoChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                                         </div>
                                     </div>
                                 </div>

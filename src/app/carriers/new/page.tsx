@@ -14,18 +14,12 @@ export default function NewCarrierPage() {
 
     const [formData, setFormData] = useState({
         company_name: '',
-        primary_contact: '',
         address: '',
         city: '',
         state: '',
         zip: '',
         phone: '',
-        email: '',
-        website: '',
         status: 'Active',
-        notes: '',
-        credit_limit: '',
-        payment_terms: 'Net 30',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -50,10 +44,7 @@ export default function NewCarrierPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    credit_limit: parseFloat(formData.credit_limit) || 0,
-                }),
+                body: JSON.stringify(formData),
             });
 
             if (!response.ok) {
@@ -190,19 +181,8 @@ export default function NewCarrierPage() {
                                 </div>
 
                                 <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Web</h2>
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Status</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label htmlFor="primary_contact" className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact</label>
-                                            <input
-                                                type="text"
-                                                id="primary_contact"
-                                                name="primary_contact"
-                                                value={formData.primary_contact}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            />
-                                        </div>
                                         <div>
                                             <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-1">Main Phone</label>
                                             <input
@@ -214,35 +194,6 @@ export default function NewCarrierPage() {
                                                 className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                                             />
                                         </div>
-                                        <div>
-                                            <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1">Main Email</label>
-                                            <input
-                                                type="email"
-                                                id="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="website" className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
-                                            <input
-                                                type="url"
-                                                id="website"
-                                                name="website"
-                                                value={formData.website}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                                placeholder="https://"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Account Status & Details</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div>
                                             <label htmlFor="status" className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                                             <select
@@ -256,47 +207,6 @@ export default function NewCarrierPage() {
                                                 <option value="Credit Hold">Credit Hold</option>
                                                 <option value="Inactive">Inactive</option>
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label htmlFor="credit_limit" className="block text-sm font-semibold text-slate-700 mb-1">Credit Limit ($)</label>
-                                            <input
-                                                type="number"
-                                                id="credit_limit"
-                                                name="credit_limit"
-                                                value={formData.credit_limit}
-                                                onChange={handleChange}
-                                                step="0.01"
-                                                min="0"
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="payment_terms" className="block text-sm font-semibold text-slate-700 mb-1">Payment Terms</label>
-                                            <select
-                                                id="payment_terms"
-                                                name="payment_terms"
-                                                value={formData.payment_terms}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            >
-                                                <option value="Prepaid">Prepaid</option>
-                                                <option value="Due on Receipt">Due on Receipt</option>
-                                                <option value="Net 15">Net 15</option>
-                                                <option value="Net 30">Net 30</option>
-                                                <option value="Net 45">Net 45</option>
-                                                <option value="Net 60">Net 60</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-3">
-                                            <label htmlFor="notes" className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
-                                            <textarea
-                                                id="notes"
-                                                name="notes"
-                                                value={formData.notes}
-                                                onChange={handleChange}
-                                                rows={3}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
-                                            />
                                         </div>
                                     </div>
                                 </div>

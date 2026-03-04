@@ -31,18 +31,12 @@ export async function PUT(request: Request, context: any) {
             .from('carriers')
             .update({
                 name: body.company_name,
-                primary_contact: body.primary_contact,
-                email: body.email,
                 phone: body.phone,
                 address: body.address,
                 city: body.city,
                 state: body.state,
                 zip: body.zip,
-                website: body.website,
-                status: body.status,
-                notes: body.notes,
-                credit_limit: body.credit_limit || 0,
-                payment_terms: body.payment_terms
+                status: body.status
             })
             .eq('id', id)
             .select()
