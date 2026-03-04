@@ -50,6 +50,7 @@ export default async function RootLayout({
                   <Link href="/" className="hover:text-indigo-600 transition-colors">Rate Shop</Link>
                   <Link href="/loads" className="hover:text-indigo-600 transition-colors">Load Board</Link>
                   <Link href="/customers" className="hover:text-indigo-600 transition-colors">Customers</Link>
+                  <Link href="/carriers" className="hover:text-indigo-600 transition-colors">Carriers</Link>
                 </div>
               </div>
 
