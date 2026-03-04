@@ -157,4 +157,34 @@ In the customer grid load active customers only.
 add a filter to the customer grid to allow filtering by customer status. 
 
 ***************************************************
+Create a Carrier dashboard page that is similar to the customer dashboard page. 
+
+Create a Carrier/new and Carrier/edit page that is similar to the customer page. With the following tabs:
+
+Carrier Information
+Contacts
+Rating
+Documents
+API Settings
+
+
+Carrier Information:
+Carrier name
+Carrier address
+Carrier city
+Carrier state
+Carrier zip
+Carrier phone
+Carrier status
+
+Carrier contacts (same as customer contacts)
+
+Carrier documents (same as customer documents)
+
+Carrier rating (same as customer rating)
+
+API Settings:
+blank for now
+
+***************************************************
 
