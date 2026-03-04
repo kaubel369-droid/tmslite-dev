@@ -48,6 +48,7 @@ export default function EditCarrierPage() {
                 const custData = await custRes.json();
                 setFormData({
                     ...custData.carrier,
+                    company_name: custData.carrier.name || '',
                     credit_limit: custData.carrier.credit_limit?.toString() || ''
                 });
 

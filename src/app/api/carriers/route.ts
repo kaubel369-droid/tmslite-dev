@@ -13,7 +13,13 @@ export async function GET() {
 
         if (error) throw error;
 
-        return NextResponse.json({ carriers: data });
+        // Map `name` to `company_name` for the frontend
+        const carriersData = data.map(carrier => ({
+            ...carrier,
+            company_name: carrier.name
+        }));
+
+        return NextResponse.json({ carriers: carriersData });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -48,7 +54,7 @@ export async function POST(request: Request) {
             .from('carriers')
             .insert([{
                 org_id,
-                company_name: body.company_name,
+                name: body.company_name,
                 primary_contact: body.primary_contact,
                 email: body.email,
                 phone: body.phone,

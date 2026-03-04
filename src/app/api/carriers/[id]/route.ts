@@ -30,7 +30,7 @@ export async function PUT(request: Request, context: any) {
         const { data, error } = await supabase
             .from('carriers')
             .update({
-                company_name: body.company_name,
+                name: body.company_name,
                 primary_contact: body.primary_contact,
                 email: body.email,
                 phone: body.phone,
