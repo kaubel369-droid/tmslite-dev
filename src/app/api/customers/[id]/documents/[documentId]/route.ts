@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 
 export async function DELETE(request: Request, context: any) {
     try {
-        const { id, documentId } = context.params;
+        const { id, documentId } = await context.params;
 
         // 1. Verify User Role
         const authClient = await createClient();

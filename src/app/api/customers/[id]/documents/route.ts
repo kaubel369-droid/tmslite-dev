@@ -3,7 +3,7 @@ import { getServiceRoleClient } from '@/lib/supabase';
 
 export async function GET(request: Request, context: any) {
     try {
-        const { id } = context.params;
+        const { id } = await context.params;
         const supabase = getServiceRoleClient();
 
         const { data, error } = await supabase
@@ -35,7 +35,7 @@ export async function GET(request: Request, context: any) {
 
 export async function POST(request: Request, context: any) {
     try {
-        const { id } = context.params;
+        const { id } = await context.params;
         const formData = await request.formData();
         const file = formData.get('file') as File;
 

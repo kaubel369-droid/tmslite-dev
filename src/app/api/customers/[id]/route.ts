@@ -3,7 +3,7 @@ import { getServiceRoleClient } from '@/lib/supabase';
 
 export async function GET(request: Request, context: any) {
     try {
-        const { id } = context.params;
+        const { id } = await context.params;
         const supabase = getServiceRoleClient();
 
         const { data, error } = await supabase
@@ -23,7 +23,7 @@ export async function GET(request: Request, context: any) {
 
 export async function PUT(request: Request, context: any) {
     try {
-        const { id } = context.params;
+        const { id } = await context.params;
         const body = await request.json();
         const supabase = getServiceRoleClient();
 
@@ -58,7 +58,7 @@ export async function PUT(request: Request, context: any) {
 
 export async function DELETE(request: Request, context: any) {
     try {
-        const { id } = context.params;
+        const { id } = await context.params;
         const supabase = getServiceRoleClient();
 
         const { error } = await supabase

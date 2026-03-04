@@ -137,3 +137,8 @@ Change the grid on the customer page to have the following columns:
 The customer name should be a link that opens the customer/edit page. 
 
 ***************************************************
+When I click on a customer to view or edit I get a message that customer not found and the screen is not loading the customer data. 
+When I create a new customer after saving the customer I get a message that customer not found and the screen is not loading the customer data. 
+When trying to upload a document I get an error message that the document could not be uploaded. 
+
+*************************************************** 
