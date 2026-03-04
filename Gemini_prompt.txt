@@ -70,5 +70,70 @@ leanna.smith@example.com
 Carryon!@
 
 ***************************************************
+Change the customer/new page to have the the following tabs:
+1. Customer Information
+2. Contacts
+3. Dispatch
+4. Quotes
+5. Rating
+6. Documents
 
 
+Customer information tab:
+1. Customer name
+2. Customer address
+3. Customer city
+4. Customer state
+5. Customer zip
+6. Customer phone
+7. Customer email
+8. Customer website
+9. Customer status (Active,Credit Hold,Inactive)
+10. Customer notes
+
+Contacts Tab:
+I want to be able to add a new contact by clicking a button that opens a pop up data entry screen.
+I want to be able to edit a contact by clicking a button in the contact grid that opens a pop up data entry screen.
+I want to be able to delete a contact by clicking a button in the contact grid that opens a pop up data entry screen.
+
+
+These are the fields I want on the pop up data entry screen:
+1. Contact name
+2. Contact phone number and extension
+3. Contact cell phone number
+4. Contact email
+5. Contact position
+6. Contact notes
+
+The contacts should be diplayed in a sortable grid.
+
+Allow for up to 10 contacts per customer.
+
+
+Dispatch Tab:
+1. blank for now
+
+Quotes Tab:
+1. blank for now
+
+Rating Tab:
+1. LTL rating screen  
+
+Documents Tab:
+I want to be able to upload documents to the customer record.
+I want to be able to view documents in the customer record.
+I want to be able to delete documents in the customer record.(Supervisor and Admin only)
+Save the documents to a folder named Customer Documents that is in the same folder as the application. Make sure the folder is not in the public folder.  
+
+Change the grid on the customer page to have the following columns:
+1. Customer name
+2. Customer address
+3. Customer city
+4. Customer state
+5. Customer zip
+6. Customer phone
+7. Customer status
+
+The customer name should be a link that opens the customer/edit page. 
+
+***************************************************
