@@ -54,5 +54,21 @@ Create a pop up data entry screen to add new user and edit existing user.
 Make the user grid sortable and filterable by role. 
 
 ***************************************************
+kaubel369@gmail.com
+TMSLiteAdmin123%  
+
+christopherhall@outlook.com
+TMSLiteAdmin2!@
+
+john.smith@example.com
+Forwardnow!!
+
+jane.smith@example.com
+Doubleback!!
+
+leanna.smith@example.com
+Carryon!@
+
+***************************************************
 
 

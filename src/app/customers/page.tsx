@@ -10,6 +10,11 @@ type Customer = {
     primary_contact: string;
     email: string;
     phone: string;
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    status: string;
     credit_limit: number;
     payment_terms: string;
 };
@@ -97,36 +102,43 @@ export default function CustomersPage() {
                                 <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                                     <tr>
                                         <th className="px-6 py-3 font-semibold">Company Name</th>
-                                        <th className="px-6 py-3 font-semibold">Contact</th>
-                                        <th className="px-6 py-3 font-semibold">Email</th>
+                                        <th className="px-6 py-3 font-semibold">Address</th>
+                                        <th className="px-6 py-3 font-semibold">City</th>
+                                        <th className="px-6 py-3 font-semibold">State</th>
+                                        <th className="px-6 py-3 font-semibold">Zip</th>
                                         <th className="px-6 py-3 font-semibold">Phone</th>
-                                        <th className="px-6 py-3 font-semibold text-right">Credit Limit</th>
-                                        <th className="px-6 py-3 font-semibold">Terms</th>
+                                        <th className="px-6 py-3 font-semibold">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {customers.map((customer) => (
                                         <tr key={customer.id} className="hover:bg-slate-50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
-                                                {customer.company_name}
+                                                <Link href={`/customers/edit/${customer.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                    {customer.company_name}
+                                                </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                                                {customer.primary_contact || '-'}
+                                                {customer.address || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                                                {customer.email ? (
-                                                    <a href={`mailto:${customer.email}`} className="text-indigo-600 hover:underline">{customer.email}</a>
-                                                ) : '-'}
+                                                {customer.city || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                                                {customer.state || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                                                {customer.zip || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-slate-600">
                                                 {customer.phone || '-'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right text-slate-600">
-                                                ${Number(customer.credit_limit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded-md border border-slate-200 font-medium">
-                                                    {customer.payment_terms || 'N/A'}
+                                                <span className={`text-xs px-2 py-1 rounded-md border font-medium ${customer.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                        customer.status === 'Credit Hold' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                            'bg-slate-100 text-slate-700 border-slate-200'
+                                                    }`}>
+                                                    {customer.status || 'Active'}
                                                 </span>
                                             </td>
                                         </tr>

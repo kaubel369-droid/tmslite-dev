@@ -63,6 +63,8 @@ create table public.settings (
 alter table public.settings enable row level security;
 
 -- Customers (CRM)
+create type public.customer_status as enum ('Active', 'Credit Hold', 'Inactive');
+
 create table public.customers (
     id uuid default gen_random_uuid() primary key,
     org_id uuid references public.organizations(id) on delete cascade not null,
@@ -70,11 +72,43 @@ create table public.customers (
     primary_contact text,
     email text,
     phone text,
+    address text,
+    city text,
+    state text,
+    zip text,
+    website text,
+    status public.customer_status default 'Active'::public.customer_status not null,
+    notes text,
     credit_limit numeric(10,2) default 0.00,
     payment_terms text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table public.customers enable row level security;
+
+-- Customer Contacts
+create table public.customer_contacts (
+    id uuid default gen_random_uuid() primary key,
+    customer_id uuid references public.customers(id) on delete cascade not null,
+    name text not null,
+    phone text,
+    cell_phone text,
+    email text,
+    position text,
+    notes text,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.customer_contacts enable row level security;
+
+-- Customer Documents Metadata
+create table public.customer_documents (
+    id uuid default gen_random_uuid() primary key,
+    customer_id uuid references public.customers(id) on delete cascade not null,
+    file_name text not null,
+    file_path text not null,
+    uploaded_by uuid references auth.users(id) on delete set null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.customer_documents enable row level security;
 
 -- Carrier Accounts (Encrypted Credentials)
 create table public.carrier_accounts (
@@ -158,6 +192,14 @@ create policy "Users can update own profile" on public.profiles
 create policy "Org isolation for customers" on public.customers
   for all using (org_id = get_user_org_id());
 
+-- Customer Contacts: scoped by linking to customer's org
+create policy "Org isolation for customer_contacts" on public.customer_contacts
+  for all using (customer_id in (select id from public.customers where org_id = get_user_org_id()));
+
+-- Customer Documents: scoped by linking to customer's org
+create policy "Org isolation for customer_documents" on public.customer_documents
+  for all using (customer_id in (select id from public.customers where org_id = get_user_org_id()));
+
 -- Carrier Accounts: scoped by org_id
 create policy "Org isolation for carrier_accounts" on public.carrier_accounts
   for all using (org_id = get_user_org_id());
@@ -181,6 +223,23 @@ create policy "Anyone can view permissions" on public.permissions
 -- Role Permissions: read-only for all authenticated users
 create policy "Anyone can view role_permissions" on public.role_permissions
   for select using (auth.role() = 'authenticated');
+
+-- Storage Bucket configuration
+insert into storage.buckets (id, name, public) 
+values ('customer-documents', 'customer-documents', false)
+on conflict (id) do nothing;
+
+create policy "Users can upload customer documents" on storage.objects
+  for insert with check ( bucket_id = 'customer-documents' and auth.role() = 'authenticated' );
+
+create policy "Users can view customer documents" on storage.objects
+  for select using ( bucket_id = 'customer-documents' and auth.role() = 'authenticated' );
+
+create policy "Users can update customer documents" on storage.objects
+  for update using ( bucket_id = 'customer-documents' and auth.role() = 'authenticated' );
+
+create policy "Users can delete customer documents" on storage.objects
+  for delete using ( bucket_id = 'customer-documents' and auth.role() = 'authenticated' );
 
 -- 5. Helper function for Symmetric Encryption via pgcrypto
 -- The standard pattern is to encrypt from the middle-tier (Next.js server edge) 
