@@ -142,3 +142,19 @@ When I create a new customer after saving the customer I get a message that cust
 When trying to upload a document I get an error message that the document could not be uploaded. 
 
 *************************************************** 
+
+In a contact add Ext. field beside the phone number field (4 digits) 
+
+Remove (legacy) from the customer/edit page. 
+
+Format all phone number fields to have the following format: (###) ###-####
+
+Format all cell phone number fields to have the following format: (###) ###-#### 
+
+Make the location pin icon on the customer/edit page clickable and open a map showing the customer location.
+
+In the customer grid load active customers only. 
+add a filter to the customer grid to allow filtering by customer status. 
+
+***************************************************
+

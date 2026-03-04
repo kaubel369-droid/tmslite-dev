@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Building2, ArrowLeft, Save, Lock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatPhoneNumber } from '@/lib/utils';
 
 export default function NewCustomerPage() {
     const router = useRouter();
@@ -28,9 +29,13 @@ export default function NewCustomerPage() {
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        let value = e.target.value;
+        if (e.target.name === 'phone') {
+            value = formatPhoneNumber(value);
+        }
         setFormData((prev) => ({
             ...prev,
-            [e.target.name]: e.target.value,
+            [e.target.name]: value,
         }));
     };
 
@@ -188,7 +193,7 @@ export default function NewCustomerPage() {
                                     <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Web</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label htmlFor="primary_contact" className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact (Legacy)</label>
+                                            <label htmlFor="primary_contact" className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact</label>
                                             <input
                                                 type="text"
                                                 id="primary_contact"

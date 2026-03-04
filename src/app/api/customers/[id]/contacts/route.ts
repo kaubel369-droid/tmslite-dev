@@ -43,6 +43,7 @@ export async function POST(request: Request, context: any) {
                 customer_id: id,
                 name: body.name,
                 phone: body.phone,
+                ext: body.ext,
                 cell_phone: body.cell_phone,
                 email: body.email,
                 position: body.position,

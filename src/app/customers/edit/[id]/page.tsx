@@ -7,8 +7,9 @@ import { Building2, ArrowLeft, Save, FileText, Trash2, Pencil, Upload, Download,
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatPhoneNumber } from '@/lib/utils';
 
-type Contact = { id: string; name: string; phone: string; cell_phone: string; email: string; position: string; notes: string };
+type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
 
 export default function EditCustomerPage() {
@@ -31,7 +32,7 @@ export default function EditCustomerPage() {
     // Contact Dialog State
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
-    const [contactForm, setContactForm] = useState({ name: '', phone: '', cell_phone: '', email: '', position: '', notes: '' });
+    const [contactForm, setContactForm] = useState({ name: '', phone: '', ext: '', cell_phone: '', email: '', position: '', notes: '' });
 
     // Document States
     const [uploading, setUploading] = useState(false);
@@ -71,7 +72,11 @@ export default function EditCustomerPage() {
 
     // Customer Info Handlers
     const handleInfoChange = (e: any) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        let value = e.target.value;
+        if (e.target.name === 'phone') {
+            value = formatPhoneNumber(value);
+        }
+        setFormData(prev => ({ ...prev, [e.target.name]: value }));
     };
 
     const handleInfoSave = async (e: React.FormEvent) => {
@@ -95,7 +100,7 @@ export default function EditCustomerPage() {
 
     // Contact Handlers
     const resetContactForm = () => {
-        setContactForm({ name: '', phone: '', cell_phone: '', email: '', position: '', notes: '' });
+        setContactForm({ name: '', phone: '', ext: '', cell_phone: '', email: '', position: '', notes: '' });
         setEditingContactId(null);
     };
 
@@ -205,7 +210,7 @@ export default function EditCustomerPage() {
                         </h1>
                         <p className="text-slate-500 mt-2 flex items-center gap-4 text-sm font-medium">
                             <span className={`px-2.5 py-1 rounded-md border ${formData.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' : formData.status === 'Credit Hold' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>{formData.status}</span>
-                            <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {formData.city}, {formData.state}</span>
+                            <a href={`https://maps.google.com/?q=${encodeURIComponent(`${formData.address}, ${formData.city}, ${formData.state} ${formData.zip}`)}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-indigo-600 transition-colors"><MapPin className="h-4 w-4" /> {formData.city}, {formData.state}</a>
                             <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {formData.phone}</span>
                         </p>
                     </div>
@@ -260,7 +265,7 @@ export default function EditCustomerPage() {
                                     <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Web</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact (Legacy)</label>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Primary Contact</label>
                                             <input type="text" name="primary_contact" value={formData.primary_contact || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                         </div>
                                         <div>
@@ -338,14 +343,18 @@ export default function EditCustomerPage() {
                                                 <label className="block text-sm font-medium mb-1">Name *</label>
                                                 <input required type="text" value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
+                                            <div className="grid grid-cols-12 gap-4">
+                                                <div className="col-span-12 sm:col-span-5">
                                                     <label className="block text-sm font-medium mb-1">Phone *</label>
-                                                    <input required type="text" value={contactForm.phone} onChange={e => setContactForm({ ...contactForm, phone: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                    <input required type="text" value={contactForm.phone} onChange={e => setContactForm({ ...contactForm, phone: formatPhoneNumber(e.target.value) })} className="w-full px-3 py-2 border rounded-md" />
                                                 </div>
-                                                <div>
+                                                <div className="col-span-12 sm:col-span-2">
+                                                    <label className="block text-sm font-medium mb-1">Ext.</label>
+                                                    <input type="text" maxLength={4} value={contactForm.ext || ''} onChange={e => setContactForm({ ...contactForm, ext: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-md" placeholder="e.g. 101" />
+                                                </div>
+                                                <div className="col-span-12 sm:col-span-5">
                                                     <label className="block text-sm font-medium mb-1">Cell Phone</label>
-                                                    <input type="text" value={contactForm.cell_phone || ''} onChange={e => setContactForm({ ...contactForm, cell_phone: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                    <input type="text" value={contactForm.cell_phone || ''} onChange={e => setContactForm({ ...contactForm, cell_phone: formatPhoneNumber(e.target.value) })} className="w-full px-3 py-2 border rounded-md" />
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
@@ -389,7 +398,7 @@ export default function EditCustomerPage() {
                                             <TableRow key={contact.id}>
                                                 <TableCell className="font-medium">{contact.name}</TableCell>
                                                 <TableCell>{contact.position || '-'}</TableCell>
-                                                <TableCell>{contact.phone}</TableCell>
+                                                <TableCell>{contact.phone} {contact.ext && <span className="text-slate-500 text-xs ml-1">x{contact.ext}</span>}</TableCell>
                                                 <TableCell>{contact.email ? <a href={`mailto:${contact.email}`} className="text-indigo-600 hover:underline">{contact.email}</a> : '-'}</TableCell>
                                                 <TableCell className="text-right flex justify-end gap-2">
                                                     <button onClick={() => openEditContact(contact)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">

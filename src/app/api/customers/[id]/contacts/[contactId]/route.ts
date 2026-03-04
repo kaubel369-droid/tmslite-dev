@@ -12,6 +12,7 @@ export async function PUT(request: Request, context: any) {
             .update({
                 name: body.name,
                 phone: body.phone,
+                ext: body.ext,
                 cell_phone: body.cell_phone,
                 email: body.email,
                 position: body.position,

@@ -23,6 +23,11 @@ export default function CustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<string>('Active');
+
+    const filteredCustomers = customers.filter(c =>
+        statusFilter === 'All' ? true : (c.status || 'Active') === statusFilter
+    );
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -86,15 +91,27 @@ export default function CustomersPage() {
                 ) : (
                     <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                            <div className="relative">
-                                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input
-                                    type="text"
-                                    placeholder="Search customers..."
-                                    className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
-                                />
+                            <div className="flex gap-4 items-center">
+                                <div className="relative">
+                                    <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search customers..."
+                                        className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+                                    />
+                                </div>
+                                <select
+                                    value={statusFilter}
+                                    onChange={e => setStatusFilter(e.target.value)}
+                                    className="px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                >
+                                    <option value="All">All Statuses</option>
+                                    <option value="Active">Active Only</option>
+                                    <option value="Credit Hold">Credit Hold Only</option>
+                                    <option value="Inactive">Inactive Only</option>
+                                </select>
                             </div>
-                            <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2.5 py-1 rounded-md">{customers.length} Customers</span>
+                            <span className="text-xs text-slate-500 font-medium bg-slate-100 px-2.5 py-1 rounded-md">{filteredCustomers.length} Customers</span>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -111,7 +128,13 @@ export default function CustomersPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {customers.map((customer) => (
+                                    {filteredCustomers.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                                                No customers match the current filter.
+                                            </td>
+                                        </tr>
+                                    ) : filteredCustomers.map((customer) => (
                                         <tr key={customer.id} className="hover:bg-slate-50 transition-colors group">
                                             <td className="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
                                                 <Link href={`/customers/edit/${customer.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
@@ -135,8 +158,8 @@ export default function CustomersPage() {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`text-xs px-2 py-1 rounded-md border font-medium ${customer.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                        customer.status === 'Credit Hold' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                                            'bg-slate-100 text-slate-700 border-slate-200'
+                                                    customer.status === 'Credit Hold' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                        'bg-slate-100 text-slate-700 border-slate-200'
                                                     }`}>
                                                     {customer.status || 'Active'}
                                                 </span>
