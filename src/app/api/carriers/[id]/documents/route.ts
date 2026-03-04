@@ -61,11 +61,25 @@ export async function POST(request: Request, context: any) {
 
         if (storageError) throw storageError;
 
+        // Get carrier org_id
+        const { data: carrierInfo, error: carrierError } = await supabase
+            .from('carriers')
+            .select('org_id')
+            .eq('id', id)
+            .single();
+
+        if (carrierError || !carrierInfo) {
+            // Rollback storage if carrier not found
+            await supabase.storage.from('carrier-documents').remove([filePath]);
+            throw new Error('Carrier not found');
+        }
+
         // Save metadata to database
         const { data: docData, error: docError } = await supabase
             .from('carrier_documents')
             .insert([{
                 carrier_id: id,
+                org_id: carrierInfo.org_id,
                 file_name: file.name,
                 file_path: filePath,
                 // uploaded_by would require user authcontext, skipping for now

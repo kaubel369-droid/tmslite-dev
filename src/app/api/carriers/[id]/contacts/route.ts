@@ -37,10 +37,20 @@ export async function POST(request: Request, context: any) {
             return NextResponse.json({ error: 'Maximum of 10 contacts allowed per carrier' }, { status: 400 });
         }
 
+        // Get carrier org_id
+        const { data: carrierInfo, error: carrierError } = await supabase
+            .from('carriers')
+            .select('org_id')
+            .eq('id', id)
+            .single();
+
+        if (carrierError || !carrierInfo) throw new Error('Carrier not found');
+
         const { data, error } = await supabase
             .from('carrier_contacts')
             .insert([{
                 carrier_id: id,
+                org_id: carrierInfo.org_id,
                 name: body.name,
                 phone: body.phone,
                 ext: body.ext,
