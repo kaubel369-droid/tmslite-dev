@@ -32,6 +32,10 @@ export default function EditCarrierPage() {
         website: '', dot_number: '', ein: '', mc_number: '', scac: '', insurance_status: '', notes: '',
         api_key: '', api_secret: '', api_url: '', api_account_number: '', api_username: '', api_password: '', api_enabled: false
     });
+    const [insuranceData, setInsuranceData] = useState({
+        id: '', insurance_company: '', policy_number: '', expiration_date: '',
+        coverage_amount: '', agent: '', phone: '', email: '', notes: ''
+    });
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
 
@@ -78,6 +82,15 @@ export default function EditCarrierPage() {
                 const docRes = await fetch(`/api/carriers/${id}/documents`);
                 const docData = await docRes.json();
                 setDocuments(docData.documents || []);
+
+                // Fetch Insurance
+                try {
+                    const insRes = await fetch(`/api/carriers/${id}/insurance`);
+                    if (insRes.ok) {
+                        const insData = await insRes.json();
+                        if (insData.insurance) setInsuranceData(insData.insurance);
+                    }
+                } catch (e) { console.error('Error fetching insurance', e); }
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -109,6 +122,38 @@ export default function EditCarrierPage() {
             });
             if (!res.ok) throw new Error('Failed to update carrier');
             router.refresh();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleInsuranceChange = (e: any) => {
+        let value = e.target.value;
+        if (e.target.name === 'phone') value = formatPhoneNumber(value);
+        setInsuranceData(prev => ({ ...prev, [e.target.name]: value }));
+    };
+
+    const handleInsuranceSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        setError(null);
+        try {
+            const res = await fetch(`/api/carriers/${id}/insurance`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(insuranceData),
+            });
+            if (!res.ok) throw new Error('Failed to update insurance');
+
+            // Re-fetch carrier to update status if it changed
+            const custRes = await fetch(`/api/carriers/${id}`);
+            if (custRes.ok) {
+                const custData = await custRes.json();
+                setFormData(prev => ({ ...prev, status: custData.carrier.status, insurance_status: custData.carrier.insurance_status }));
+            }
+            alert('Insurance saved successfully');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -278,9 +323,19 @@ export default function EditCarrierPage() {
                                                 <input type="text" name="zip" value={formData.zip || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                             </div>
                                         </div>
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
+                                                <input type="url" name="website" value={formData.website || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">Main Phone</label>
+                                                <input type="tel" name="phone" value={formData.phone || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                        </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
-                                            <input type="url" name="website" value={formData.website || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
+                                            <textarea name="notes" value={formData.notes || ''} onChange={handleInfoChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                                         </div>
                                         <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-6">
                                             <div>
@@ -303,24 +358,16 @@ export default function EditCarrierPage() {
                                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Insurance Status</label>
-                                                <input type="text" name="insurance_status" value={formData.insurance_status || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                                <input type="text" name="insurance_status" value={formData.insurance_status || ''} disabled className="w-full px-4 py-2 bg-slate-100 border border-slate-300 rounded-lg focus:outline-none text-slate-500" placeholder="Computed from Insurance Tab" />
                                             </div>
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
-                                            <textarea name="notes" value={formData.notes || ''} onChange={handleInfoChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Contact & Status</h2>
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Status</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Main Phone</label>
-                                            <input type="tel" name="phone" value={formData.phone || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Carrier Status</label>
                                             <select name="status" value={formData.status} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                                 <option value="Active">Active</option>
                                                 <option value="Credit Hold">Credit Hold</option>
@@ -517,9 +564,51 @@ export default function EditCarrierPage() {
 
                     {/* Insurance Tab */}
                     <TabsContent value="insurance" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-16 flex flex-col items-center justify-center text-slate-500">
-                            <h3 className="text-xl font-medium text-slate-800 mb-2">Insurance Details</h3>
-                            <p className="max-w-md text-center">Track policy expirations, cargo limits, and general liability.</p>
+                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                            <form onSubmit={handleInsuranceSave} className="space-y-6">
+                                <div className="border-b border-slate-100 pb-6">
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Insurance Details</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Insurance Company</label>
+                                            <input type="text" name="insurance_company" value={insuranceData.insurance_company || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Policy Number</label>
+                                            <input type="text" name="policy_number" value={insuranceData.policy_number || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Expiration Date</label>
+                                            <input type="date" name="expiration_date" value={insuranceData.expiration_date || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Coverage Amount</label>
+                                            <input type="text" name="coverage_amount" value={insuranceData.coverage_amount || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="$1,000,000" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Agent Name</label>
+                                            <input type="text" name="agent" value={insuranceData.agent || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Agent Phone</label>
+                                            <input type="tel" name="phone" value={insuranceData.phone || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Agent Email</label>
+                                            <input type="email" name="email" value={insuranceData.email || ''} onChange={handleInsuranceChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
+                                            <textarea name="notes" value={insuranceData.notes || ''} onChange={handleInsuranceChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="pt-4 flex justify-end">
+                                    <button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 shadow-sm">
+                                        {saving ? <span className="animate-pulse">Saving...</span> : <><Save className="h-4 w-4" /> Save Insurance</>}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </TabsContent>
 
