@@ -191,3 +191,39 @@ blank for now
 I do not see a link to the carrier page on the dashboard. 
 
 ***************************************************
+On the carrier info tab add the following fields:
+1. Carrier website
+2. carrier SCAC (8 characters)
+3. carrier DOT (10 characters)  
+4. carrier EIN (10 characters)
+5. Carrier MC number (10 characters)
+6. Carrier insurance status
+7. Carrier notes
+
+
+Find a data base to check the carrier's DOT number and MC number.   If the DOT number is not found in the DOT database the status should be "Inactive". If the DOT number is found in the DOT database the status should be "Active".   If the MC number is not found in the MC database the status should be "Inactive". If the MC number is found in the MC database the status should be "Active".     
+
+On the API settings tab add the following fields:
+1. API Key
+2. API Secret
+3. API URL
+4. SCAC
+5. Account Number
+6. Username
+7. Password
+
+Add a toggle switch to the API settings tab to enable or disable the API. 
+
+Add a button to the API settings tab to test the API connection. 
+
+Add a button to the API settings tab to save the API settings. 
+
+Add a button to the API settings tab to reset the API settings. 
+
+Add a button to the API settings tab to delete the API settings. 
+
+Save this information in the carrier_account table.
+
+Make this page only visible to the admin role and supervisor role.  
+
+*************************************************** 
