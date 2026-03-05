@@ -282,20 +282,20 @@ export default function EditCarrierPage() {
                 {error && <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl mb-6">{error}</div>}
 
                 <Tabs defaultValue="info" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8 h-auto p-1 bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <TabsTrigger value="info" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Carrier Info</TabsTrigger>
-                        <TabsTrigger value="contacts" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Contacts ({contacts.length})</TabsTrigger>
-                        <TabsTrigger value="rating" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Rating</TabsTrigger>
-                        <TabsTrigger value="documents" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Documents ({documents.length})</TabsTrigger>
+                    <TabsList>
+                        <TabsTrigger value="info">Carrier Info</TabsTrigger>
+                        <TabsTrigger value="contacts">Contacts ({contacts.length})</TabsTrigger>
+                        <TabsTrigger value="rating">Rating</TabsTrigger>
+                        <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
                         {(userRole === 'Admin' || userRole === 'Supervisor') && (
-                            <TabsTrigger value="api_settings" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">API Settings</TabsTrigger>
+                            <TabsTrigger value="api_settings">API Settings</TabsTrigger>
                         )}
-                        <TabsTrigger value="insurance" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Insurance</TabsTrigger>
+                        <TabsTrigger value="insurance">Insurance</TabsTrigger>
                     </TabsList>
 
                     {/* Carrier Info Tab */}
                     <TabsContent value="info" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
                             <form onSubmit={handleInfoSave} className="space-y-6">
                                 {/* Core Info */}
                                 <div className="border-b border-slate-100 pb-6">
@@ -387,7 +387,7 @@ export default function EditCarrierPage() {
 
                     {/* Contacts Tab */}
                     <TabsContent value="contacts" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
                             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                                 <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><Users className="h-5 w-5 text-indigo-600" /> Current Contacts ({contacts.length}/10)</h2>
                                 <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
@@ -482,7 +482,7 @@ export default function EditCarrierPage() {
                     {/* API Settings Tab */}
                     {(userRole === 'Admin' || userRole === 'Supervisor') && (
                         <TabsContent value="api_settings" className="outline-none">
-                            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                            <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
                                 <form onSubmit={handleInfoSave} className="space-y-6">
                                     <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                                         <div>
@@ -564,7 +564,7 @@ export default function EditCarrierPage() {
 
                     {/* Insurance Tab */}
                     <TabsContent value="insurance" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
                             <form onSubmit={handleInsuranceSave} className="space-y-6">
                                 <div className="border-b border-slate-100 pb-6">
                                     <h2 className="text-lg font-semibold text-slate-800 mb-4">Insurance Details</h2>
@@ -614,7 +614,7 @@ export default function EditCarrierPage() {
 
                     {/* Rating Tab */}
                     <TabsContent value="rating" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-16 flex flex-col items-center justify-center text-slate-500">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-16 flex flex-col items-center justify-center text-slate-500">
                             <h3 className="text-xl font-medium text-slate-900 mb-2">LTL Rating Screen</h3>
                             <p className="max-w-md text-center">Configure standard LTL rate markups and tariffs here.</p>
                         </div>
@@ -622,7 +622,7 @@ export default function EditCarrierPage() {
 
                     {/* Documents Tab */}
                     <TabsContent value="documents" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
                             <div className="p-6 border-b border-slate-200 bg-slate-50">
                                 <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2 mb-4"><FileText className="h-5 w-5 text-indigo-600" /> Upload New Document</h2>
                                 <div className="flex gap-4 items-center">

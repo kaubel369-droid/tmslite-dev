@@ -97,29 +97,29 @@ export default function NewCustomerPage() {
                 )}
 
                 <Tabs defaultValue="info" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-8 h-auto p-1 bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <TabsTrigger value="info" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">
+                    <TabsList>
+                        <TabsTrigger value="info">
                             Customer Information
                         </TabsTrigger>
-                        <TabsTrigger value="contacts" disabled className="py-2.5 flex gap-2 items-center opacity-50 cursor-not-allowed">
+                        <TabsTrigger value="contacts" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
                             Contacts <Lock className="h-3 w-3" />
                         </TabsTrigger>
-                        <TabsTrigger value="dispatch" disabled className="py-2.5 flex gap-2 items-center opacity-50 cursor-not-allowed">
+                        <TabsTrigger value="dispatch" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
                             Dispatch <Lock className="h-3 w-3" />
                         </TabsTrigger>
-                        <TabsTrigger value="quotes" disabled className="py-2.5 flex gap-2 items-center opacity-50 cursor-not-allowed">
+                        <TabsTrigger value="quotes" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
                             Quotes <Lock className="h-3 w-3" />
                         </TabsTrigger>
-                        <TabsTrigger value="rating" disabled className="py-2.5 flex gap-2 items-center opacity-50 cursor-not-allowed">
+                        <TabsTrigger value="rating" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
                             Rating <Lock className="h-3 w-3" />
                         </TabsTrigger>
-                        <TabsTrigger value="documents" disabled className="py-2.5 flex gap-2 items-center opacity-50 cursor-not-allowed">
+                        <TabsTrigger value="documents" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
                             Documents <Lock className="h-3 w-3" />
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="info" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
                             <form onSubmit={handleSubmit} className="space-y-6">
 
                                 <div className="border-b border-slate-100 pb-6">
