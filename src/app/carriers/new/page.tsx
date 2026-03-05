@@ -20,6 +20,13 @@ export default function NewCarrierPage() {
         zip: '',
         phone: '',
         status: 'Active',
+        website: '',
+        dot_number: '',
+        ein: '',
+        mc_number: '',
+        scac: '',
+        insurance_status: '',
+        notes: '',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -176,6 +183,91 @@ export default function NewCarrierPage() {
                                                     className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                                                 />
                                             </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label htmlFor="website" className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
+                                            <input
+                                                type="url"
+                                                id="website"
+                                                name="website"
+                                                value={formData.website}
+                                                onChange={handleChange}
+                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div>
+                                                <label htmlFor="scac" className="block text-sm font-semibold text-slate-700 mb-1">SCAC</label>
+                                                <input
+                                                    type="text"
+                                                    id="scac"
+                                                    name="scac"
+                                                    maxLength={8}
+                                                    value={formData.scac}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors uppercase"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="dot_number" className="block text-sm font-semibold text-slate-700 mb-1">DOT Number</label>
+                                                <input
+                                                    type="text"
+                                                    id="dot_number"
+                                                    name="dot_number"
+                                                    maxLength={10}
+                                                    value={formData.dot_number}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="mc_number" className="block text-sm font-semibold text-slate-700 mb-1">MC Number</label>
+                                                <input
+                                                    type="text"
+                                                    id="mc_number"
+                                                    name="mc_number"
+                                                    maxLength={10}
+                                                    value={formData.mc_number}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label htmlFor="ein" className="block text-sm font-semibold text-slate-700 mb-1">EIN</label>
+                                                <input
+                                                    type="text"
+                                                    id="ein"
+                                                    name="ein"
+                                                    maxLength={10}
+                                                    value={formData.ein}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label htmlFor="insurance_status" className="block text-sm font-semibold text-slate-700 mb-1">Insurance Status</label>
+                                                <input
+                                                    type="text"
+                                                    id="insurance_status"
+                                                    name="insurance_status"
+                                                    value={formData.insurance_status}
+                                                    onChange={handleChange}
+                                                    className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label htmlFor="notes" className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
+                                            <textarea
+                                                id="notes"
+                                                name="notes"
+                                                value={formData.notes}
+                                                onChange={handleChange}
+                                                rows={3}
+                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
+                                            />
                                         </div>
                                     </div>
                                 </div>

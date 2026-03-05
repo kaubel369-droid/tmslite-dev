@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getServiceRoleClient } from '@/lib/supabase';
 
+// Mock function for SAFER API check
+async function checkSaferAPI(dotNumber?: string, mcNumber?: string): Promise<boolean> {
+    // In a real implementation, this would make an HTTP request to the FMCSA SAFER API
+    // e.g., fetch(`https://api.safer.fmcsa.dot.gov/...`)
+    // For now, if a number is provided, we simulate a successful find (true).
+    if (dotNumber && dotNumber.trim() !== '') return true;
+    if (mcNumber && mcNumber.trim() !== '') return true;
+    return false; // If neither text is found/valid, return false
+}
+
 export async function GET(request: Request, context: any) {
     try {
         const { id } = await context.params;
@@ -27,6 +37,18 @@ export async function PUT(request: Request, context: any) {
         const body = await request.json();
         const supabase = getServiceRoleClient();
 
+        let finalStatus = body.status || 'Active';
+
+        // Check DOT / MC numbers against SAFER API logic
+        if (body.dot_number || body.mc_number) {
+            const isFound = await checkSaferAPI(body.dot_number, body.mc_number);
+            if (!isFound) {
+                finalStatus = 'Inactive';
+            } else {
+                finalStatus = 'Active';
+            }
+        }
+
         const { data, error } = await supabase
             .from('carriers')
             .update({
@@ -36,7 +58,21 @@ export async function PUT(request: Request, context: any) {
                 city: body.city,
                 state: body.state,
                 zip: body.zip,
-                status: body.status
+                status: finalStatus,
+                website: body.website,
+                dot_number: body.dot_number,
+                ein: body.ein,
+                mc_number: body.mc_number,
+                scac: body.scac,
+                insurance_status: body.insurance_status,
+                notes: body.notes,
+                api_key: body.api_key,
+                api_secret: body.api_secret,
+                api_url: body.api_url,
+                api_account_number: body.api_account_number,
+                api_username: body.api_username,
+                api_password: body.api_password,
+                api_enabled: body.api_enabled
             })
             .eq('id', id)
             .select()

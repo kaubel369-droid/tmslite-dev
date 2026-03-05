@@ -22,6 +22,7 @@ export default async function RootLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   let isAdmin = false;
+  let isSupervisor = false;
   let userInitial = '';
 
   if (user) {

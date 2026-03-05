@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
+import { createClient } from '@/utils/supabase/client';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
@@ -21,10 +22,15 @@ export default function EditCarrierPage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Auth State
+    const [userRole, setUserRole] = useState<string | null>(null);
+
     // Data States
     const [formData, setFormData] = useState({
         company_name: '', address: '', city: '', state: '', zip: '',
         phone: '', status: 'Active',
+        website: '', dot_number: '', ein: '', mc_number: '', scac: '', insurance_status: '', notes: '',
+        api_key: '', api_secret: '', api_url: '', api_account_number: '', api_username: '', api_password: '', api_enabled: false
     });
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -42,6 +48,18 @@ export default function EditCarrierPage() {
     useEffect(() => {
         const fetchAllData = async () => {
             try {
+                // Fetch User Role
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', user.id)
+                        .single();
+                    if (profile) setUserRole(profile.role);
+                }
+
                 // Fetch Carrier
                 const custRes = await fetch(`/api/carriers/${id}`);
                 if (!custRes.ok) throw new Error('Carrier not found');
@@ -224,7 +242,9 @@ export default function EditCarrierPage() {
                         <TabsTrigger value="contacts" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Contacts ({contacts.length})</TabsTrigger>
                         <TabsTrigger value="rating" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Rating</TabsTrigger>
                         <TabsTrigger value="documents" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Documents ({documents.length})</TabsTrigger>
-                        <TabsTrigger value="api_settings" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">API Settings</TabsTrigger>
+                        {(userRole === 'Admin' || userRole === 'Supervisor') && (
+                            <TabsTrigger value="api_settings" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">API Settings</TabsTrigger>
+                        )}
                         <TabsTrigger value="insurance" className="py-2.5 data-[state=active]:bg-slate-100 data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm">Insurance</TabsTrigger>
                     </TabsList>
 
@@ -257,6 +277,38 @@ export default function EditCarrierPage() {
                                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Zip Code</label>
                                                 <input type="text" name="zip" value={formData.zip || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                                             </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Website</label>
+                                            <input type="url" name="website" value={formData.website || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div className="md:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">SCAC</label>
+                                                <input type="text" name="scac" maxLength={8} value={formData.scac || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">DOT Number</label>
+                                                <input type="text" name="dot_number" maxLength={10} value={formData.dot_number || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">MC Number</label>
+                                                <input type="text" name="mc_number" maxLength={10} value={formData.mc_number || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">EIN</label>
+                                                <input type="text" name="ein" maxLength={10} value={formData.ein || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-1">Insurance Status</label>
+                                                <input type="text" name="insurance_status" value={formData.insurance_status || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
+                                            <textarea name="notes" value={formData.notes || ''} onChange={handleInfoChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                                         </div>
                                     </div>
                                 </div>
@@ -381,12 +433,87 @@ export default function EditCarrierPage() {
                     </TabsContent>
 
                     {/* API Settings Tab */}
-                    <TabsContent value="api_settings" className="outline-none">
-                        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-16 flex flex-col items-center justify-center text-slate-500">
-                            <h3 className="text-xl font-medium text-slate-800 mb-2">API API Settings</h3>
-                            <p className="max-w-md text-center">Configure integration settings and token mappings here.</p>
-                        </div>
-                    </TabsContent>
+                    {(userRole === 'Admin' || userRole === 'Supervisor') && (
+                        <TabsContent value="api_settings" className="outline-none">
+                            <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-8">
+                                <form onSubmit={handleInfoSave} className="space-y-6">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-6">
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-slate-800">API Settings</h2>
+                                            <p className="text-sm text-slate-500">Configure connection details for this carrier.</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-slate-700">Enable API</span>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" name="api_enabled" checked={formData.api_enabled} onChange={(e) => setFormData(prev => ({ ...prev, api_enabled: e.target.checked }))} className="sr-only peer" />
+                                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">API URL</label>
+                                            <input type="url" name="api_url" value={formData.api_url || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://api.carrier.com/v1" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">API Key</label>
+                                            <input type="password" name="api_key" value={formData.api_key || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••••••••••" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">API Secret</label>
+                                            <input type="password" name="api_secret" value={formData.api_secret || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••••••••••" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Username</label>
+                                            <input type="text" name="api_username" value={formData.api_username || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+                                            <input type="password" name="api_password" value={formData.api_password || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Account Number</label>
+                                            <input type="text" name="api_account_number" value={formData.api_account_number || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">SCAC</label>
+                                            <input type="text" name="scac" maxLength={8} value={formData.scac || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 flex flex-wrap justify-between items-center gap-4 bg-slate-50/50 -mx-8 -mb-8 p-6 border-t border-slate-100 rounded-b-xl">
+                                        <div className="flex gap-3">
+                                            <button type="button" onClick={async () => {
+                                                if (confirm('Are you sure you want to delete these API settings?')) {
+                                                    setFormData(prev => ({
+                                                        ...prev, api_key: '', api_secret: '', api_url: '', api_account_number: '', api_username: '', api_password: '', api_enabled: false
+                                                    }));
+                                                }
+                                            }} className="text-red-600 hover:text-red-700 hover:bg-red-50 font-medium py-2 px-4 rounded-lg transition-colors border border-transparent hover:border-red-200">
+                                                Delete Settings
+                                            </button>
+                                            <button type="button" onClick={() => {
+                                                alert('Mock test connection successful!');
+                                            }} className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg transition-colors shadow-sm">
+                                                Test Connection
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <button type="button" onClick={() => {
+                                                router.refresh();
+                                            }} className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg transition-colors shadow-sm">
+                                                Reset
+                                            </button>
+                                            <button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 shadow-sm">
+                                                {saving ? <span className="animate-pulse">Saving...</span> : <><Save className="h-4 w-4" /> Save Settings</>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </TabsContent>
+                    )}
 
                     {/* Insurance Tab */}
                     <TabsContent value="insurance" className="outline-none">
