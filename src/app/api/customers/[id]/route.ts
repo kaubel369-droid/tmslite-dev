@@ -41,6 +41,7 @@ export async function PUT(request: Request, context: any) {
                 website: body.website,
                 status: body.status,
                 notes: body.notes,
+                dispatch_notes: body.dispatch_notes,
                 credit_limit: body.credit_limit || 0,
                 payment_terms: body.payment_terms
             })

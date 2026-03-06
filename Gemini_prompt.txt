@@ -305,4 +305,24 @@ Save this information in the shipper_consignee table.
 
 
 *************************************************** 
+On the Customer display page add a button to add a new shipper/consignee. 
+Add a grid to display the shipper/consignee information for the customer that occupies the top half of the page 
+I want be able to click on a shipper/consignee in the grid and open the shipper/consignee display page. 
+I want to be able to edit a shipper/consignee by clicking a button in the shipper/consignee grid that opens a pop up data entry screen. 
+I want to be able to delete a shipper/consignee by clicking a button in the shipper/consignee grid that opens a pop up data entry screen. 
+The data should be saved in the shipper_consignee table, just add the customer id to the table. 
+The shipper/consignee grid should be sortable. 
+
+On the bottom half of the page put a note box called "Dispatch Notes" 
+Add a save button to the note box to save the note.
+
+*************************************************** 
+ 
+
+
+ 
+  
+
+
+
   

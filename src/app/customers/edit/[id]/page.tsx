@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, ArrowLeft, Save, FileText, Trash2, Pencil, Upload, Download, Phone, Mail, Users, MapPin, Loader2 } from 'lucide-react';
+import { Building2, ArrowLeft, Save, FileText, Trash2, Pencil, Upload, Download, Phone, Mail, Users, MapPin, Loader2, Truck, Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,6 +11,7 @@ import { formatPhoneNumber } from '@/lib/utils';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
+type ShipperConsignee = { id: string; name: string; address: string; city: string; state: string; zip: string; phone: string; email: string; website: string; status: string; notes: string };
 
 export default function EditCustomerPage() {
     const router = useRouter();
@@ -24,10 +25,16 @@ export default function EditCustomerPage() {
     // Data States
     const [formData, setFormData] = useState({
         company_name: '', primary_contact: '', address: '', city: '', state: '', zip: '',
-        phone: '', email: '', website: '', status: 'Active', notes: '', credit_limit: '', payment_terms: 'Net 30',
+        phone: '', email: '', website: '', status: 'Active', notes: '', dispatch_notes: '', credit_limit: '', payment_terms: 'Net 30',
     });
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
+    const [shippers, setShippers] = useState<ShipperConsignee[]>([]);
+
+    // Shipper Dialog State
+    const [isShipperOpen, setIsShipperOpen] = useState(false);
+    const [editingShipperId, setEditingShipperId] = useState<string | null>(null);
+    const [shipperForm, setShipperForm] = useState({ name: '', address: '', city: '', state: '', zip: '', phone: '', email: '', website: '', status: 'Active', notes: '' });
 
     // Contact Dialog State
     const [isContactOpen, setIsContactOpen] = useState(false);
@@ -60,6 +67,11 @@ export default function EditCustomerPage() {
                 const docRes = await fetch(`/api/customers/${id}/documents`);
                 const docData = await docRes.json();
                 setDocuments(docData.documents || []);
+
+                // Fetch Shippers
+                const shipRes = await fetch(`/api/shipper-consignees?customer_id=${id}`);
+                const shipData = await shipRes.json();
+                setShippers(shipData.shipper_consignees || []);
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -144,6 +156,87 @@ export default function EditCustomerPage() {
         setContactForm({ ...contact });
         setEditingContactId(contact.id);
         setIsContactOpen(true);
+    };
+
+    // Shipper Handlers
+    const resetShipperForm = () => {
+        setShipperForm({ name: '', address: '', city: '', state: '', zip: '', phone: '', email: '', website: '', status: 'Active', notes: '' });
+        setEditingShipperId(null);
+    };
+
+    const handleShipperSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const url = editingShipperId ? `/api/shipper-consignees/${editingShipperId}` : `/api/shipper-consignees`;
+            const method = editingShipperId ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...shipperForm, customer_id: id }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+
+            // Refresh shippers
+            const shipRes = await fetch(`/api/shipper-consignees?customer_id=${id}`);
+            const shipData = await shipRes.json();
+            setShippers(shipData.shipper_consignees || []);
+            setIsShipperOpen(false);
+            resetShipperForm();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleShipperDelete = async (shipperId: string) => {
+        if (!confirm('Are you sure you want to delete this Shipper/Consignee?')) return;
+        try {
+            const res = await fetch(`/api/shipper-consignees/${shipperId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete');
+            setShippers(prev => prev.filter(s => s.id !== shipperId));
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    // Shipper Sorting State
+    const [sortField, setSortField] = useState<keyof ShipperConsignee>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+    const handleSort = (field: keyof ShipperConsignee) => {
+        if (field === sortField) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const sortedShippers = [...shippers].sort((a, b) => {
+        const valA = (a[sortField] || '').toString().toLowerCase();
+        const valB = (b[sortField] || '').toString().toLowerCase();
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const openEditShipper = (shipper: ShipperConsignee) => {
+        setShipperForm({
+            name: shipper.name || '',
+            address: shipper.address || '',
+            city: shipper.city || '',
+            state: shipper.state || '',
+            zip: shipper.zip || '',
+            phone: shipper.phone || '',
+            email: shipper.email || '',
+            website: shipper.website || '',
+            status: shipper.status || 'Active',
+            notes: shipper.notes || ''
+        });
+        setEditingShipperId(shipper.id);
+        setIsShipperOpen(true);
     };
 
     // Document Handlers
@@ -418,9 +511,148 @@ export default function EditCustomerPage() {
 
                     {/* Dispatch Tab */}
                     <TabsContent value="dispatch" className="outline-none">
-                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-16 flex flex-col items-center justify-center text-slate-500">
-                            <h3 className="text-xl font-medium text-slate-800 mb-2">Dispatch History</h3>
-                            <p className="max-w-md text-center">There are no loads recently dispatched for this customer yet.</p>
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
+                            {/* Top Half: Shippers/Consignees */}
+                            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2"><Truck className="h-5 w-5 text-indigo-600" /> Shippers / Consignees</h2>
+                                    <p className="text-sm text-slate-500 mt-1">Manage locations associated with this customer.</p>
+                                </div>
+                                <Dialog open={isShipperOpen} onOpenChange={setIsShipperOpen}>
+                                    <DialogTrigger asChild>
+                                        <button onClick={resetShipperForm} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                                            <Plus className="h-4 w-4" /> Add Shipper/Consignee
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-2xl">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingShipperId ? 'Edit Shipper/Consignee' : 'Add New Shipper/Consignee'}</DialogTitle>
+                                            <DialogDescription>Enter the location details below.</DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleShipperSave} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="col-span-2">
+                                                    <label className="block text-sm font-medium mb-1">Location Name *</label>
+                                                    <input required type="text" value={shipperForm.name} onChange={e => setShipperForm({ ...shipperForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-sm font-medium mb-1">Address</label>
+                                                    <input type="text" value={shipperForm.address} onChange={e => setShipperForm({ ...shipperForm, address: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">City</label>
+                                                    <input type="text" value={shipperForm.city} onChange={e => setShipperForm({ ...shipperForm, city: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-1">State</label>
+                                                        <input type="text" value={shipperForm.state} onChange={e => setShipperForm({ ...shipperForm, state: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium mb-1">Zip</label>
+                                                        <input type="text" value={shipperForm.zip} onChange={e => setShipperForm({ ...shipperForm, zip: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Phone</label>
+                                                    <input type="text" value={shipperForm.phone} onChange={e => setShipperForm({ ...shipperForm, phone: formatPhoneNumber(e.target.value) })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Email</label>
+                                                    <input type="email" value={shipperForm.email} onChange={e => setShipperForm({ ...shipperForm, email: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Status</label>
+                                                    <select value={shipperForm.status} onChange={e => setShipperForm({ ...shipperForm, status: e.target.value })} className="w-full px-3 py-2 border rounded-md bg-white">
+                                                        <option value="Active">Active</option>
+                                                        <option value="Inactive">Inactive</option>
+                                                        <option value="Credit Hold">Credit Hold</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <label className="block text-sm font-medium mb-1">Notes</label>
+                                                    <textarea rows={2} value={shipperForm.notes} onChange={e => setShipperForm({ ...shipperForm, notes: e.target.value })} className="w-full px-3 py-2 border rounded-md resize-none" />
+                                                </div>
+                                            </div>
+                                            <DialogFooter className="pt-4">
+                                                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700">Save Location</button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
+                                            Location Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </TableHead>
+                                        <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleSort('city')}>
+                                            City, State {sortField === 'city' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead className="cursor-pointer hover:bg-slate-100" onClick={() => handleSort('status')}>
+                                            Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedShippers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">No Shippers/Consignees linked to this customer yet.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        sortedShippers.map(shipper => (
+                                            <TableRow key={shipper.id}>
+                                                <TableCell className="font-medium">
+                                                    <Link href={`/shipper-consignees/edit/${shipper.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                                        {shipper.name}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>{shipper.city}{shipper.city && shipper.state ? ', ' : ''}{shipper.state}</TableCell>
+                                                <TableCell>{shipper.phone || '-'}</TableCell>
+                                                <TableCell>
+                                                    <span className={`text-xs px-2 py-1 rounded-md border font-medium ${shipper.status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                        shipper.status === 'Credit Hold' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                            'bg-slate-100 text-slate-700 border-slate-200'
+                                                        }`}>
+                                                        {shipper.status || 'Active'}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right flex justify-end gap-2">
+                                                    <button onClick={() => openEditShipper(shipper)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleShipperDelete(shipper.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+
+                            {/* Bottom Half: Dispatch Notes */}
+                            <div className="p-6 border-t border-slate-200 bg-slate-50">
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2"><FileText className="h-5 w-5 text-indigo-600" /> Dispatch Notes</h3>
+                                <div className="space-y-4">
+                                    <textarea
+                                        value={formData.dispatch_notes || ''}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, dispatch_notes: e.target.value }))}
+                                        placeholder="Enter any specific dispatch instructions, notes, or requirements for this customer..."
+                                        rows={4}
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-4xl bg-white shadow-sm"
+                                    />
+                                    <div>
+                                        <button onClick={handleInfoSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 shadow-sm">
+                                            {saving ? <span className="animate-pulse">Saving...</span> : <><Save className="h-4 w-4" /> Save Dispatch Notes</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </TabsContent>
 
