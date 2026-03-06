@@ -227,3 +227,82 @@ Save this information in the carrier_account table.
 Make this page only visible to the admin role and supervisor role.  
 
 *************************************************** 
+
+Move SCAC, DOT, EIN, MC number and insurance status to below the notes field. 
+Move Main Phone to beside the website field. 
+
+On the insurance tab add the following fields:
+1. Insurance Company
+2. Insurance Policy Number
+3. Insurance Expiration Date
+4. Insurance Coverage Amount
+5. Insurance Agent
+6. Insurance Phone
+7. Insurance Email
+8. Insurance Notes
+
+Use the expiration date to determine if the insurance is active or expired. 
+Display the status in the insurance status field. 
+The status should be "Active" if the expiration date is greater than the current date. 
+The status should be "Expired" if the expiration date is less than the current date. 
+The status should be "Expired" if the expiration date is null. 
+ 
+
+Add a button to the insurance tab to save the insurance. 
+
+ 
+
+Save this information in the carrier_insurance table.
+
+*************************************************** 
+I do not like the look of the tabs on all the pages in the application.   
+Give me a couple of options for a better looking tab interface. 
+
+*************************************************** 
+To the left of the customer grid add an option called Shipper/Consignee
+
+Add a table to the shipper/consignee page to display the shipper/consignee information.
+
+Add a button to the shipper/consignee page to add a new shipper/consignee.
+
+Create a data entry screen to add a new shipper/consignee
+There shoulde be two tabs on this screen:
+1. Shipper/Consignee Information
+2. Contacts
+
+Shipper/Consignee Information tab:
+1. Shipper/Consignee name
+2. Shipper/Consignee address
+3. Shipper/Consignee city
+4. Shipper/Consignee state
+5. Shipper/Consignee zip
+6. Shipper/Consignee phone
+7. Shipper/Consignee email
+8. Shipper/Consignee website
+9. Shipper/Consignee status (Active,Credit Hold,Inactive)
+10. Shipper/Consignee notes
+
+Contacts tab:
+I want to be able to add a new contact by clicking a button that opens a pop up data entry screen.
+I want to be able to edit a contact by clicking a button in the contact grid that opens a pop up data entry screen.
+I want to be able to delete a contact by clicking a button in the contact grid that opens a pop up data entry screen.
+
+
+These are the fields I want on the pop up data entry screen:
+1. Contact name
+2. Contact phone number and extension
+3. Contact cell phone number
+4. Contact email
+5. Contact position
+6. Contact notes
+
+The contacts should be diplayed in a sortable grid.
+
+Allow for up to 10 contacts per shipper/consignee.
+
+Save this information in the shipper_consignee table.
+   
+
+
+*************************************************** 
+  

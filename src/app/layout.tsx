@@ -50,7 +50,18 @@ export default async function RootLayout({
                 <div className="flex gap-6 font-medium text-sm text-slate-600 hidden md:flex">
                   <Link href="/" className="hover:text-indigo-600 transition-colors">Rate Shop</Link>
                   <Link href="/loads" className="hover:text-indigo-600 transition-colors">Load Board</Link>
-                  <Link href="/customers" className="hover:text-indigo-600 transition-colors">Customers</Link>
+                  <div className="relative group py-5 -my-5">
+                    <button className="hover:text-indigo-600 transition-colors flex items-center gap-1 h-full font-medium">
+                      Customers
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover:rotate-180 transition-transform duration-200"><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                    <div className="absolute left-0 top-full mt-0 pt-1 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden py-1">
+                        <Link href="/customers" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100 last:border-0">Customers</Link>
+                        <Link href="/shipper-consignees" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100 last:border-0">Shippers / Consignees</Link>
+                      </div>
+                    </div>
+                  </div>
                   <Link href="/carriers" className="hover:text-indigo-600 transition-colors">Carriers</Link>
                 </div>
               </div>
