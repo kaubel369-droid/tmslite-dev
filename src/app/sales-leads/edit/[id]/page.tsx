@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Target, ArrowLeft, Save, Building, Loader2, ArrowRight } from 'lucide-react';
+import { Target, ArrowLeft, Save, Building, Loader2, ArrowRight, MapPin, Phone, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -284,7 +284,17 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                         <Target className="h-8 w-8 text-indigo-600" />
                         {formData.company_name || 'Edit Lead'}
                     </h1>
-                    <p className="text-slate-500 mt-2">Manage tracking details for this sales lead.</p>
+                    <p className="text-slate-500 mt-2 flex items-center gap-4 text-sm font-medium">
+                        <span className={`px-2.5 py-1 rounded-md border ${formData.status === 'Converted' ? 'bg-green-50 text-green-700 border-green-200' : formData.status === 'Lost' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>{formData.status}</span>
+                        {formData.city && formData.state && (
+                            <a href={`https://maps.google.com/?q=${encodeURIComponent(`${formData.address || ''}, ${formData.city}, ${formData.state} ${formData.zip || ''}`)}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+                                <MapPin className="h-4 w-4" /> {formData.city}, {formData.state}
+                            </a>
+                        )}
+                        {formData.phone && (
+                            <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {formData.phone}</span>
+                        )}
+                    </p>
                 </header>
 
                 {error && (
@@ -579,10 +589,10 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                                                 <TableCell>{contact.email ? <a href={`mailto:${contact.email}`} className="text-indigo-600 hover:underline">{contact.email}</a> : '-'}</TableCell>
                                                 <TableCell className="text-right flex justify-end gap-2">
                                                     <button onClick={() => openEditContact(contact)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">
-                                                        Edit
+                                                        <Pencil className="h-4 w-4" />
                                                     </button>
                                                     <button onClick={() => handleContactDelete(contact.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
-                                                        Delete
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </TableCell>
                                             </TableRow>
