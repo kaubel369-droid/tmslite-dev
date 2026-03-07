@@ -36,7 +36,7 @@ export default function UserGrid({
     // Form ref
     const formRef = useRef<HTMLFormElement>(null)
 
-    const roles = ['All', 'Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer']
+    const roles = ['All', 'Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Sales Rep/Customer Service Rep', 'Customer']
 
     // Keep state in sync if props change (though typically Next.js handles this by remounting or fast refresh)
     useEffect(() => {

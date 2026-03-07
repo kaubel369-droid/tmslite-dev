@@ -14,7 +14,7 @@ export default async function AdminRolesPage() {
     }
 
     // Pre-defined roles based on Enum
-    const roles = ['Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer']
+    const roles = ['Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Sales Rep/Customer Service Rep', 'Customer']
 
     return (
         <div className="space-y-8">

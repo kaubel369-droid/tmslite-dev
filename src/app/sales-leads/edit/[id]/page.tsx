@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Target, ArrowLeft, Save, Building, Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
+
+type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 
 type SalesRep = {
     id: string;
@@ -24,6 +28,12 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
+    const [contacts, setContacts] = useState<Contact[]>([]);
+
+    // Contact Dialog State
+    const [isContactOpen, setIsContactOpen] = useState(false);
+    const [editingContactId, setEditingContactId] = useState<string | null>(null);
+    const [contactForm, setContactForm] = useState({ name: '', phone: '', ext: '', cell_phone: '', email: '', position: '', notes: '' });
 
     const [formData, setFormData] = useState({
         company_name: '',
@@ -81,13 +91,23 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                 }
             } catch (err: any) {
                 setError(err.message);
-            } finally {
-                setLoading(false);
+            }
+        };
+
+        const fetchContacts = async () => {
+            try {
+                const response = await fetch(`/api/sales-lead-contacts?sales_lead_id=${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setContacts(data.contacts || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch lead contacts", err);
             }
         };
 
         fetchReps();
-        fetchLead();
+        fetchLead().then(() => fetchContacts()).finally(() => setLoading(false));
     }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -164,6 +184,53 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
         }
     };
 
+    // Contact Handlers
+    const resetContactForm = () => {
+        setContactForm({ name: '', phone: '', ext: '', cell_phone: '', email: '', position: '', notes: '' });
+        setEditingContactId(null);
+    };
+
+    const handleContactSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const url = editingContactId ? `/api/sales-lead-contacts/${editingContactId}` : `/api/sales-lead-contacts`;
+            const res = await fetch(url, {
+                method: editingContactId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...contactForm, sales_lead_id: id }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+
+            const contRes = await fetch(`/api/sales-lead-contacts?sales_lead_id=${id}`);
+            const contData = await contRes.json();
+            setContacts(contData.contacts || []);
+            setIsContactOpen(false);
+            resetContactForm();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleContactDelete = async (contactId: string) => {
+        if (!confirm('Are you sure you want to delete this contact?')) return;
+        try {
+            const res = await fetch(`/api/sales-lead-contacts/${contactId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete contact');
+            setContacts(prev => prev.filter(c => c.id !== contactId));
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const openEditContact = (contact: Contact) => {
+        setContactForm({ ...contact });
+        setEditingContactId(contact.id);
+        setIsContactOpen(true);
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -235,6 +302,9 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                     <TabsList>
                         <TabsTrigger value="info">
                             Lead Information
+                        </TabsTrigger>
+                        <TabsTrigger value="contacts">
+                            Contacts
                         </TabsTrigger>
                         <TabsTrigger value="activity">
                             Activity
@@ -427,6 +497,99 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="contacts" className="outline-none">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">Current Contacts ({contacts.length}/10)</h2>
+                                <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
+                                    <DialogTrigger asChild>
+                                        <button onClick={resetContactForm} disabled={contacts.length >= 10} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                            New Contact
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingContactId ? 'Edit Contact' : 'Add New Contact'}</DialogTitle>
+                                            <DialogDescription>Fill in the contact details below.</DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleContactSave} className="space-y-4 py-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Name *</label>
+                                                <input required type="text" value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                            </div>
+                                            <div className="grid grid-cols-12 gap-4">
+                                                <div className="col-span-12 sm:col-span-5">
+                                                    <label className="block text-sm font-medium mb-1">Phone *</label>
+                                                    <input required type="text" value={contactForm.phone} onChange={e => setContactForm({ ...contactForm, phone: formatPhoneNumber(e.target.value) })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div className="col-span-12 sm:col-span-2">
+                                                    <label className="block text-sm font-medium mb-1">Ext.</label>
+                                                    <input type="text" maxLength={4} value={contactForm.ext || ''} onChange={e => setContactForm({ ...contactForm, ext: e.target.value.replace(/\D/g, '') })} className="w-full px-3 py-2 border rounded-md" placeholder="e.g. 101" />
+                                                </div>
+                                                <div className="col-span-12 sm:col-span-5">
+                                                    <label className="block text-sm font-medium mb-1">Cell Phone</label>
+                                                    <input type="text" value={contactForm.cell_phone || ''} onChange={e => setContactForm({ ...contactForm, cell_phone: formatPhoneNumber(e.target.value) })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Email</label>
+                                                    <input type="email" value={contactForm.email || ''} onChange={e => setContactForm({ ...contactForm, email: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Position</label>
+                                                    <input type="text" value={contactForm.position || ''} onChange={e => setContactForm({ ...contactForm, position: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Notes</label>
+                                                <textarea rows={2} value={contactForm.notes || ''} onChange={e => setContactForm({ ...contactForm, notes: e.target.value })} className="w-full px-3 py-2 border rounded-md resize-none" />
+                                            </div>
+                                            <DialogFooter>
+                                                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700">Save Contact</button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Position</TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {contacts.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">No contacts recorded yet.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        contacts.map(contact => (
+                                            <TableRow key={contact.id}>
+                                                <TableCell className="font-medium">{contact.name}</TableCell>
+                                                <TableCell>{contact.position || '-'}</TableCell>
+                                                <TableCell>{contact.phone} {contact.ext && <span className="text-slate-500 text-xs ml-1">x{contact.ext}</span>}</TableCell>
+                                                <TableCell>{contact.email ? <a href={`mailto:${contact.email}`} className="text-indigo-600 hover:underline">{contact.email}</a> : '-'}</TableCell>
+                                                <TableCell className="text-right flex justify-end gap-2">
+                                                    <button onClick={() => openEditContact(contact)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">
+                                                        Edit
+                                                    </button>
+                                                    <button onClick={() => handleContactDelete(contact.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                                        Delete
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </TabsContent>
 

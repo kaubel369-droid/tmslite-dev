@@ -9,7 +9,7 @@ export async function GET() {
         const { data, error } = await supabase
             .from('profiles')
             .select('id, first_name, last_name, role')
-            .eq('role', 'Sales Rep')
+            .in('role', ['Sales Rep', 'Sales Rep/Customer Service Rep'])
             .order('first_name', { ascending: true })
             .order('last_name', { ascending: true });
 

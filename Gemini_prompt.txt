@@ -333,6 +333,18 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
 *************************************************** 
 
   
+  Add a contacts tab to a sales lead in the same design as the customer contact tab 
+  
+  Save this information in the sales_lead_contacts table. 
+  sales_lead_contacts should move to the customer_contacts table when a lead is converted to customer.
+
+  Add the ability for a user to have 2 roles Sales Rep/Customer Service Rep.
+  That is the only dual role I want available
+
+  **********************************************
+
+
+
  
 
 

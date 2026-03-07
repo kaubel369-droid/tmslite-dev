@@ -43,7 +43,38 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
         if (insertError) throw insertError;
 
-        // 3. Update the sales lead status to Converted and link the customer id
+        // 3. Migrate Sales Lead Contacts
+        const { data: leadContacts, error: contactsFetchError } = await supabase
+            .from('sales_lead_contacts')
+            .select('*')
+            .eq('sales_lead_id', id);
+
+        if (contactsFetchError) {
+            console.error('Failed to fetch lead contacts:', contactsFetchError);
+            // Non-fatal error for conversion, but ideally handled
+        }
+
+        if (leadContacts && leadContacts.length > 0) {
+            const customerContacts = leadContacts.map(contact => ({
+                customer_id: customer.id,
+                name: contact.name,
+                phone: contact.phone,
+                cell_phone: contact.cell_phone,
+                email: contact.email,
+                position: contact.position,
+                notes: contact.notes
+            }));
+
+            const { error: contactsInsertError } = await supabase
+                .from('customer_contacts')
+                .insert(customerContacts);
+
+            if (contactsInsertError) {
+                console.error('Failed to insert customer contacts:', contactsInsertError);
+            }
+        }
+
+        // 4. Update the sales lead status to Converted and link the customer id
         const { error: updateError } = await supabase
             .from('sales_leads')
             .update({

@@ -20,7 +20,72 @@ create table public.organizations (
 alter table public.organizations enable row level security;
 
 -- Profiles linking to auth.users
-create type public.user_role as enum ('Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Customer');
+create type public.user_role as enum ('Admin', 'Supervisor', 'Customer Service Rep', 'Sales Rep', 'Sales Rep/Customer Service Rep', 'Customer');
+
+-- ... existing types ...
+
+-- ... existing tables ...
+
+-- Sales Leads
+create table public.sales_leads (
+    id uuid default gen_random_uuid() primary key,
+    org_id uuid references public.organizations(id) on delete cascade not null,
+    company_name text not null,
+    primary_contact text,
+    email text,
+    phone text,
+    address text,
+    city text,
+    state text,
+    zip text,
+    website text,
+    status public.sales_lead_status default 'New'::public.sales_lead_status not null,
+    notes text,
+    assigned_to uuid references public.profiles(id) on delete set null,
+    converted_to_customer_id uuid references public.customers(id) on delete set null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.sales_leads enable row level security;
+
+-- Sales Lead Contacts
+create table public.sales_lead_contacts (
+    id uuid default gen_random_uuid() primary key,
+    sales_lead_id uuid references public.sales_leads(id) on delete cascade not null,
+    name text not null,
+    phone text,
+    cell_phone text,
+    email text,
+    position text,
+    notes text,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.sales_lead_contacts enable row level security;
+
+-- ... existing RLS ...
+
+-- Sales Leads: RLS Policies
+create policy "Admins and Supervisors have full access to sales leads in org" on public.sales_leads
+  for all using (
+    org_id = get_user_org_id() 
+    and exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role in ('Admin', 'Supervisor')
+    )
+  );
+
+create policy "Sales Reps can access assigned sales leads" on public.sales_leads
+  for all using (
+    org_id = get_user_org_id()
+    and exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role in ('Sales Rep', 'Sales Rep/Customer Service Rep')
+    )
+    and assigned_to = auth.uid()
+  );
+
+create policy "Org isolation for sales_lead_contacts" on public.sales_lead_contacts
+  for all using (sales_lead_id in (select id from public.sales_leads where org_id = get_user_org_id()));
 
 create table public.profiles (
     id uuid references auth.users(id) on delete cascade primary key,
