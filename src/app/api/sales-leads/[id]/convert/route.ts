@@ -59,6 +59,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 customer_id: customer.id,
                 name: contact.name,
                 phone: contact.phone,
+                ext: contact.ext,
                 cell_phone: contact.cell_phone,
                 email: contact.email,
                 position: contact.position,
