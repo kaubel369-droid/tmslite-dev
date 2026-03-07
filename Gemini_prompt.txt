@@ -342,7 +342,37 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   That is the only dual role I want available
 
   **********************************************
+  add the google map feature to sales leads like on the customer display page.
+  use the same edit and delete icons on the sales lead contacts grid as the customer contacts grid.
+
+  **********************************************
+  On the sales lead Activity tab add the following fields:
+  1. Activity Date
+  2. Activity Type
+  3. Activity Description
+  4. Activity Notes
   
+  Activity Type should be a drop down list with the following options:
+  1. Phone Call
+  2. Email
+  3. In Person
+  4. Other  
+
+  ActivityDate should be a date picker. 
+  ActivityDescription should be a text area.
+  ActivityNotes should be a text area.
+
+  Add a button to the activity tab to Add Activity. 
+  Add the ability to edit an activity by clicking a button in the activity grid that opens a pop up data entry screen. 
+  Add the ability to delete an activity by clicking a button in the activity grid that opens a pop up data entry screen.   
+  
+  **************************************************
+
+  
+
+
+  
+
 
 
 

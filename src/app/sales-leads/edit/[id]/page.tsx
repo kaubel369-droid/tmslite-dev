@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatPhoneNumber } from '@/lib/utils';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
+type Activity = { id: string; activity_date: string; activity_type: string; description: string; notes: string };
 
 type SalesRep = {
     id: string;
@@ -29,6 +30,12 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
     const [contacts, setContacts] = useState<Contact[]>([]);
+    const [activities, setActivities] = useState<Activity[]>([]);
+
+    // Activity Dialog State
+    const [isActivityOpen, setIsActivityOpen] = useState(false);
+    const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+    const [activityForm, setActivityForm] = useState({ activity_date: new Date().toISOString().split('T')[0], activity_type: 'Phone Call', description: '', notes: '' });
 
     // Contact Dialog State
     const [isContactOpen, setIsContactOpen] = useState(false);
@@ -106,8 +113,20 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
             }
         };
 
+        const fetchActivities = async () => {
+            try {
+                const response = await fetch(`/api/sales-lead-activities?sales_lead_id=${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setActivities(data.activities || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch lead activities", err);
+            }
+        };
+
         fetchReps();
-        fetchLead().then(() => fetchContacts()).finally(() => setLoading(false));
+        fetchLead().then(() => { fetchContacts(); fetchActivities(); }).finally(() => setLoading(false));
     }, [id]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -229,6 +248,58 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
         setContactForm({ ...contact });
         setEditingContactId(contact.id);
         setIsContactOpen(true);
+    };
+
+    // Activity Handlers
+    const resetActivityForm = () => {
+        setActivityForm({ activity_date: new Date().toISOString().split('T')[0], activity_type: 'Phone Call', description: '', notes: '' });
+        setEditingActivityId(null);
+    };
+
+    const handleActivitySave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const url = editingActivityId ? `/api/sales-lead-activities/${editingActivityId}` : `/api/sales-lead-activities`;
+            const res = await fetch(url, {
+                method: editingActivityId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...activityForm, sales_lead_id: id }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error);
+            }
+
+            const actRes = await fetch(`/api/sales-lead-activities?sales_lead_id=${id}`);
+            const actData = await actRes.json();
+            setActivities(actData.activities || []);
+            setIsActivityOpen(false);
+            resetActivityForm();
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleActivityDelete = async (activityId: string) => {
+        if (!confirm('Are you sure you want to delete this activity?')) return;
+        try {
+            const res = await fetch(`/api/sales-lead-activities/${activityId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to delete activity');
+            setActivities(prev => prev.filter(a => a.id !== activityId));
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const openEditActivity = (activity: Activity) => {
+        setActivityForm({
+            activity_date: activity.activity_date ? activity.activity_date.split('T')[0] : '',
+            activity_type: activity.activity_type,
+            description: activity.description || '',
+            notes: activity.notes || ''
+        });
+        setEditingActivityId(activity.id);
+        setIsActivityOpen(true);
     };
 
     if (loading) {
@@ -604,8 +675,94 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                     </TabsContent>
 
                     <TabsContent value="activity">
-                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8 text-center text-slate-500">
-                            Activity tracking coming soon!
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">Recent Activities ({activities.length})</h2>
+                                <Dialog open={isActivityOpen} onOpenChange={setIsActivityOpen}>
+                                    <DialogTrigger asChild>
+                                        <button onClick={resetActivityForm} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                                            Log Activity
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-xl">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingActivityId ? 'Edit Activity' : 'Log New Activity'}</DialogTitle>
+                                            <DialogDescription>Record your interactions with this sales lead.</DialogDescription>
+                                        </DialogHeader>
+                                        <form onSubmit={handleActivitySave} className="space-y-4 py-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Date *</label>
+                                                    <input required type="date" value={activityForm.activity_date} onChange={e => setActivityForm({ ...activityForm, activity_date: e.target.value })} className="w-full px-3 py-2 border rounded-md" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-1">Type *</label>
+                                                    <select required value={activityForm.activity_type} onChange={e => setActivityForm({ ...activityForm, activity_type: e.target.value })} className="w-full px-3 py-2 border rounded-md bg-white">
+                                                        <option value="Phone Call">Phone Call</option>
+                                                        <option value="Email">Email</option>
+                                                        <option value="In Person">In Person</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Description</label>
+                                                <input type="text" maxLength={250} value={activityForm.description} onChange={e => setActivityForm({ ...activityForm, description: e.target.value })} className="w-full px-3 py-2 border rounded-md" placeholder="Brief summary of the interaction..." />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Notes</label>
+                                                <textarea rows={3} value={activityForm.notes} onChange={e => setActivityForm({ ...activityForm, notes: e.target.value })} className="w-full px-3 py-2 border rounded-md resize-none" placeholder="Detailed notes, next steps, etc." />
+                                            </div>
+                                            <DialogFooter className="pt-4">
+                                                <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700">Save Activity</button>
+                                            </DialogFooter>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead className="w-32">Date</TableHead>
+                                        <TableHead className="w-32">Type</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activities.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">No activities logged yet.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        activities.map(activity => (
+                                            <TableRow key={activity.id}>
+                                                <TableCell className="font-medium whitespace-nowrap">{
+                                                    // Add timezone bug prevention
+                                                    new Date(activity.activity_date).toLocaleDateString(undefined, { timeZone: 'UTC' })
+                                                }</TableCell>
+                                                <TableCell>
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${activity.activity_type === 'Phone Call' ? 'bg-blue-100 text-blue-700' : activity.activity_type === 'Email' ? 'bg-amber-100 text-amber-700' : activity.activity_type === 'In Person' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                                                        {activity.activity_type}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <p className="font-medium text-slate-900">{activity.description || '-'}</p>
+                                                    {activity.notes && <p className="text-sm text-slate-500 line-clamp-1 mt-0.5">{activity.notes}</p>}
+                                                </TableCell>
+                                                <TableCell className="text-right flex justify-end gap-2">
+                                                    <button onClick={() => openEditActivity(activity)} className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" title="Edit">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button onClick={() => handleActivityDelete(activity.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </TabsContent>
                 </Tabs>
