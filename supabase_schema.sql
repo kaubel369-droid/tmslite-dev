@@ -81,6 +81,7 @@ create table public.customers (
     notes text,
     credit_limit numeric(10,2) default 0.00,
     payment_terms text,
+    sales_person_id uuid references public.profiles(id) on delete set null,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table public.customers enable row level security;
@@ -109,6 +110,30 @@ create table public.customer_documents (
     created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 alter table public.customer_documents enable row level security;
+
+-- Sales Leads
+create type public.sales_lead_status as enum ('New', 'Contacted', 'Qualified', 'Lost', 'Converted');
+
+create table public.sales_leads (
+    id uuid default gen_random_uuid() primary key,
+    org_id uuid references public.organizations(id) on delete cascade not null,
+    company_name text not null,
+    primary_contact text,
+    email text,
+    phone text,
+    address text,
+    city text,
+    state text,
+    zip text,
+    website text,
+    status public.sales_lead_status default 'New'::public.sales_lead_status not null,
+    notes text,
+    assigned_to uuid references public.profiles(id) on delete set null,
+    converted_to_customer_id uuid references public.customers(id) on delete set null,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table public.sales_leads enable row level security;
 
 -- Carrier Accounts (Encrypted Credentials)
 create table public.carrier_accounts (
@@ -199,6 +224,26 @@ create policy "Org isolation for customer_contacts" on public.customer_contacts
 -- Customer Documents: scoped by linking to customer's org
 create policy "Org isolation for customer_documents" on public.customer_documents
   for all using (customer_id in (select id from public.customers where org_id = get_user_org_id()));
+
+-- Sales Leads: RLS Policies
+create policy "Admins and Supervisors have full access to sales leads in org" on public.sales_leads
+  for all using (
+    org_id = get_user_org_id() 
+    and exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role in ('Admin', 'Supervisor')
+    )
+  );
+
+create policy "Sales Reps can access assigned sales leads" on public.sales_leads
+  for all using (
+    org_id = get_user_org_id()
+    and exists (
+      select 1 from public.profiles 
+      where id = auth.uid() and role = 'Sales Rep'
+    )
+    and assigned_to = auth.uid()
+  );
 
 -- Carrier Accounts: scoped by org_id
 create policy "Org isolation for carrier_accounts" on public.carrier_accounts

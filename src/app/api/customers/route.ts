@@ -60,7 +60,8 @@ export async function POST(request: Request) {
                 status: body.status || 'Active',
                 notes: body.notes,
                 credit_limit: body.credit_limit || 0,
-                payment_terms: body.payment_terms
+                payment_terms: body.payment_terms,
+                sales_person_id: body.sales_person_id
             }])
             .select()
             .single();

@@ -1,34 +1,36 @@
 import { NextResponse } from 'next/server';
-import { getServiceRoleClient } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 
-export async function GET(request: Request, context: any) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = await context.params;
-        const supabase = getServiceRoleClient();
+        const { id } = await params;
+        const supabase = await createClient();
 
         const { data, error } = await supabase
-            .from('customers')
-            .select('*')
+            .from('sales_leads')
+            .select(`
+                *,
+                assigned_to_profile:profiles!sales_leads_assigned_to_fkey(first_name, last_name)
+            `)
             .eq('id', id)
             .single();
 
         if (error) throw error;
-        if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-        return NextResponse.json({ customer: data });
+        return NextResponse.json({ salesLead: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function PUT(request: Request, context: any) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = await context.params;
+        const { id } = await params;
+        const supabase = await createClient();
         const body = await request.json();
-        const supabase = getServiceRoleClient();
 
         const { data, error } = await supabase
-            .from('customers')
+            .from('sales_leads')
             .update({
                 company_name: body.company_name,
                 primary_contact: body.primary_contact,
@@ -41,10 +43,8 @@ export async function PUT(request: Request, context: any) {
                 website: body.website,
                 status: body.status,
                 notes: body.notes,
-                dispatch_notes: body.dispatch_notes,
-                credit_limit: body.credit_limit || 0,
-                payment_terms: body.payment_terms,
-                sales_person_id: body.sales_person_id
+                assigned_to: body.assigned_to,
+                converted_to_customer_id: body.converted_to_customer_id
             })
             .eq('id', id)
             .select()
@@ -52,19 +52,19 @@ export async function PUT(request: Request, context: any) {
 
         if (error) throw error;
 
-        return NextResponse.json({ customer: data });
+        return NextResponse.json({ salesLead: data });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function DELETE(request: Request, context: any) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = await context.params;
-        const supabase = getServiceRoleClient();
+        const { id } = await params;
+        const supabase = await createClient();
 
         const { error } = await supabase
-            .from('customers')
+            .from('sales_leads')
             .delete()
             .eq('id', id);
 

@@ -12,6 +12,7 @@ import { formatPhoneNumber } from '@/lib/utils';
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
 type ShipperConsignee = { id: string; name: string; address: string; city: string; state: string; zip: string; phone: string; email: string; website: string; status: string; notes: string };
+type SalesRep = { id: string; first_name: string; last_name: string };
 
 export default function EditCustomerPage() {
     const router = useRouter();
@@ -25,11 +26,12 @@ export default function EditCustomerPage() {
     // Data States
     const [formData, setFormData] = useState({
         company_name: '', primary_contact: '', address: '', city: '', state: '', zip: '',
-        phone: '', email: '', website: '', status: 'Active', notes: '', dispatch_notes: '', credit_limit: '', payment_terms: 'Net 30',
+        phone: '', email: '', website: '', status: 'Active', notes: '', dispatch_notes: '', credit_limit: '', payment_terms: 'Net 30', sales_person_id: ''
     });
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [documents, setDocuments] = useState<Document[]>([]);
     const [shippers, setShippers] = useState<ShipperConsignee[]>([]);
+    const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
 
     // Shipper Dialog State
     const [isShipperOpen, setIsShipperOpen] = useState(false);
@@ -72,6 +74,13 @@ export default function EditCustomerPage() {
                 const shipRes = await fetch(`/api/shipper-consignees?customer_id=${id}`);
                 const shipData = await shipRes.json();
                 setShippers(shipData.shipper_consignees || []);
+
+                // Fetch Sales Reps
+                const repsRes = await fetch('/api/profiles/sales-reps');
+                if (repsRes.ok) {
+                    const repsData = await repsRes.json();
+                    setSalesReps(repsData.salesReps || []);
+                }
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -99,7 +108,7 @@ export default function EditCustomerPage() {
             const res = await fetch(`/api/customers/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, credit_limit: parseFloat(formData.credit_limit) || 0 }),
+                body: JSON.stringify({ ...formData, credit_limit: parseFloat(formData.credit_limit) || 0, sales_person_id: formData.sales_person_id || null }),
             });
             if (!res.ok) throw new Error('Failed to update customer');
             router.refresh();
@@ -378,7 +387,7 @@ export default function EditCustomerPage() {
                                 {/* Account Status & Notes */}
                                 <div className="border-b border-slate-100 pb-6">
                                     <h2 className="text-lg font-semibold text-slate-800 mb-4">Account Details</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                                             <select name="status" value={formData.status} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -400,7 +409,18 @@ export default function EditCustomerPage() {
                                                 <option value="Net 30">Net 30</option>
                                             </select>
                                         </div>
-                                        <div className="md:col-span-3">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">Assigned Sales Rep</label>
+                                            <select name="sales_person_id" value={formData.sales_person_id || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                <option value="">-- Unassigned --</option>
+                                                {salesReps.map(rep => (
+                                                    <option key={rep.id} value={rep.id}>
+                                                        {rep.first_name} {rep.last_name || ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-4 lg:col-span-4">
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
                                             <textarea name="notes" value={formData.notes || ''} onChange={handleInfoChange} rows={3} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                                         </div>

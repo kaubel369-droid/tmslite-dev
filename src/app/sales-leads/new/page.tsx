@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Target, ArrowLeft, Save, Lock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatPhoneNumber } from '@/lib/utils';
 
 type SalesRep = {
     id: string;
     first_name: string;
     last_name: string;
 };
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Building2, ArrowLeft, Save, Lock } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatPhoneNumber } from '@/lib/utils';
 
-export default function NewCustomerPage() {
+export default function NewSalesLeadPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,23 +29,10 @@ export default function NewCustomerPage() {
         phone: '',
         email: '',
         website: '',
-        status: 'Active',
+        status: 'New',
         notes: '',
-        credit_limit: '',
-        payment_terms: 'Net 30',
-        sales_person_id: '',
+        assigned_to: '',
     });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        let value = e.target.value;
-        if (e.target.name === 'phone') {
-            value = formatPhoneNumber(value);
-        }
-        setFormData((prev) => ({
-            ...prev,
-            [e.target.name]: value,
-        }));
-    };
 
     useEffect(() => {
         const fetchReps = async () => {
@@ -62,33 +49,45 @@ export default function NewCustomerPage() {
         fetchReps();
     }, []);
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+        let value = e.target.value;
+        if (e.target.name === 'phone') {
+            value = formatPhoneNumber(value);
+        }
+        setFormData((prev) => ({
+            ...prev,
+            [e.target.name]: value,
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/api/customers', {
+            const bodyPayload = { ...formData };
+            if (!bodyPayload.assigned_to) {
+                delete (bodyPayload as any).assigned_to;
+            }
+
+            const response = await fetch('/api/sales-leads', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    ...formData,
-                    credit_limit: parseFloat(formData.credit_limit) || 0,
-                    sales_person_id: formData.sales_person_id || null,
-                }),
+                body: JSON.stringify(bodyPayload),
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || 'Failed to create customer');
+                throw new Error(data.error || 'Failed to create sales lead');
             }
 
             const data = await response.json();
 
             // Redirect to edit page
-            router.push(`/customers/edit/${data.customer.id}`);
+            router.push(`/sales-leads/edit/${data.salesLead.id}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message);
@@ -100,18 +99,18 @@ export default function NewCustomerPage() {
         <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
             <div className="max-w-5xl w-full">
                 <Link
-                    href="/customers"
+                    href="/sales-leads"
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 transition-colors mb-6 font-medium"
                 >
-                    <ArrowLeft className="h-4 w-4" /> Back to Customers
+                    <ArrowLeft className="h-4 w-4" /> Back to Sales Leads
                 </Link>
 
                 <header className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                        <Building2 className="h-8 w-8 text-indigo-600" />
-                        Add New Customer
+                        <Target className="h-8 w-8 text-indigo-600" />
+                        Add New Sales Lead
                     </h1>
-                    <p className="text-slate-500 mt-2">Create a new customer profile. Other features unlock after saving.</p>
+                    <p className="text-slate-500 mt-2">Create a new prospect. Start tracking their journey to becoming a customer.</p>
                 </header>
 
                 {error && (
@@ -123,22 +122,10 @@ export default function NewCustomerPage() {
                 <Tabs defaultValue="info" className="w-full">
                     <TabsList>
                         <TabsTrigger value="info">
-                            Customer Information
+                            Lead Information
                         </TabsTrigger>
-                        <TabsTrigger value="contacts" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
-                            Contacts <Lock className="h-3 w-3" />
-                        </TabsTrigger>
-                        <TabsTrigger value="dispatch" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
-                            Dispatch <Lock className="h-3 w-3" />
-                        </TabsTrigger>
-                        <TabsTrigger value="quotes" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
-                            Quotes <Lock className="h-3 w-3" />
-                        </TabsTrigger>
-                        <TabsTrigger value="rating" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
-                            Rating <Lock className="h-3 w-3" />
-                        </TabsTrigger>
-                        <TabsTrigger value="documents" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
-                            Documents <Lock className="h-3 w-3" />
+                        <TabsTrigger value="activity" disabled className="flex gap-2 items-center opacity-50 cursor-not-allowed">
+                            Activity <Lock className="h-3 w-3" />
                         </TabsTrigger>
                     </TabsList>
 
@@ -159,7 +146,7 @@ export default function NewCustomerPage() {
                                                 onChange={handleChange}
                                                 required
                                                 className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                                placeholder="Acme Logistics Inc."
+                                                placeholder="Prospect Logistics Inc."
                                             />
                                         </div>
                                         <div className="md:col-span-2">
@@ -265,8 +252,8 @@ export default function NewCustomerPage() {
                                 </div>
 
                                 <div className="border-b border-slate-100 pb-6">
-                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Account Status & Details</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Lead Status & Assignment</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label htmlFor="status" className="block text-sm font-semibold text-slate-700 mb-1">Status</label>
                                             <select
@@ -276,47 +263,19 @@ export default function NewCustomerPage() {
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                                             >
-                                                <option value="Active">Active</option>
-                                                <option value="Credit Hold">Credit Hold</option>
-                                                <option value="Inactive">Inactive</option>
+                                                <option value="New">New</option>
+                                                <option value="Contacted">Contacted</option>
+                                                <option value="Qualified">Qualified</option>
+                                                <option value="Lost">Lost</option>
+                                                <option value="Converted">Converted</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label htmlFor="credit_limit" className="block text-sm font-semibold text-slate-700 mb-1">Credit Limit ($)</label>
-                                            <input
-                                                type="number"
-                                                id="credit_limit"
-                                                name="credit_limit"
-                                                value={formData.credit_limit}
-                                                onChange={handleChange}
-                                                step="0.01"
-                                                min="0"
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="payment_terms" className="block text-sm font-semibold text-slate-700 mb-1">Payment Terms</label>
+                                            <label htmlFor="assigned_to" className="block text-sm font-semibold text-slate-700 mb-1">Assigned Sales Rep</label>
                                             <select
-                                                id="payment_terms"
-                                                name="payment_terms"
-                                                value={formData.payment_terms}
-                                                onChange={handleChange}
-                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                                            >
-                                                <option value="Prepaid">Prepaid</option>
-                                                <option value="Due on Receipt">Due on Receipt</option>
-                                                <option value="Net 15">Net 15</option>
-                                                <option value="Net 30">Net 30</option>
-                                                <option value="Net 45">Net 45</option>
-                                                <option value="Net 60">Net 60</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label htmlFor="sales_person_id" className="block text-sm font-semibold text-slate-700 mb-1">Assigned Sales Rep</label>
-                                            <select
-                                                id="sales_person_id"
-                                                name="sales_person_id"
-                                                value={formData.sales_person_id}
+                                                id="assigned_to"
+                                                name="assigned_to"
+                                                value={formData.assigned_to}
                                                 onChange={handleChange}
                                                 className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                                             >
@@ -328,7 +287,7 @@ export default function NewCustomerPage() {
                                                 ))}
                                             </select>
                                         </div>
-                                        <div className="md:col-span-4 lg:col-span-4">
+                                        <div className="md:col-span-2">
                                             <label htmlFor="notes" className="block text-sm font-semibold text-slate-700 mb-1">Notes</label>
                                             <textarea
                                                 id="notes"
@@ -344,7 +303,7 @@ export default function NewCustomerPage() {
 
                                 <div className="pt-4 flex justify-end gap-4">
                                     <Link
-                                        href="/customers"
+                                        href="/sales-leads"
                                         className="px-6 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
                                     >
                                         Cancel

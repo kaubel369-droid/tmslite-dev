@@ -57,7 +57,8 @@ export default async function RootLayout({
                     </button>
                     <div className="absolute left-0 top-full mt-0 pt-1 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                       <div className="bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden py-1">
-                        <Link href="/customers" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100 last:border-0">Customers</Link>
+                        <Link href="/customers" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100">Customers</Link>
+                        <Link href="/sales-leads" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100 last:border-0">Sales Leads</Link>
                         <Link href="/shipper-consignees" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-100 last:border-0">Shippers / Consignees</Link>
                       </div>
                     </div>

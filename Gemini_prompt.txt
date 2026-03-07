@@ -317,7 +317,26 @@ On the bottom half of the page put a note box called "Dispatch Notes"
 Add a save button to the note box to save the note.
 
 *************************************************** 
+ Add a basic CRM to the application.
+ make it so that a sales lead can be added and tracked. 
+ make it so that a sales lead can be converted to a customer. 
+ make so that a sales person can be assigned to a lead. 
+ make so that a sales person can be assigned to a customer. 
+
+ create a sales lead grid that is similar to the customer grid. 
+ create a sales lead display page that is similar to the customer display page. 
+ create a sales lead data entry screen that is similar to the customer data entry screen. 
+Admin and supervisor should be able to add, edit, delete, and view sales leads. 
+Sales person should be able to view sales leads assigned to them. 
+Sales person should be able to add, edit, and delete sales leads assigned to them. 
+
+*************************************************** 
+
+  
  
+
+
+
 
 
  
