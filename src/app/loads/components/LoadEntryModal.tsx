@@ -50,6 +50,8 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
 
     const [customers, setCustomers] = useState<any[]>([]);
     const [shippersConsignees, setShippersConsignees] = useState<any[]>([]);
+    const [carriers, setCarriers] = useState<any[]>([]);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
     // Modal states for adding shipper/consignee
     const [scModalOpen, setScModalOpen] = useState(false);
@@ -90,9 +92,10 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
 
     const fetchDropdownData = async () => {
         try {
-            const [custRes, scRes] = await Promise.all([
+            const [custRes, scRes, carrierRes] = await Promise.all([
                 fetch('/api/customers'),
-                fetch('/api/shipper-consignees')
+                fetch('/api/shipper-consignees'),
+                fetch('/api/carriers')
             ]);
 
             if (custRes.ok) {
@@ -102,6 +105,10 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
             if (scRes.ok) {
                 const scData = await scRes.json();
                 setShippersConsignees(scData.shipper_consignees || []);
+            }
+            if (carrierRes.ok) {
+                const carrierData = await carrierRes.json();
+                setCarriers(carrierData.carriers || []);
             }
         } catch (err) {
             console.error("Failed to load drop down data", err);
@@ -131,13 +138,37 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                 load.products = [{ pallets: '', weight: '', description: '', nmfc: '' }];
             }
 
-            setFormData(load);
+            // If new load number returned, update it
+            if (load.load_number) {
+                setFormData(load);
+            } else {
+                setFormData(load);
+            }
         } catch (err: any) {
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
+
+    // Auto-update zips based on shipper/consignee
+    useEffect(() => {
+        if (formData.shipper_id) {
+            const shipper = shippersConsignees.find(s => s.id === formData.shipper_id);
+            if (shipper && shipper.zip !== formData.origin_zip) {
+                setFormData((prev: any) => ({ ...prev, origin_zip: shipper.zip }));
+            }
+        }
+    }, [formData.shipper_id, shippersConsignees]);
+
+    useEffect(() => {
+        if (formData.consignee_id) {
+            const consignee = shippersConsignees.find(s => s.id === formData.consignee_id);
+            if (consignee && consignee.zip !== formData.destination_zip) {
+                setFormData((prev: any) => ({ ...prev, destination_zip: consignee.zip }));
+            }
+        }
+    }, [formData.consignee_id, shippersConsignees]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -170,8 +201,9 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         setLoading(true);
         setError(null);
         try {
-            const method = loadId ? 'PUT' : 'POST';
-            const url = loadId ? `/api/loads/${loadId}` : '/api/loads';
+            const currentId = loadId || formData.id;
+            const method = currentId ? 'PUT' : 'POST';
+            const url = currentId ? `/api/loads/${currentId}` : '/api/loads';
 
             const res = await fetch(url, {
                 method,
@@ -184,8 +216,24 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                 throw new Error(errorData.error || 'Failed to save load');
             }
 
+            const data = await res.json();
+            if (data.load) {
+                // Update form with saved data (useful for new ID and load number)
+                setFormData((prev: any) => ({ ...prev, ...data.load }));
+
+                // If it was a new load, we now have an ID for future updates
+                if (!loadId) {
+                    // We can't actually change loadId prop, but we can set internal state if we had it
+                    // or just let the caller know. For now, since it's a "start over" and "keep open",
+                    // the parent might need to refresh or the modal needs to handle its own "editing" state.
+                    // The easiest fix is to ensure the parent refreshes without closing.
+                }
+            }
+
+            setSaveSuccess(true);
+            setTimeout(() => setSaveSuccess(false), 3000);
             onSaveSuccess();
-            onClose();
+            // Removed onClose() as requested
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -263,6 +311,11 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                             {error}
                         </div>
                     )}
+                    {saveSuccess && (
+                        <div id="save-success-message" className="mb-4 bg-green-50 text-green-600 p-3 rounded-lg border border-green-200 text-sm animate-in fade-in slide-in-from-top-1 flex items-center gap-2">
+                            <Save className="h-4 w-4" /> Load saved successfully!
+                        </div>
+                    )}
                     {loading && !formData.load_number && loadId ? (
                         <div id="loading-spinner" className="py-24 flex flex-col items-center justify-center text-slate-500">
                             <Truck className="h-12 w-12 text-indigo-200 animate-bounce mb-4" />
@@ -295,6 +348,20 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                 <option value="Delivered">Delivered</option>
                                                 <option value="Invoiced">Invoiced</option>
                                                 <option value="Cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+                                        <div id="field-carrier">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Carrier</label>
+                                            <select
+                                                name="selected_carrier_id"
+                                                value={formData.selected_carrier_id || ''}
+                                                onChange={handleChange}
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-700"
+                                            >
+                                                <option value="">Select Carrier</option>
+                                                {carriers.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
@@ -452,22 +519,13 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                         </div>
                                     </div>
 
-                                    {/* Zip and Dates */}
+                                    {/* Zip and Dates - Route Info removed, only Dates remain */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Route Information</label>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Origin Zip</label>
-                                                    <input type="text" name="origin_zip" value={formData.origin_zip} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Destination Zip</label>
-                                                    <input type="text" name="destination_zip" value={formData.destination_zip} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
-                                                </div>
-                                            </div>
+                                        <div className="hidden">
+                                            <input type="hidden" name="origin_zip" value={formData.origin_zip || ''} />
+                                            <input type="hidden" name="destination_zip" value={formData.destination_zip || ''} />
                                         </div>
-                                        <div className="space-y-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                                        <div className="space-y-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 md:col-span-2">
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">Dates</label>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
@@ -498,13 +556,6 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                                                     <input type="number" step="0.01" name="carrier_rate" value={formData.carrier_rate} onChange={handleChange} className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Fuel Surcharge ($)</label>
-                                                <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                                                    <input type="number" step="0.01" name="fuel_surcharge" value={formData.fuel_surcharge} onChange={handleChange} className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                             </div>
                                             <div>

@@ -409,6 +409,17 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   total pallets, weight,Product description and nmfc should be inline Put a button called add at the end to allow up to 6 lines of products
 
   *************************************************
+  When you press the save load button it should not close the load data entry screen. 
+  Remove the route information from the load data entry screen.   
+  Origin zip should be the zip code of the shipper. 
+  Destination zip should be the zip code of the consignee. 
+  In it's place add a Carrier field that is a drop down list of carriers.
+  Remove fuel surcharge field.  
+  ****************************************
+
+
+  
+  
   
 
 
