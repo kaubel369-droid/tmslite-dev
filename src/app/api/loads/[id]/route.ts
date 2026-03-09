@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getServiceRoleClient } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const routeParams = await params;
         const supabase = getServiceRoleClient();
         const { data, error } = await supabase
             .from('loads')
-            .select('*, load_products(*)')
+            .select('*, shipper:shipper_consignees!shipper_id(*), consignee:shipper_consignees!consignee_id(*)') /* , load_products!load_id(*) */
             .eq('id', routeParams.id)
             .single();
 

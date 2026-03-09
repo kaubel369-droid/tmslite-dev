@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServiceRoleClient } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const supabase = getServiceRoleClient();
@@ -12,12 +14,14 @@ export async function GET() {
                 *,
                 customer:customers(company_name),
                 shipper:shipper_consignees!shipper_id(name),
-                consignee:shipper_consignees!consignee_id(name),
-                load_products(*)
+                consignee:shipper_consignees!consignee_id(name)
             `)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Error fetching loads:', error);
+            return NextResponse.json({ error: error.message }, { status: 400 });
+        }
 
         return NextResponse.json({ loads: data });
     } catch (error: any) {
@@ -88,8 +92,6 @@ export async function POST(request: Request) {
                     .insert(productsToInsert);
                 if (prodError) {
                     console.error("Error inserting products:", prodError);
-                    // We don't necessarily want to fail the whole load creation if products fail, 
-                    // but in a production app we'd use a transaction.
                 }
             }
         }
