@@ -45,7 +45,6 @@ export async function POST(request: Request) {
             .insert([{
                 org_id,
                 customer_id: body.customer_id,
-                load_number: body.load_number,
                 status: body.status || 'Not Dispatched',
                 origin_zip: body.origin_zip,
                 destination_zip: body.destination_zip,

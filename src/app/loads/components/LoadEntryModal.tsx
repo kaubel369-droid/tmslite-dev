@@ -22,10 +22,19 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         shipper_id: '',
         consignee_id: '',
         status: 'Not Dispatched',
+        origin_zip: '',
+        destination_zip: '',
+        total_weight: '',
+        nmfc_class: '',
+        total_pallets: '',
         pickup_date: '',
         delivery_date: '',
         customer_rate: 0,
         carrier_rate: 0,
+        fuel_surcharge: 0,
+        carrier_quote_id: '',
+        carrier_pro_number: '',
+        selected_carrier_id: '',
         notes: ''
     });
 
@@ -44,10 +53,19 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     shipper_id: '',
                     consignee_id: '',
                     status: 'Not Dispatched',
+                    origin_zip: '',
+                    destination_zip: '',
+                    total_weight: '',
+                    nmfc_class: '',
+                    total_pallets: '',
                     pickup_date: '',
                     delivery_date: '',
                     customer_rate: 0,
                     carrier_rate: 0,
+                    fuel_surcharge: 0,
+                    carrier_quote_id: '',
+                    carrier_pro_number: '',
+                    selected_carrier_id: '',
                     notes: ''
                 });
                 setActiveTab('Load Information');
@@ -181,8 +199,8 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">Load Number *</label>
-                                            <input type="text" name="load_number" value={formData.load_number} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Load Number</label>
+                                            <input type="text" name="load_number" value={formData.load_number || 'Auto-generated'} readOnly className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm bg-slate-100 text-slate-500 cursor-not-allowed focus:outline-none" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
@@ -194,6 +212,17 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                 <option value="Invoiced">Invoiced</option>
                                                 <option value="Cancelled">Cancelled</option>
                                             </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Origin Zip *</label>
+                                            <input type="text" name="origin_zip" value={formData.origin_zip} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Destination Zip *</label>
+                                            <input type="text" name="destination_zip" value={formData.destination_zip} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
                                         </div>
                                     </div>
 
@@ -227,6 +256,21 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                         </div>
                                     </div>
 
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Total Weight *</label>
+                                            <input type="number" step="0.01" name="total_weight" value={formData.total_weight} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">NMFC Class</label>
+                                            <input type="text" name="nmfc_class" value={formData.nmfc_class} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Total Pallets</label>
+                                            <input type="number" name="total_pallets" value={formData.total_pallets} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Pickup Date</label>
@@ -246,6 +290,28 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Carrier Rate ($)</label>
                                             <input type="number" step="0.01" name="carrier_rate" value={formData.carrier_rate} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Fuel Surcharge ($)</label>
+                                            <input type="number" step="0.01" name="fuel_surcharge" value={formData.fuel_surcharge} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Carrier Quote ID</label>
+                                            <input type="text" name="carrier_quote_id" value={formData.carrier_quote_id} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Selected Carrier ID</label>
+                                            <input type="text" name="selected_carrier_id" value={formData.selected_carrier_id} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Carrier PRO Number</label>
+                                            <input type="text" name="carrier_pro_number" value={formData.carrier_pro_number} onChange={handleChange} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                         </div>
                                     </div>
                                 </div>

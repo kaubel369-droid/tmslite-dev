@@ -396,6 +396,10 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   Change the status Quoting to Not Dispatched and add a status of Cancelled.  
 
   **************************************************
+  Make sure the supabase schema is up to date with all changes made to the application.
+
+  **************************************************
+  
   
 
 

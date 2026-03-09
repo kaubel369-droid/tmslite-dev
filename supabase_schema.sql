@@ -236,6 +236,8 @@ alter table public.carrier_accounts enable row level security;
 -- Loads (TMS Workflow)
 create type public.load_status as enum ('Not Dispatched', 'Dispatched', 'In-Transit', 'Delivered', 'Invoiced', 'Cancelled');
 
+create sequence if not exists public.load_number_seq start 1000;
+
 create table public.loads (
     id uuid default gen_random_uuid() primary key,
     org_id uuid references public.organizations(id) on delete cascade not null,
