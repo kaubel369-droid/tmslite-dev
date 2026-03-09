@@ -234,7 +234,7 @@ create table public.carrier_accounts (
 alter table public.carrier_accounts enable row level security;
 
 -- Loads (TMS Workflow)
-create type public.load_status as enum ('Quoting', 'Dispatched', 'In-Transit', 'Delivered', 'Invoiced');
+create type public.load_status as enum ('Not Dispatched', 'Dispatched', 'In-Transit', 'Delivered', 'Invoiced', 'Cancelled');
 
 create table public.loads (
     id uuid default gen_random_uuid() primary key,
@@ -255,6 +255,8 @@ create table public.loads (
     selected_carrier_id uuid references public.carrier_accounts(id) on delete restrict,
     pickup_date date,
     delivery_date date,
+    shipper_id uuid references public.shipper_consignees(id) on delete restrict,
+    consignee_id uuid references public.shipper_consignees(id) on delete restrict,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
