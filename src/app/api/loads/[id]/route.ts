@@ -9,7 +9,34 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         const supabase = getServiceRoleClient();
         const { data, error } = await supabase
             .from('loads')
-            .select('*, shipper:shipper_consignees!shipper_id(*), consignee:shipper_consignees!consignee_id(*)') /* , load_products!load_id(*) */
+            .select(`
+                id, 
+                org_id, 
+                customer_id, 
+                load_number, 
+                status, 
+                origin_zip, 
+                destination_zip, 
+                total_weight, 
+                nmfc_class, 
+                total_pallets, 
+                customer_rate, 
+                carrier_rate, 
+                fuel_surcharge, 
+                carrier_quote_id, 
+                carrier_pro_number, 
+                selected_carrier_id, 
+                pickup_date, 
+                delivery_date, 
+                created_at, 
+                updated_at, 
+                shipper_id, 
+                consignee_id, 
+                bol_number,
+                shipper:shipper_consignees!shipper_id(*), 
+                consignee:shipper_consignees!consignee_id(*),
+                load_products!load_id(*)
+            `)
             .eq('id', routeParams.id)
             .single();
 
@@ -28,7 +55,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const body = await request.json();
 
         // Remove un-updateable fields like id, org_id, created_at, etc from body to avoid errors
-        const { id, org_id, created_at, customer, shipper, consignee, ...updateData } = body;
+        const { id, org_id, created_at, customer, shipper, consignee, products, ...updateData } = body;
 
         // Sanitize empty strings to null to prevent UUID type errors
         for (const key in updateData) {
