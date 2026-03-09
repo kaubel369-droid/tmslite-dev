@@ -1,93 +1,250 @@
-import { Truck, MapPin, CheckCircle2, Clock, Package } from 'lucide-react';
-import Link from 'next/link';
+'use client';
 
-// Mock Data representing loads pulled from Supabase
-const mockLoads = [
-    { id: 'LD-1001', carrier: 'Old Dominion', origin: 'Atlanta, GA', dest: 'Dallas, TX', status: 'Dispatched', date: '2023-11-01' },
-    { id: 'LD-1002', carrier: 'XPO Logistics', origin: 'Chicago, IL', dest: 'Miami, FL', status: 'In-Transit', date: '2023-11-02' },
-    { id: 'LD-1003', carrier: 'Estes Express', origin: 'Seattle, WA', dest: 'Denver, CO', status: 'In-Transit', date: '2023-11-03' },
-    { id: 'LD-1004', carrier: 'FedEx Freight', origin: 'Boston, MA', dest: 'New York, NY', status: 'Delivered', date: '2023-10-30' },
-    { id: 'LD-1005', carrier: 'Old Dominion', origin: 'Phoenix, AZ', dest: 'Las Vegas, NV', status: 'Invoiced', date: '2023-10-25' },
-];
+import { useState, useEffect } from 'react';
+import { Truck, Plus, Package, CheckCircle2, Search, Edit2 } from 'lucide-react';
+import LoadEntryModal from './components/LoadEntryModal';
 
-const loadColumns = [
-    { title: 'Dispatched', status: 'Dispatched', icon: <Package className="w-5 h-5 text-indigo-500" />, borderColor: 'border-indigo-200', bgColor: 'bg-indigo-50' },
-    { title: 'In-Transit', status: 'In-Transit', icon: <Truck className="w-5 h-5 text-amber-500" />, borderColor: 'border-amber-200', bgColor: 'bg-amber-50' },
-    { title: 'Delivered', status: 'Delivered', icon: <MapPin className="w-5 h-5 text-emerald-500" />, borderColor: 'border-emerald-200', bgColor: 'bg-emerald-50' },
-    { title: 'Invoiced', status: 'Invoiced', icon: <CheckCircle2 className="w-5 h-5 text-slate-500" />, borderColor: 'border-slate-200', bgColor: 'bg-slate-100' },
-];
+type Load = {
+    id: string;
+    load_number: string;
+    customer: { company_name: string } | null;
+    consignee: { name: string } | null;
+    pickup_date: string;
+    customer_rate: number;
+    status: string;
+};
 
-export default function LoadsDashboard() {
+type BoardTab = 'Pickups' | 'Loads' | 'Invoice Que';
+
+export default function LoadsPage() {
+    const [loads, setLoads] = useState<Load[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const [activeTab, setActiveTab] = useState<BoardTab>('Pickups');
+    const [statusFilter, setStatusFilter] = useState<string>('All');
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
+
+    const fetchLoads = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/loads');
+            if (!response.ok) throw new Error('Failed to fetch loads');
+            const data = await response.json();
+            setLoads(data.loads || []);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLoads();
+    }, []);
+
+    // Filter loads based on the active tab and status filter
+    const filteredLoads = loads.filter(load => {
+        if (activeTab === 'Pickups') {
+            return load.status === 'Not Dispatched' || load.status === 'Dispatched';
+        } else if (activeTab === 'Loads') {
+            if (statusFilter === 'All') return true; // Could default to In-Transit if All is selected, but "All" should probably show all. 
+            if (statusFilter === 'In-Transit Default') return load.status === 'In-Transit';
+            return load.status === statusFilter;
+        } else if (activeTab === 'Invoice Que') {
+            return load.status === 'Delivered';
+        }
+        return true;
+    });
+
+    // When switching tabs, reset or set defaults for filters
+    const handleTabChange = (tab: BoardTab) => {
+        setActiveTab(tab);
+        if (tab === 'Loads') {
+            setStatusFilter('In-Transit Default');
+        } else {
+            setStatusFilter('All');
+        }
+    };
+
+    const handleOpenNewLoad = () => {
+        setEditingLoadId(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditLoad = (id: string) => {
+        setEditingLoadId(id);
+        setIsModalOpen(true);
+    };
+
+    const renderStatusBadge = (status: string) => {
+        let colorClass = 'bg-slate-100 text-slate-700 border-slate-200';
+        if (status === 'Not Dispatched' || status === 'Quoting') colorClass = 'bg-slate-100 text-slate-700 border-slate-200';
+        else if (status === 'Dispatched') colorClass = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+        else if (status === 'In-Transit') colorClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        else if (status === 'Delivered') colorClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        else if (status === 'Invoiced') colorClass = 'bg-blue-50 text-blue-700 border-blue-200';
+        else if (status === 'Cancelled') colorClass = 'bg-red-50 text-red-700 border-red-200';
+
+        return (
+            <span className={`text-xs px-2.5 py-1 rounded-full border font-medium whitespace-nowrap ${colorClass}`}>
+                {status || 'Unknown'}
+            </span>
+        );
+    };
+
     return (
-        <div className="min-h-screen bg-slate-50 p-6">
-            <div className="max-w-7xl mx-auto">
-                <header className="mb-8 flex justify-between items-end">
+        <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
+            <div className="max-w-7xl w-full">
+                <header className="mb-6 flex justify-between items-end">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Load Board</h1>
-                        <p className="text-slate-500 mt-2">Track active shipments and invoice statuses.</p>
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                            <Truck className="h-8 w-8 text-indigo-600" />
+                            Load Board
+                        </h1>
+                        <p className="text-slate-500 mt-2">Manage and track your active shipments.</p>
                     </div>
-                    <Link href="/" className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-indigo-600 font-medium px-4 py-2 rounded-lg text-sm shadow-sm transition-all focus:ring-2 focus:ring-indigo-100">
-                        + New Quote
-                    </Link>
+                    <button
+                        onClick={handleOpenNewLoad}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        <Plus className="h-4 w-4" />
+                        New Load
+                    </button>
                 </header>
 
-                <div className="flex gap-6 overflow-x-auto pb-4">
-                    {loadColumns.map((col) => {
-                        const columnLoads = mockLoads.filter(load => load.status === col.status);
+                {error && (
+                    <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl mb-6 shadow-sm">
+                        {error}
+                    </div>
+                )}
 
-                        return (
-                            <div key={col.status} className="flex-1 min-w-[300px] bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col h-[calc(100vh-200px)]">
-                                {/* Column Header */}
-                                <div className={`p-4 border-b border-slate-200 flex items-center justify-between ${col.bgColor}`}>
-                                    <div className="flex items-center gap-2 font-semibold text-slate-700">
-                                        {col.icon}
-                                        {col.title}
-                                    </div>
-                                    <span className="bg-white text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full border border-slate-200">
-                                        {columnLoads.length}
-                                    </span>
-                                </div>
-
-                                {/* Card List */}
-                                <div className="p-4 flex-1 overflow-y-auto space-y-3 bg-slate-50/50">
-                                    {columnLoads.map(load => (
-                                        <div key={load.id} className={`bg-white border-l-4 ${col.borderColor} border-y border-r border-slate-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}>
-                                            <div className="flex justify-between items-start mb-2">
-                                                <span className="font-bold text-indigo-700 text-sm">{load.id}</span>
-                                                <div className="flex items-center gap-1 text-slate-400 text-xs">
-                                                    <Clock className="w-3.5 h-3.5" />
-                                                    {load.date}
-                                                </div>
-                                            </div>
-
-                                            <div className="font-medium text-slate-800 text-sm mb-3">
-                                                {load.carrier}
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
-                                                <div>
-                                                    <span className="block text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Origin</span>
-                                                    <span className="truncate block font-medium text-slate-700">{load.origin}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="block text-[10px] uppercase text-slate-400 font-semibold mb-0.5">Destination</span>
-                                                    <span className="truncate block font-medium text-slate-700">{load.dest}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {columnLoads.length === 0 && (
-                                        <div className="h-full flex items-center justify-center p-6 text-center text-slate-400 text-sm border-2 border-dashed border-slate-200 rounded-lg">
-                                            No loads in this status.
-                                        </div>
-                                    )}
-                                </div>
+                {/* Tabs */}
+                <div className="flex space-x-1 border-b border-slate-200 mb-6">
+                    {(['Pickups', 'Loads', 'Invoice Que'] as BoardTab[]).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => handleTabChange(tab)}
+                            className={`py-3 px-6 font-medium text-sm transition-colors border-b-2 ${activeTab === tab ? 'border-indigo-600 text-indigo-700 bg-indigo-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                {tab === 'Pickups' && <Package className="w-4 h-4" />}
+                                {tab === 'Loads' && <Truck className="w-4 h-4" />}
+                                {tab === 'Invoice Que' && <CheckCircle2 className="w-4 h-4" />}
+                                {tab}
                             </div>
-                        );
-                    })}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden min-h-[500px] flex flex-col">
+                    <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                        <div className="flex gap-4 items-center">
+                            <div className="relative">
+                                <Search className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Search load number..."
+                                    className="pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64 shadow-sm"
+                                />
+                            </div>
+                            {activeTab === 'Loads' && (
+                                <select
+                                    value={statusFilter}
+                                    onChange={e => setStatusFilter(e.target.value)}
+                                    className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                                >
+                                    <option value="All">All Statuses</option>
+                                    <option value="In-Transit Default">In-Transit</option>
+                                    <option value="Not Dispatched">Not Dispatched</option>
+                                    <option value="Dispatched">Dispatched</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Invoiced">Invoiced</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            )}
+                        </div>
+                        <span className="text-xs text-slate-600 font-medium bg-slate-200/50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            {filteredLoads.length} Loads
+                        </span>
+                    </div>
+
+                    <div className="overflow-x-auto flex-1">
+                        {loading ? (
+                            <div className="flex justify-center items-center h-48">
+                                <span className="animate-pulse text-slate-500 font-medium">Loading loads...</span>
+                            </div>
+                        ) : (
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-4 font-semibold">Load Number</th>
+                                        <th className="px-6 py-4 font-semibold">Customer</th>
+                                        <th className="px-6 py-4 font-semibold">Consignee</th>
+                                        <th className="px-6 py-4 font-semibold">Pickup Date</th>
+                                        <th className="px-6 py-4 font-semibold">Rate</th>
+                                        <th className="px-6 py-4 font-semibold">Status</th>
+                                        <th className="px-6 py-4 text-right font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredLoads.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <Truck className="h-10 w-10 text-slate-300 mb-3" />
+                                                    <p className="text-base font-medium text-slate-700">No loads found</p>
+                                                    <p className="text-sm mt-1">There are no loads matching the current criteria.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : filteredLoads.map((load) => (
+                                        <tr key={load.id} className="hover:bg-slate-50/80 transition-colors group">
+                                            <td className="px-6 py-4 whitespace-nowrap font-semibold text-slate-900">
+                                                {load.load_number}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-700 font-medium">
+                                                {load?.customer?.company_name || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                                                {load?.consignee?.name || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                                                {load.pickup_date ? new Date(load.pickup_date).toLocaleDateString() : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-slate-700 font-medium">
+                                                {load.customer_rate ? `$${load.customer_rate.toFixed(2)}` : '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {renderStatusBadge(load.status)}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                <button
+                                                    onClick={() => handleEditLoad(load.id)}
+                                                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                                                    title="Edit Load"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             </div>
+
+            <LoadEntryModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                loadId={editingLoadId}
+                onSaveSuccess={fetchLoads}
+            />
         </div>
     );
 }

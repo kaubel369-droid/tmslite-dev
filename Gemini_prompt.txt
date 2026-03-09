@@ -367,6 +367,37 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   Add the ability to delete an activity by clicking a button in the activity grid that opens a pop up data entry screen.   
   
   **************************************************
+  Change the design of the load board page to be more like the customer page. 
+  I want 3 different load boards:
+  1. Pickups that will display loads with a status of Not Dispatched and Dispatched
+  2. Loads that will display loads with a status of  In Transit by default
+  Add a drop down to the top of the grid to change the display to any of the statuses.
+  3. Invoice Que that will display loads with a status of Delivered by default
+  
+
+  I want the load board to be a grid with the following columns:
+  1. Load Number
+  2. Customer
+  3. Consignee
+  4. Pickup Date
+  5. Rate
+  6. Status
+  
+
+  Add a button to the load board page to add a new load. 
+  Use the columns in the Load table to build the load data entry screen. 
+  Add a button to the load data entry screen to save the load.  
+  There are going to be three tabs on the load data entry screen:
+  1. Load Information
+  2. Notes
+  3. Documents
+  The notes and documents tabs should be available after the load information is saved.   
+  Add the ability to edit a load by clicking a button in the load grid that opens a pop up data entry screen. 
+  Change the status Quoting to Not Dispatched and add a status of Cancelled.  
+
+  **************************************************
+  
+
 
   
 
