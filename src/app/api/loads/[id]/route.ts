@@ -7,7 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         const supabase = getServiceRoleClient();
         const { data, error } = await supabase
             .from('loads')
-            .select('*')
+            .select('*, load_products(*)')
             .eq('id', routeParams.id)
             .single();
 
@@ -44,6 +44,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             .single();
 
         if (error) throw error;
+
+        // Update product lines if provided
+        if (body.products && Array.isArray(body.products)) {
+            // Simple approach for dev: delete existing and re-insert
+            await supabase.from('load_products').delete().eq('load_id', routeParams.id);
+
+            const productsToInsert = body.products
+                .filter((p: any) => p.description || p.pallets || p.weight)
+                .map((p: any) => ({
+                    load_id: routeParams.id,
+                    pallets: parseInt(p.pallets) || 0,
+                    weight: parseFloat(p.weight) || 0,
+                    description: p.description,
+                    nmfc_class: p.nmfc
+                }));
+
+            if (productsToInsert.length > 0) {
+                const { error: prodError } = await supabase
+                    .from('load_products')
+                    .insert(productsToInsert);
+                if (prodError) console.error("Error updating products:", prodError);
+            }
+        }
 
         return NextResponse.json({ load: data });
     } catch (error: any) {

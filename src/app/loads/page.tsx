@@ -44,12 +44,6 @@ export default function LoadsPage() {
 
     useEffect(() => {
         fetchLoads();
-
-        // Auto-open modal if ?design=true is in URL (for Visual Editor fallback)
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('design') === 'true') {
-            setIsModalOpen(true);
-        }
     }, []);
 
     // Filter loads based on the active tab and status filter

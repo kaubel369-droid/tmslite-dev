@@ -23,7 +23,6 @@ export default async function RootLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   let isAdmin = false;
-  let isSupervisor = false;
   let userInitial = '';
 
   if (user) {
@@ -93,8 +92,6 @@ export default async function RootLayout({
         <main className="flex-1">
           {children}
         </main>
-        {/* Antigravity Visual Editor Bridge */}
-        <Script src="/antigravity-bridge.js" strategy="afterInteractive" />
       </body>
     </html>
   );

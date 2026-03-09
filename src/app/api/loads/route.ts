@@ -12,7 +12,8 @@ export async function GET() {
                 *,
                 customer:customers(company_name),
                 shipper:shipper_consignees!shipper_id(name),
-                consignee:shipper_consignees!consignee_id(name)
+                consignee:shipper_consignees!consignee_id(name),
+                load_products(*)
             `)
             .order('created_at', { ascending: false });
 
@@ -40,7 +41,8 @@ export async function POST(request: Request) {
             }
         }
 
-        const { data, error } = await supabase
+        // 1. Insert Load
+        const { data: loadData, error: loadError } = await supabase
             .from('loads')
             .insert([{
                 org_id,
@@ -48,9 +50,9 @@ export async function POST(request: Request) {
                 status: body.status || 'Not Dispatched',
                 origin_zip: body.origin_zip || null,
                 destination_zip: body.destination_zip || null,
-                total_weight: body.total_weight || null,
+                total_weight: body.total_weight || 0,
                 nmfc_class: body.nmfc_class || null,
-                total_pallets: body.total_pallets || null,
+                total_pallets: body.total_pallets || 0,
                 customer_rate: body.customer_rate || 0,
                 carrier_rate: body.carrier_rate || 0,
                 fuel_surcharge: body.fuel_surcharge || 0,
@@ -60,14 +62,39 @@ export async function POST(request: Request) {
                 pickup_date: body.pickup_date || null,
                 delivery_date: body.delivery_date || null,
                 shipper_id: body.shipper_id || null,
-                consignee_id: body.consignee_id || null
+                consignee_id: body.consignee_id || null,
+                bol_number: body.bol_number || null
             }])
             .select()
             .single();
 
-        if (error) throw error;
+        if (loadError) throw loadError;
 
-        return NextResponse.json({ load: data });
+        // 2. Insert Products if they exist
+        if (body.products && Array.isArray(body.products)) {
+            const productsToInsert = body.products
+                .filter((p: any) => p.description || p.pallets || p.weight)
+                .map((p: any) => ({
+                    load_id: loadData.id,
+                    pallets: parseInt(p.pallets) || 0,
+                    weight: parseFloat(p.weight) || 0,
+                    description: p.description,
+                    nmfc_class: p.nmfc
+                }));
+
+            if (productsToInsert.length > 0) {
+                const { error: prodError } = await supabase
+                    .from('load_products')
+                    .insert(productsToInsert);
+                if (prodError) {
+                    console.error("Error inserting products:", prodError);
+                    // We don't necessarily want to fail the whole load creation if products fail, 
+                    // but in a production app we'd use a transaction.
+                }
+            }
+        }
+
+        return NextResponse.json({ load: loadData });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
