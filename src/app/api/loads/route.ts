@@ -44,23 +44,23 @@ export async function POST(request: Request) {
             .from('loads')
             .insert([{
                 org_id,
-                customer_id: body.customer_id,
+                customer_id: body.customer_id || null,
                 status: body.status || 'Not Dispatched',
-                origin_zip: body.origin_zip,
-                destination_zip: body.destination_zip,
-                total_weight: body.total_weight,
-                nmfc_class: body.nmfc_class,
-                total_pallets: body.total_pallets,
-                customer_rate: body.customer_rate,
-                carrier_rate: body.carrier_rate,
-                fuel_surcharge: body.fuel_surcharge,
-                carrier_quote_id: body.carrier_quote_id,
-                carrier_pro_number: body.carrier_pro_number,
-                selected_carrier_id: body.selected_carrier_id,
-                pickup_date: body.pickup_date,
-                delivery_date: body.delivery_date,
-                shipper_id: body.shipper_id,
-                consignee_id: body.consignee_id
+                origin_zip: body.origin_zip || null,
+                destination_zip: body.destination_zip || null,
+                total_weight: body.total_weight || null,
+                nmfc_class: body.nmfc_class || null,
+                total_pallets: body.total_pallets || null,
+                customer_rate: body.customer_rate || 0,
+                carrier_rate: body.carrier_rate || 0,
+                fuel_surcharge: body.fuel_surcharge || 0,
+                carrier_quote_id: body.carrier_quote_id || null,
+                carrier_pro_number: body.carrier_pro_number || null,
+                selected_carrier_id: body.selected_carrier_id || null,
+                pickup_date: body.pickup_date || null,
+                delivery_date: body.delivery_date || null,
+                shipper_id: body.shipper_id || null,
+                consignee_id: body.consignee_id || null
             }])
             .select()
             .single();

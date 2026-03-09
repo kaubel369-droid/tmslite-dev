@@ -28,6 +28,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         // Remove un-updateable fields like id, org_id, created_at, etc from body to avoid errors
         const { id, org_id, created_at, customer, shipper, consignee, ...updateData } = body;
 
+        // Sanitize empty strings to null to prevent UUID type errors
+        for (const key in updateData) {
+            if (updateData[key] === '') {
+                updateData[key] = null;
+            }
+        }
+
         // Perform the update
         const { data, error } = await supabase
             .from('loads')
