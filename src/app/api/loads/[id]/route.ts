@@ -54,13 +54,21 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         const supabase = getServiceRoleClient();
         const body = await request.json();
 
-        // Remove un-updateable fields like id, org_id, created_at, etc from body to avoid errors
-        const { id, org_id, created_at, customer, shipper, consignee, products, ...updateData } = body;
+        // Whitelist of valid columns for the 'loads' table
+        const LOAD_COLUMNS = [
+            'customer_id', 'status', 'origin_zip', 'destination_zip',
+            'total_weight', 'nmfc_class', 'total_pallets', 'customer_rate',
+            'carrier_rate', 'fuel_surcharge', 'carrier_quote_id',
+            'carrier_pro_number', 'selected_carrier_id', 'pickup_date',
+            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number'
+        ];
 
-        // Sanitize empty strings to null to prevent UUID type errors
-        for (const key in updateData) {
-            if (updateData[key] === '') {
-                updateData[key] = null;
+        // Filter body to only include whitelisted columns
+        const updateData: any = {};
+        for (const col of LOAD_COLUMNS) {
+            if (col in body) {
+                // Sanitize empty strings to null
+                updateData[col] = body[col] === '' ? null : body[col];
             }
         }
 
@@ -72,33 +80,48 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Update load error:', error);
+            throw error;
+        }
 
-        // Update product lines if provided
+        // 2. Update product lines if provided
         if (body.products && Array.isArray(body.products)) {
-            // Simple approach for dev: delete existing and re-insert
-            await supabase.from('load_products').delete().eq('load_id', routeParams.id);
+            // Delete existing products for this load
+            const { error: delError } = await supabase
+                .from('load_products')
+                .delete()
+                .eq('load_id', routeParams.id);
 
+            if (delError) {
+                console.error("Error deleting old products:", delError);
+            }
+
+            // Map and filter new products
             const productsToInsert = body.products
                 .filter((p: any) => p.description || p.pallets || p.weight)
                 .map((p: any) => ({
                     load_id: routeParams.id,
                     pallets: parseInt(p.pallets) || 0,
                     weight: parseFloat(p.weight) || 0,
-                    description: p.description,
-                    nmfc_class: p.nmfc
+                    description: p.description || '',
+                    nmfc_class: p.nmfc || null
                 }));
 
             if (productsToInsert.length > 0) {
                 const { error: prodError } = await supabase
                     .from('load_products')
                     .insert(productsToInsert);
-                if (prodError) console.error("Error updating products:", prodError);
+                if (prodError) {
+                    console.error("Error inserting products:", prodError);
+                    // We don't throw here to allow the main load update to succeed
+                }
             }
         }
 
         return NextResponse.json({ load: data });
     } catch (error: any) {
+        console.error('API Error in PUT /api/loads/[id]:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

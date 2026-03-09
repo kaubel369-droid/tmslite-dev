@@ -67,34 +67,34 @@ export async function POST(request: Request) {
             }
         }
 
+        // Whitelist of valid columns for the 'loads' table
+        const LOAD_COLUMNS = [
+            'customer_id', 'status', 'origin_zip', 'destination_zip',
+            'total_weight', 'nmfc_class', 'total_pallets', 'customer_rate',
+            'carrier_rate', 'fuel_surcharge', 'carrier_quote_id',
+            'carrier_pro_number', 'selected_carrier_id', 'pickup_date',
+            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number'
+        ];
+
+        // Filter and map fields for insertion
+        const insertData: any = { org_id };
+        for (const col of LOAD_COLUMNS) {
+            if (col in body) {
+                insertData[col] = body[col] === '' ? null : body[col];
+            }
+        }
+
         // 1. Insert Load
         const { data: loadData, error: loadError } = await supabase
             .from('loads')
-            .insert([{
-                org_id,
-                customer_id: body.customer_id || null,
-                status: body.status || 'Not Dispatched',
-                origin_zip: body.origin_zip || null,
-                destination_zip: body.destination_zip || null,
-                total_weight: body.total_weight || 0,
-                nmfc_class: body.nmfc_class || null,
-                total_pallets: body.total_pallets || 0,
-                customer_rate: body.customer_rate || 0,
-                carrier_rate: body.carrier_rate || 0,
-                fuel_surcharge: body.fuel_surcharge || 0,
-                carrier_quote_id: body.carrier_quote_id || null,
-                carrier_pro_number: body.carrier_pro_number || null,
-                selected_carrier_id: body.selected_carrier_id || null,
-                pickup_date: body.pickup_date || null,
-                delivery_date: body.delivery_date || null,
-                shipper_id: body.shipper_id || null,
-                consignee_id: body.consignee_id || null,
-                bol_number: body.bol_number || null
-            }])
+            .insert([insertData])
             .select()
             .single();
 
-        if (loadError) throw loadError;
+        if (loadError) {
+            console.error('Insert load error:', loadError);
+            throw loadError;
+        }
 
         // 2. Insert Products if they exist
         if (body.products && Array.isArray(body.products)) {
@@ -104,8 +104,8 @@ export async function POST(request: Request) {
                     load_id: loadData.id,
                     pallets: parseInt(p.pallets) || 0,
                     weight: parseFloat(p.weight) || 0,
-                    description: p.description,
-                    nmfc_class: p.nmfc
+                    description: p.description || '',
+                    nmfc_class: p.nmfc || null
                 }));
 
             if (productsToInsert.length > 0) {
@@ -114,12 +114,14 @@ export async function POST(request: Request) {
                     .insert(productsToInsert);
                 if (prodError) {
                     console.error("Error inserting products:", prodError);
+                    // We don't throw here to allow the main load entry to succeed
                 }
             }
         }
 
         return NextResponse.json({ load: loadData });
     } catch (error: any) {
+        console.error('API Error in POST /api/loads:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
