@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import Link from 'next/link';
 import { PackageOpen, LogOut, Shield } from 'lucide-react';
@@ -92,6 +93,8 @@ export default async function RootLayout({
         <main className="flex-1">
           {children}
         </main>
+        {/* Antigravity Visual Editor Bridge */}
+        <Script src="/antigravity-bridge.js" strategy="afterInteractive" />
       </body>
     </html>
   );
