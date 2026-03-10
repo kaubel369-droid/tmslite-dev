@@ -33,6 +33,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 shipper_id, 
                 consignee_id, 
                 bol_number,
+                internal_notes,
+                bol_notes,
+                tracing_notes,
                 shipper:shipper_consignees!shipper_id(*), 
                 consignee:shipper_consignees!consignee_id(*),
                 load_products!load_id(*)
@@ -60,7 +63,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             'total_weight', 'nmfc_class', 'total_pallets', 'customer_rate',
             'carrier_rate', 'fuel_surcharge', 'carrier_quote_id',
             'carrier_pro_number', 'selected_carrier_id', 'pickup_date',
-            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number'
+            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number',
+            'internal_notes', 'bol_notes', 'tracing_notes'
         ];
 
         // Filter body to only include whitelisted columns

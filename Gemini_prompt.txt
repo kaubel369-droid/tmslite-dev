@@ -416,6 +416,15 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   In it's place add a Carrier field that is a drop down list of carriers.
   Remove fuel surcharge field.  
   ****************************************
+  On the load notes tab stack 2 more note fields on top of internal notes.
+  They will be called BOL Notes and Tracing Notes.
+  ******************************************* 
+  On the documents tab I want 2 document sections
+    The top one being " Public Documents" and the bottom one being "Private Documents"
+  ****************************************
+  
+  
+
 
 
   

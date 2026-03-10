@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, FileText, Paperclip, Truck, Plus, Trash2 } from 'lucide-react';
+import { X, Save, FileText, Paperclip, Truck, Plus, Trash2, Shield, Eye, EyeOff, Download, Loader2, Lock, Globe } from 'lucide-react';
 import ShipperConsigneeModal from './ShipperConsigneeModal';
 
 type Tab = 'Load Information' | 'Notes' | 'Documents';
@@ -44,15 +44,18 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         carrier_pro_number: '',
         bol_number: '',
         selected_carrier_id: '',
-        notes: '',
+        internal_notes: '',
+        bol_notes: '',
+        tracing_notes: '',
         products: [] as Product[]
     });
 
     const [customers, setCustomers] = useState<any[]>([]);
     const [shippersConsignees, setShippersConsignees] = useState<any[]>([]);
     const [carriers, setCarriers] = useState<any[]>([]);
+    const [documents, setDocuments] = useState<any[]>([]);
     const [saveSuccess, setSaveSuccess] = useState(false);
-
+    const [uploading, setUploading] = useState(false);
     // Modal states for adding shipper/consignee
     const [scModalOpen, setScModalOpen] = useState(false);
     const [scModalType, setScModalType] = useState<'Shipper' | 'Consignee'>('Shipper');
@@ -62,6 +65,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
             fetchDropdownData();
             if (loadId) {
                 fetchLoadData(loadId);
+                fetchDocuments(loadId);
             } else {
                 setFormData({
                     load_number: '',
@@ -81,12 +85,17 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     fuel_surcharge: 0,
                     carrier_quote_id: '',
                     carrier_pro_number: '',
+                    bol_number: '',
                     selected_carrier_id: '',
-                    notes: '',
+                    internal_notes: '',
+                    bol_notes: '',
+                    tracing_notes: '',
                     products: [{ pallets: '', weight: '', description: '', nmfc: '' }]
                 });
-                setActiveTab('Load Information');
+                setDocuments([]);
             }
+            setActiveTab('Load Information');
+            setError(null);
         }
     }, [isOpen, loadId]);
 
@@ -179,6 +188,70 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         const updatedProducts = [...formData.products];
         updatedProducts[index] = { ...updatedProducts[index], [field]: value };
         setFormData((prev: any) => ({ ...prev, products: updatedProducts }));
+    };
+
+    const fetchDocuments = async (idToFetch?: string) => {
+        const currentId = idToFetch || loadId || formData.id;
+        if (!currentId) return;
+        try {
+            const res = await fetch(`/api/loads/${currentId}/documents`);
+            if (res.ok) {
+                const data = await res.json();
+                setDocuments(data.documents || []);
+            }
+        } catch (err) {
+            console.error("Failed to load documents", err);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isPrivate: boolean) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const currentId = loadId || formData.id;
+        if (!currentId) {
+            setError("Please save the load before uploading documents.");
+            return;
+        }
+
+        setUploading(true);
+        const fData = new FormData();
+        fData.append('file', file);
+        fData.append('is_private', isPrivate.toString());
+        fData.append('type', 'Other'); 
+
+        try {
+            const res = await fetch(`/api/loads/${currentId}/documents`, {
+                method: 'POST',
+                body: fData
+            });
+
+            if (!res.ok) throw new Error('Upload failed');
+            
+            fetchDocuments();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setUploading(false);
+            if (e.target) e.target.value = '';
+        }
+    };
+
+    const handleDeleteDocument = async (documentId: string) => {
+        const currentId = loadId || formData.id;
+        if (!confirm('Are you sure you want to delete this document?')) return;
+
+        try {
+            const res = await fetch(`/api/loads/${currentId}/documents/${documentId}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) throw new Error('Delete failed');
+            
+            fetchDocuments();
+        } catch (err: any) {
+            setError(err.message);
+        }
     };
 
     const addProductLine = () => {
@@ -568,33 +641,145 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                             )}
 
                             {activeTab === 'Notes' && (
-                                <div id="notes-panel" className="space-y-4">
-                                    <div id="field-notes">
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Internal Notes</label>
+                                <div id="notes-panel" className="space-y-6">
+                                    <div id="field-bol-notes">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">BOL Notes</label>
                                         <textarea
-                                            name="notes"
-                                            value={formData.notes || ''}
+                                            name="bol_notes"
+                                            value={formData.bol_notes || ''}
                                             onChange={handleChange}
-                                            rows={12}
+                                            rows={3}
                                             className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner"
-                                            placeholder="Add instructions, delivery requirements, or carrier specific notes here..."
+                                            placeholder="Notes to appear on the BOL..."
+                                        />
+                                    </div>
+                                    <div id="field-tracing-notes">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Tracing Notes</label>
+                                        <textarea
+                                            name="tracing_notes"
+                                            value={formData.tracing_notes || ''}
+                                            onChange={handleChange}
+                                            rows={3}
+                                            className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner"
+                                            placeholder="Tracking and tracing updates..."
+                                        />
+                                    </div>
+                                    <div id="field-internal-notes">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Internal Notes</label>
+                                        <textarea
+                                            name="internal_notes"
+                                            value={formData.internal_notes || ''}
+                                            onChange={handleChange}
+                                            rows={6}
+                                            className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner"
+                                            placeholder="General instructions, delivery requirements, or carrier specific notes here..."
                                         />
                                     </div>
                                 </div>
                             )}
 
-                            {activeTab === 'Documents' && (
-                                <div id="documents-panel" className="space-y-4 py-8">
-                                    <div id="upload-area" className="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-200 transition-all cursor-pointer group">
-                                        <div className="bg-white h-16 w-16 rounded-full shadow-md flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                            <Paperclip className="h-8 w-8 text-indigo-400" />
+                             {activeTab === 'Documents' && (
+                                <div id="documents-panel" className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    {/* Public Documents Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="bg-indigo-50 p-1.5 rounded-lg">
+                                                    <Globe className="h-4 w-4 text-indigo-600" />
+                                                </div>
+                                                <h3 className="text-sm font-bold text-slate-800">Public Documents</h3>
+                                            </div>
+                                            <label className="cursor-pointer bg-white border border-slate-200 text-indigo-600 px-4 py-1.5 rounded-lg text-[10px] font-bold hover:shadow-sm hover:border-indigo-200 transition-all flex items-center gap-2 active:scale-95">
+                                                <Paperclip className="h-3 w-3" />
+                                                UPLOAD PUBLIC
+                                                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, false)} disabled={uploading} />
+                                            </label>
                                         </div>
-                                        <h3 className="text-sm font-bold text-slate-700">Upload Load Documents</h3>
-                                        <p className="text-xs text-slate-400 mt-2 max-w-xs mx-auto text-center leading-relaxed">Drag and drop files here or click to browse. Max file size: 10MB.</p>
-                                        <button className="mt-6 bg-white border border-slate-200 text-indigo-600 px-6 py-2 rounded-lg text-xs font-bold hover:shadow-sm hover:border-indigo-100 transition-all active:scale-95">
-                                            BROWSE FILES
-                                        </button>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {documents.filter(d => !d.is_private).length > 0 ? (
+                                                documents.filter(d => !d.is_private).map(doc => (
+                                                    <div key={doc.id} className="group flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-200 hover:shadow-sm transition-all">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="bg-slate-50 p-2 rounded-lg group-hover:bg-indigo-50 transition-colors">
+                                                                <FileText className="h-5 w-5 text-slate-400 group-hover:text-indigo-400" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-sm font-medium text-slate-700 truncate">{doc.file_name}</p>
+                                                                <p className="text-[10px] text-slate-400">{new Date(doc.created_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Document">
+                                                                <Eye className="h-4 w-4" />
+                                                            </a>
+                                                            <button onClick={() => handleDeleteDocument(doc.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete Document">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="md:col-span-2 py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-center">
+                                                    <p className="text-xs text-slate-400 italic">No public documents found.</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Private Documents Section */}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="bg-amber-50 p-1.5 rounded-lg">
+                                                    <Lock className="h-4 w-4 text-amber-600" />
+                                                </div>
+                                                <h3 className="text-sm font-bold text-slate-800">Private Documents</h3>
+                                            </div>
+                                            <label className="cursor-pointer bg-white border border-slate-200 text-amber-600 px-4 py-1.5 rounded-lg text-[10px] font-bold hover:shadow-sm hover:border-amber-200 transition-all flex items-center gap-2 active:scale-95">
+                                                <Paperclip className="h-3 w-3" />
+                                                UPLOAD PRIVATE
+                                                <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, true)} disabled={uploading} />
+                                            </label>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {documents.filter(d => d.is_private).length > 0 ? (
+                                                documents.filter(d => d.is_private).map(doc => (
+                                                    <div key={doc.id} className="group flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl hover:border-amber-200 hover:shadow-sm transition-all text-amber-900">
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className="bg-amber-50/50 p-2 rounded-lg group-hover:bg-amber-50 transition-colors">
+                                                                <Lock className="h-5 w-5 text-amber-400" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <p className="text-sm font-medium text-amber-800 truncate">{doc.file_name}</p>
+                                                                <p className="text-[10px] text-amber-400">{new Date(doc.created_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-2 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="View Document">
+                                                                <Eye className="h-4 w-4" />
+                                                            </a>
+                                                            <button onClick={() => handleDeleteDocument(doc.id)} className="p-2 text-amber-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Delete Document">
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="md:col-span-2 py-8 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-center">
+                                                    <p className="text-xs text-slate-400 italic">No private documents found.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {uploading && (
+                                        <div className="flex justify-center items-center gap-2 text-indigo-600 text-xs font-bold animate-pulse">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            UPLOADING DOCUMENT...
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

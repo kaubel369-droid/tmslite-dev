@@ -34,6 +34,9 @@ export async function GET() {
                 shipper_id, 
                 consignee_id, 
                 bol_number,
+                internal_notes,
+                bol_notes,
+                tracing_notes,
                 customer:customers(company_name),
                 shipper:shipper_consignees!shipper_id(name),
                 consignee:shipper_consignees!consignee_id(name)
@@ -73,7 +76,8 @@ export async function POST(request: Request) {
             'total_weight', 'nmfc_class', 'total_pallets', 'customer_rate',
             'carrier_rate', 'fuel_surcharge', 'carrier_quote_id',
             'carrier_pro_number', 'selected_carrier_id', 'pickup_date',
-            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number'
+            'delivery_date', 'shipper_id', 'consignee_id', 'bol_number',
+            'internal_notes', 'bol_notes', 'tracing_notes'
         ];
 
         // Filter and map fields for insertion
