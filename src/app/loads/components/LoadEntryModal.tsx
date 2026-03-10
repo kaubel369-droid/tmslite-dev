@@ -47,6 +47,8 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         internal_notes: '',
         bol_notes: '',
         tracing_notes: '',
+        load_type: 'LTL',
+        mileage: '',
         products: [] as Product[]
     });
 
@@ -59,6 +61,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
     // Modal states for adding shipper/consignee
     const [scModalOpen, setScModalOpen] = useState(false);
     const [scModalType, setScModalType] = useState<'Shipper' | 'Consignee'>('Shipper');
+    const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -90,6 +93,8 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     internal_notes: '',
                     bol_notes: '',
                     tracing_notes: '',
+                    load_type: 'LTL',
+                    mileage: '',
                     products: [{ pallets: '', weight: '', description: '', nmfc: '' }]
                 });
                 setDocuments([]);
@@ -178,6 +183,43 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
             }
         }
     }, [formData.consignee_id, shippersConsignees]);
+ 
+    // Auto-calculate mileage when locations change
+    useEffect(() => {
+        const updateMileage = async () => {
+            // Only trigger if both are selected and we're not currently editing/saving
+            if (!formData.shipper_id || !formData.consignee_id || loading) return;
+
+            const shipper = shippersConsignees.find(s => s.id === formData.shipper_id);
+            const consignee = shippersConsignees.find(s => s.id === formData.consignee_id);
+
+            if (!shipper || !consignee) return;
+
+            // If mileage already exists for an existing load, don't overwrite it unless locations actually changed from what's stored
+            // For now, let's just calculate if it's 0 or empty to be safe, or if locations were just changed by user selection
+            
+            setIsCalculatingMileage(true);
+            try {
+                const origin = `${shipper.address}, ${shipper.city}, ${shipper.state} ${shipper.zip}`;
+                const destination = `${consignee.address}, ${consignee.city}, ${consignee.state} ${consignee.zip}`;
+                
+                const res = await fetch(`/api/distance/calculate?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`);
+                if (!res.ok) throw new Error('Distance API failed');
+                
+                const data = await res.json();
+                if (data.mileage !== null) {
+                    setFormData((prev: any) => ({ ...prev, mileage: data.mileage.toString() }));
+                }
+            } catch (err) {
+                console.error("Mileage calculation error:", err);
+            } finally {
+                setIsCalculatingMileage(false);
+            }
+        };
+
+        const debounceTimer = setTimeout(updateMileage, 1500); 
+        return () => clearTimeout(debounceTimer);
+    }, [formData.shipper_id, formData.consignee_id, shippersConsignees]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -437,6 +479,22 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                 ))}
                                             </select>
                                         </div>
+                                        <div id="field-load-type">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Type</label>
+                                            <select 
+                                                name="load_type" 
+                                                value={formData.load_type || 'LTL'} 
+                                                onChange={handleChange} 
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-700"
+                                            >
+                                                <option value="LTL">LTL</option>
+                                                <option value="FTL">FTL</option>
+                                                <option value="PTL">PTL</option>
+                                                <option value="INTL">INTL</option>
+                                                <option value="AIR">AIR</option>
+                                                <option value="RAIL">RAIL</option>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <hr className="border-slate-100" />
@@ -504,6 +562,16 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                     <p>{selectedConsignee.address}</p>
                                                     <p>{selectedConsignee.city}, {selectedConsignee.state} {selectedConsignee.zip}</p>
                                                     <p>{selectedConsignee.phone}</p>
+                                                    <div className="pt-1">
+                                                        <a 
+                                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selectedConsignee.address}, ${selectedConsignee.city}, ${selectedConsignee.state} ${selectedConsignee.zip}`)}`}
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer"
+                                                            className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 mt-1 underline"
+                                                        >
+                                                            <Globe className="h-3 w-3" /> View Map
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -634,6 +702,22 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                             <div>
                                                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Quote ID</label>
                                                 <input type="text" name="carrier_quote_id" value={formData.carrier_quote_id} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="OPTIONAL" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mileage</label>
+                                                <div className="relative">
+                                                    {isCalculatingMileage && <Loader2 className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-indigo-500 z-10" />}
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.1" 
+                                                        name="mileage" 
+                                                        value={formData.mileage || ''} 
+                                                        onChange={handleChange} 
+                                                        className={`w-full border border-slate-300 rounded-lg ${isCalculatingMileage ? 'pl-8' : 'px-3'} py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all`} 
+                                                        placeholder="0.0" 
+                                                    />
+                                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">MILES</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

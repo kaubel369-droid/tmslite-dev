@@ -94,6 +94,7 @@ export async function POST(request: Request, context: any) {
 
         return NextResponse.json({ document: docData });
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Document Upload Error:", error);
+        return NextResponse.json({ error: error.message || 'Unknown error occurred' }, { status: 500 });
     }
 }
