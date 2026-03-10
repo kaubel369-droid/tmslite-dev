@@ -111,7 +111,8 @@ export async function POST(request: Request) {
                     pallets: parseInt(p.pallets) || 0,
                     weight: parseFloat(p.weight) || 0,
                     description: p.description || '',
-                    nmfc_class: p.nmfc || null
+                    nmfc_class: p.nmfc || null,
+                    unit_type: p.unit_type || 'PLT'
                 }));
 
             if (productsToInsert.length > 0) {

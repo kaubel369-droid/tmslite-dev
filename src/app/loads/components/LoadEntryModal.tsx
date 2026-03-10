@@ -11,6 +11,7 @@ interface Product {
     weight: string;
     description: string;
     nmfc: string;
+    unit_type: string;
 }
 
 interface LoadEntryModalProps {
@@ -95,7 +96,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     tracing_notes: '',
                     load_type: 'LTL',
                     mileage: '',
-                    products: [{ pallets: '', weight: '', description: '', nmfc: '' }]
+                    products: [{ pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }]
                 });
                 setDocuments([]);
             }
@@ -143,13 +144,14 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     pallets: p.pallets?.toString() || '',
                     weight: p.weight?.toString() || '',
                     description: p.description || '',
-                    nmfc: p.nmfc_class || ''
+                    nmfc: p.nmfc_class || '',
+                    unit_type: p.unit_type || 'PLT'
                 }));
             }
 
             // Ensure products is an array if still empty
             if (!load.products || !Array.isArray(load.products) || load.products.length === 0) {
-                load.products = [{ pallets: '', weight: '', description: '', nmfc: '' }];
+                load.products = [{ pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }];
             }
 
             // If new load number returned, update it
@@ -300,7 +302,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         if (formData.products.length < 6) {
             setFormData((prev: any) => ({
                 ...prev,
-                products: [...prev.products, { pallets: '', weight: '', description: '', nmfc: '' }]
+                products: [...prev.products, { pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }]
             }));
         }
     };
@@ -595,8 +597,9 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                             <table className="w-full border-collapse">
                                                 <thead>
                                                     <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
-                                                        <th className="pb-2 w-20">Pallets</th>
-                                                        <th className="pb-2 w-28">Weight</th>
+                                                        <th className="pb-2 w-16">#</th>
+                                                        <th className="pb-2 w-24">Type</th>
+                                                        <th className="pb-2 w-24">Weight</th>
                                                         <th className="pb-2">Product Description</th>
                                                         <th className="pb-2 w-24">NMFC</th>
                                                         <th className="pb-2 w-10"></th>
@@ -613,6 +616,16 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                                     className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                                                                     placeholder="0"
                                                                 />
+                                                            </td>
+                                                            <td className="py-2 pr-2">
+                                                                <select
+                                                                    value={p.unit_type || 'PLT'}
+                                                                    onChange={(e) => handleProductChange(index, 'unit_type', e.target.value)}
+                                                                    className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-700"
+                                                                >
+                                                                    <option value="PLT">PLT</option>
+                                                                    <option value="PCS">PCS</option>
+                                                                </select>
                                                             </td>
                                                             <td className="py-2 pr-2">
                                                                 <input
