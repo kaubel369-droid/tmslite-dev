@@ -259,6 +259,9 @@ create table public.loads (
     delivery_date date,
     shipper_id uuid references public.shipper_consignees(id) on delete restrict,
     consignee_id uuid references public.shipper_consignees(id) on delete restrict,
+    internal_notes text,
+    bol_notes text,
+    tracing_notes text,
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
