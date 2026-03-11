@@ -78,6 +78,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             }
         }
 
+        // Auto-calculate totals from products if they exist
+        if (body.products && Array.isArray(body.products)) {
+            const totalPallets = body.products.reduce((sum: number, p: any) => sum + (parseInt(p.pallets) || 0), 0);
+            const totalWeight = body.products.reduce((sum: number, p: any) => sum + (parseFloat(p.weight) || 0), 0);
+            
+            updateData.total_pallets = totalPallets > 0 ? totalPallets.toString() : null;
+            updateData.total_weight = totalWeight > 0 ? totalWeight.toString() : null;
+        }
+
         // Perform the update
         const { data, error } = await supabase
             .from('loads')

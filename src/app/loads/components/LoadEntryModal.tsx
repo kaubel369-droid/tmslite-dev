@@ -666,6 +666,20 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                         </tr>
                                                     ))}
                                                 </tbody>
+                                                <tfoot className="border-t-2 border-slate-100 bg-slate-50/50">
+                                                    <tr>
+                                                        <td className="py-3 px-2 text-sm font-bold text-slate-700">
+                                                            {formData.products.reduce((sum: number, p: Product) => sum + (parseInt(p.pallets) || 0), 0)}
+                                                        </td>
+                                                        <td className="py-3 pr-2 text-right text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                                                            Total
+                                                        </td>
+                                                        <td className="py-3 px-2 text-sm font-bold text-slate-700">
+                                                            {formData.products.reduce((sum: number, p: Product) => sum + (parseFloat(p.weight) || 0), 0)}
+                                                        </td>
+                                                        <td className="py-3" colSpan={3}></td>
+                                                    </tr>
+                                                </tfoot>
                                             </table>
                                             {formData.products.length >= 6 && (
                                                 <p className="text-[10px] text-amber-600 mt-1 font-medium italic">* Maximum 6 product lines allowed</p>

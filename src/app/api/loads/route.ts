@@ -90,6 +90,15 @@ export async function POST(request: Request) {
             }
         }
 
+        // Auto-calculate totals from products if they exist
+        if (body.products && Array.isArray(body.products)) {
+            const totalPallets = body.products.reduce((sum: number, p: any) => sum + (parseInt(p.pallets) || 0), 0);
+            const totalWeight = body.products.reduce((sum: number, p: any) => sum + (parseFloat(p.weight) || 0), 0);
+            
+            insertData.total_pallets = totalPallets > 0 ? totalPallets.toString() : null;
+            insertData.total_weight = totalWeight > 0 ? totalWeight.toString() : null;
+        }
+
         // 1. Insert Load
         const { data: loadData, error: loadError } = await supabase
             .from('loads')
