@@ -85,7 +85,12 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
             if (res.ok) {
                 const data = await res.json();
                 if (data.customer?.carrier_configs) {
-                    setCarrierConfigs(data.customer.carrier_configs);
+                    // Ensure the structure is what we expect
+                    const configs = data.customer.carrier_configs;
+                    setCarrierConfigs({
+                        default_margin: configs.default_margin ?? 15,
+                        carriers: configs.carriers ?? {}
+                    });
                 }
             }
         } catch (err) {
@@ -668,7 +673,7 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                             <div className="relative">
                                 <input 
                                     type="number" 
-                                    value={carrierConfigs.default_margin}
+                                    value={carrierConfigs?.default_margin ?? 15}
                                     onChange={(e) => setCarrierConfigs({ ...carrierConfigs, default_margin: parseFloat(e.target.value) || 0 })}
                                     className="w-24 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-bold text-indigo-900" 
                                 />
@@ -680,15 +685,16 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400">Carrier Overrides</h4>
                             <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl bg-white shadow-sm overflow-hidden">
                                 {carriersList.map(carrier => {
-                                    const config = carrierConfigs.carriers[carrier.id] || { blacklisted: false, margin: "" };
+                                    const configs = carrierConfigs?.carriers || {};
+                                    const config = configs[carrier.id] || { blacklisted: false, margin: "" };
                                     return (
                                         <div key={carrier.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <input 
                                                     type="checkbox"
-                                                    checked={config.blacklisted}
+                                                    checked={!!config.blacklisted}
                                                     onChange={(e) => {
-                                                        const newCarriers = { ...carrierConfigs.carriers };
+                                                        const newCarriers = { ...configs };
                                                         newCarriers[carrier.id] = { ...config, blacklisted: e.target.checked };
                                                         setCarrierConfigs({ ...carrierConfigs, carriers: newCarriers });
                                                     }}
@@ -706,10 +712,10 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                                                 <div className="relative">
                                                     <input 
                                                         type="number" 
-                                                        placeholder={carrierConfigs.default_margin.toString()}
-                                                        value={config.margin}
+                                                        placeholder={(carrierConfigs?.default_margin ?? 15).toString()}
+                                                        value={config.margin ?? ""}
                                                         onChange={(e) => {
-                                                            const newCarriers = { ...carrierConfigs.carriers };
+                                                            const newCarriers = { ...configs };
                                                             newCarriers[carrier.id] = { ...config, margin: e.target.value === "" ? "" : parseFloat(e.target.value) };
                                                             setCarrierConfigs({ ...carrierConfigs, carriers: newCarriers });
                                                         }}

@@ -422,7 +422,25 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   On the documents tab I want 2 document sections
     The top one being " Public Documents" and the bottom one being "Private Documents"
   ****************************************
+  Create a ltl rating screen that will include the following fields.
+  Origin zip, city(drop down if there are multiple choices),state
+  Destination Zip, city(drop down if there are multiple choices),state
+  A product grid containing
+  pcs, type(pallets, cartons, skids, etc), weight, class, Length(in), width(in), height(in), Cubic ft(calucated from L,W,H and pcs)
+  there should be a button to add up to 5 more lines of products for a total of 6
+  below the grid total pcs, total weight, total cubic feet
+  Drop down field for accessorials, there can be up to 6 accessorials selected  
+  Button to get rates
+  when the button is pressed it will run rates using carrier APIs and display the rates in a grid.
+  The grid should have the following columns:
+  Carrier(logo), Rate, Accessorials, Carrier Total Rate, Est. Transit Time, customer total rate
+
+  this rating screen will be used on the customer and carrier rating tabs, and the rate shop
+
+************************************************* 
+
   
+
   
 
 
