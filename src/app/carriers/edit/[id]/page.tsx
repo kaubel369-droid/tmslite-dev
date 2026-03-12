@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
+import CarrierAccessorialsModal from './carrier-accessorials-modal';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
@@ -545,6 +546,7 @@ export default function EditCarrierPage() {
                                             }} className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg transition-colors shadow-sm">
                                                 Test Connection
                                             </button>
+                                            <CarrierAccessorialsModal carrierId={id} />
                                         </div>
                                         <div className="flex gap-3">
                                             <button type="button" onClick={() => {
