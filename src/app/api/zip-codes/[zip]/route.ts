@@ -7,9 +7,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(
     request: Request,
-    { params }: { params: { zip: string } }
+    { params }: { params: Promise<{ zip: string }> }
 ) {
-    const zip = params.zip;
+    const { zip } = await params;
 
     if (!zip || zip.length < 3) {
         return NextResponse.json({ error: 'Invalid zip' }, { status: 400 });
