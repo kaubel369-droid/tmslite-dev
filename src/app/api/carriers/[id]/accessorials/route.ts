@@ -87,6 +87,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             .eq('id', user.id)
             .single();
 
+        if (!profile?.org_id) {
+            return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+        }
+
         const data = await request.json();
         const { accessorial_id, min_charge, max_charge, charge_per_pound, charge_per_piece, fixed_price, is_locked } = data;
 
@@ -97,7 +101,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 .delete()
                 .eq('carrier_id', awaitedParams.id)
                 .eq('accessorial_id', accessorial_id)
-                .eq('org_id', profile?.org_id);
+                .eq('org_id', profile.org_id);
                 
             if (error) throw error;
         } else {
@@ -107,13 +111,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 .upsert({
                     carrier_id: awaitedParams.id,
                     accessorial_id,
-                    org_id: profile?.org_id,
+                    org_id: profile.org_id,
                     min_charge: min_charge === '' ? null : Number(min_charge),
                     max_charge: max_charge === '' ? null : Number(max_charge),
                     charge_per_pound: charge_per_pound === '' ? null : Number(charge_per_pound),
                     charge_per_piece: charge_per_piece === '' ? null : Number(charge_per_piece),
                     fixed_price: fixed_price === '' ? null : Number(fixed_price)
-                }, { onConflict: 'carrier_id,accessorial_id' }); // Requires unique constraint! Which we added.
+                }, { onConflict: 'carrier_id,accessorial_id' });
                 
             if (error) throw error;
         }
