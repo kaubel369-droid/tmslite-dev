@@ -88,14 +88,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             .single();
 
         if (!profile?.org_id) {
+            console.error('POST Accessorials: Organization not found for user', user.id);
             return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
         }
 
         const data = await request.json();
+        console.log('POST Accessorials Payload:', { carrier_id: awaitedParams.id, ...data });
+
         const { accessorial_id, min_charge, max_charge, charge_per_pound, charge_per_piece, fixed_price, is_locked } = data;
 
         if (!is_locked) {
-            // Delete override if unlocked
+            console.log('Deleting override for carrier:', awaitedParams.id, 'accessorial:', accessorial_id);
             const { error } = await supabase
                 .from('carrier_accessorials')
                 .delete()
@@ -103,9 +106,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 .eq('accessorial_id', accessorial_id)
                 .eq('org_id', profile.org_id);
                 
-            if (error) throw error;
+            if (error) {
+                console.error('Delete error:', error);
+                throw error;
+            }
         } else {
-            // Upsert override
+            console.log('Upserting override for carrier:', awaitedParams.id, 'accessorial:', accessorial_id);
             const { error } = await supabase
                 .from('carrier_accessorials')
                 .upsert({
@@ -119,7 +125,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                     fixed_price: fixed_price === '' ? null : Number(fixed_price)
                 }, { onConflict: 'carrier_id,accessorial_id' });
                 
-            if (error) throw error;
+            if (error) {
+                console.error('Upsert error:', error);
+                throw error;
+            }
         }
 
         return NextResponse.json({ success: true });

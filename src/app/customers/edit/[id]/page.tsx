@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
+import LTLRatingScreen from '@/components/LTLRatingScreen';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
@@ -686,9 +687,8 @@ export default function EditCustomerPage() {
 
                     {/* Rating Tab */}
                     <TabsContent value="rating" className="outline-none">
-                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-16 flex flex-col items-center justify-center text-slate-500">
-                            <h3 className="text-xl font-medium text-slate-900 mb-2">LTL Rating Screen</h3>
-                            <p className="max-w-md text-center">Configure standard LTL rate markups and tariffs here.</p>
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-6">
+                            <LTLRatingScreen customerId={id} />
                         </div>
                     </TabsContent>
 

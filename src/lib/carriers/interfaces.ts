@@ -9,7 +9,13 @@ export interface FreightItem {
     weight: number;
     class: string;
     pallets: number;
+    pcs?: number;
+    length_in?: number;
+    width_in?: number;
+    height_in?: number;
+    cubic_feet?: number;
     description?: string;
+    type?: string;
 }
 
 export interface ShipmentData {
