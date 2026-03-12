@@ -45,6 +45,10 @@ export default async function AdminLayout({
                         <UserCog className="h-4 w-4" />
                         Roles & Permissions
                     </Link>
+                    <Link href="/admin/accessorials" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors">
+                        <Settings className="h-4 w-4" />
+                        Accessorials
+                    </Link>
                     <Link href="/admin/settings" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors">
                         <Settings className="h-4 w-4" />
                         Email Options
