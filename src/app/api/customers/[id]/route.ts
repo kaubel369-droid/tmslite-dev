@@ -44,7 +44,8 @@ export async function PUT(request: Request, context: any) {
                 dispatch_notes: body.dispatch_notes,
                 credit_limit: body.credit_limit || 0,
                 payment_terms: body.payment_terms,
-                sales_person_id: body.sales_person_id
+                sales_person_id: body.sales_person_id,
+                carrier_configs: body.carrier_configs
             })
             .eq('id', id)
             .select()

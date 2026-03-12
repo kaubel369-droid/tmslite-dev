@@ -1,9 +1,20 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Truck, MapPin, Package, Plus, Trash2, Search, Loader2, ChevronDown, Check } from 'lucide-react';
+import { Truck, MapPin, Package, Plus, Trash2, Search, Loader2, ChevronDown, Check, Shield, X, Settings, AlertCircle, CheckCircle2, Save } from 'lucide-react';
 import { FreightItem, RateQuote } from '@/lib/carriers/interfaces';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/utils/supabase/client';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface Address {
     zip: string;
@@ -27,13 +38,21 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
     const [origin, setOrigin] = useState<Address>({ zip: '', city: '', state: '' });
     const [destination, setDestination] = useState<Address>({ zip: '', city: '', state: '' });
     const [items, setItems] = useState<ProductLine[]>([
-        { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 0 }
+        { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64 }
     ]);
     const [selectedAccessorials, setSelectedAccessorials] = useState<string[]>([]);
     const [accessorialsOptions, setAccessorialsOptions] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [quotes, setQuotes] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
+
+    // Career Manage States
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const [carrierConfigs, setCarrierConfigs] = useState<any>({ default_margin: 15, carriers: {} });
+    const [carriersList, setCarriersList] = useState<any[]>([]);
+    const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [isSavingConfigs, setIsSavingConfigs] = useState(false);
+    const [tempAccessorial, setTempAccessorial] = useState<string>("");
 
     // Zip Lookup States
     const [originLoading, setOriginLoading] = useState(false);
@@ -43,7 +62,67 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
 
     useEffect(() => {
         fetchAccessorials();
-    }, []);
+        fetchUserData();
+        if (customerId) fetchCustomerConfigs();
+    }, [customerId]);
+
+    const fetchUserData = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+            if (profile) setUserRole(profile.role);
+        }
+    };
+
+    const fetchCustomerConfigs = async () => {
+        try {
+            const res = await fetch(`/api/customers/${customerId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.customer?.carrier_configs) {
+                    setCarrierConfigs(data.customer.carrier_configs);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to load customer configs", err);
+        }
+    };
+
+    const fetchCarriers = async () => {
+        try {
+            const res = await fetch('/api/carriers');
+            if (res.ok) {
+                const data = await res.json();
+                // Filter only those with API enabled
+                setCarriersList(data.carriers?.filter((c: any) => c.api_enabled) || []);
+            }
+        } catch (err) {
+            console.error("Failed to load carriers", err);
+        }
+    };
+
+    const handleSaveConfigs = async () => {
+        setIsSavingConfigs(true);
+        try {
+            const res = await fetch(`/api/customers/${customerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ carrier_configs: carrierConfigs })
+            });
+            if (res.ok) {
+                setIsManageModalOpen(false);
+            }
+        } catch (err) {
+            console.error("Failed to save configs", err);
+        } finally {
+            setIsSavingConfigs(false);
+        }
+    };
 
     const fetchAccessorials = async () => {
         try {
@@ -400,52 +479,85 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                 {/* Footer Controls */}
                 <div id="footer-controls" className="pt-6 border-t border-slate-100 flex flex-col md:flex-row items-end justify-between gap-6">
                     {/* Accessorials */}
-                    <div className="w-full md:w-1/2 space-y-2">
-                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-500">Accessorials (Max 6)</label>
-                        <div className="relative group">
+                    {/* Accessorials */}
+                    <div className="w-full md:w-1/2 space-y-3">
+                        <label className="block text-xs font-bold uppercase tracking-widest text-slate-500">Accessorials</label>
+                        <div className="flex gap-2">
                             <select 
-                                multiple
-                                value={selectedAccessorials}
-                                onChange={(e) => {
-                                    const vals = Array.from(e.target.selectedOptions, option => option.value);
-                                    if (vals.length <= 6) setSelectedAccessorials(vals);
-                                }}
-                                className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm min-h-[120px]"
+                                value={tempAccessorial}
+                                onChange={(e) => setTempAccessorial(e.target.value)}
+                                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm"
                             >
-                                {accessorialsOptions.map(opt => (
-                                    <option key={opt.id} value={opt.id} className="py-1">{opt.name}</option>
-                                ))}
-                                {accessorialsOptions.length === 0 && (
-                                    <>
-                                        <option value="liftgate_pickup">Liftgate Pickup</option>
-                                        <option value="liftgate_delivery">Liftgate Delivery</option>
-                                        <option value="residential_delivery">Residential Delivery</option>
-                                        <option value="inside_delivery">Inside Delivery</option>
-                                        <option value="limited_access">Limited Access</option>
-                                        <option value="notification">Prior Notification</option>
-                                    </>
-                                )}
+                                <option value="">Select Accessorial...</option>
+                                {accessorialsOptions
+                                    .filter(opt => !selectedAccessorials.includes(opt.id))
+                                    .map(opt => (
+                                        <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                    ))
+                                }
                             </select>
-                            <div className="absolute top-2 right-2 pointer-events-none text-slate-300">
-                                <ChevronDown className="h-5 w-5" />
-                            </div>
+                            <button 
+                                onClick={() => {
+                                    if (tempAccessorial && selectedAccessorials.length < 6) {
+                                        setSelectedAccessorials([...selectedAccessorials, tempAccessorial]);
+                                        setTempAccessorial("");
+                                    }
+                                }}
+                                disabled={!tempAccessorial || selectedAccessorials.length >= 6}
+                                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                            >
+                                Add
+                            </button>
                         </div>
-                        <p className="text-[10px] text-slate-400 italic">Hold Ctrl/Cmd to select multiple.</p>
+                        
+                        <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                            {selectedAccessorials.map(accId => {
+                                const acc = accessorialsOptions.find(o => o.id === accId);
+                                return (
+                                    <div key={accId} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1.5 border border-indigo-100 group">
+                                        {acc?.name || accId}
+                                        <button 
+                                            onClick={() => setSelectedAccessorials(prev => prev.filter(id => id !== accId))}
+                                            className="hover:text-indigo-900"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                            {selectedAccessorials.length === 0 && (
+                                <span className="text-[10px] text-slate-400 italic">No accessorials selected</span>
+                            )}
+                        </div>
+                        <p className="text-[10px] text-slate-400">Total: {selectedAccessorials.length}/6</p>
                     </div>
 
-                    <button 
-                        id="get-rates-btn"
-                        onClick={handleGetRates}
-                        disabled={loading || !origin.zip || !destination.zip}
-                        className="w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                            <Search className="h-5 w-5" />
+                    <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+                        {customerId && (userRole === 'Admin' || userRole === 'Supervisor') && (
+                            <button 
+                                onClick={() => {
+                                    fetchCarriers();
+                                    setIsManageModalOpen(true);
+                                }}
+                                className="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1.5 mr-auto md:mr-0 px-2 py-1 hover:bg-indigo-50 rounded-lg transition-all"
+                            >
+                                <Settings className="h-3.5 w-3.5" /> Manage Carriers
+                            </button>
                         )}
-                        Get Rates
-                    </button>
+                        <button 
+                            id="get-rates-btn"
+                            onClick={handleGetRates}
+                            disabled={loading || !origin.zip || !destination.zip}
+                            className="w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <Search className="h-5 w-5" />
+                            )}
+                            Get Rates
+                        </button>
+                    </div>
                 </div>
 
                 {/* Error Banner */}
@@ -531,6 +643,104 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                     </div>
                 )}
             </div>
+
+            {/* Manage Carriers Modal */}
+            <Dialog open={isManageModalOpen} onOpenChange={setIsManageModalOpen}>
+                <DialogContent className="sm:max-w-2xl bg-white border-0 shadow-2xl p-0 overflow-hidden">
+                    <div className="p-6 bg-slate-50 border-b border-slate-200">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <Shield className="h-6 w-6 text-indigo-600" />
+                                Manage Carrier Settings
+                            </DialogTitle>
+                            <DialogDescription className="text-slate-500">
+                                Blacklist carriers or set custom margins for this customer.
+                            </DialogDescription>
+                        </DialogHeader>
+                    </div>
+
+                    <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center justify-between">
+                            <div>
+                                <h4 className="text-sm font-bold text-indigo-900">Default Margin</h4>
+                                <p className="text-xs text-indigo-700">Applied if no carrier-specific margin is set.</p>
+                            </div>
+                            <div className="relative">
+                                <input 
+                                    type="number" 
+                                    value={carrierConfigs.default_margin}
+                                    onChange={(e) => setCarrierConfigs({ ...carrierConfigs, default_margin: parseFloat(e.target.value) || 0 })}
+                                    className="w-24 border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-bold text-indigo-900" 
+                                />
+                                <span className="absolute right-8 top-2 text-slate-400">%</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400">Carrier Overrides</h4>
+                            <div className="divide-y divide-slate-100 border border-slate-100 rounded-xl bg-white shadow-sm overflow-hidden">
+                                {carriersList.map(carrier => {
+                                    const config = carrierConfigs.carriers[carrier.id] || { blacklisted: false, margin: "" };
+                                    return (
+                                        <div key={carrier.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={config.blacklisted}
+                                                    onChange={(e) => {
+                                                        const newCarriers = { ...carrierConfigs.carriers };
+                                                        newCarriers[carrier.id] = { ...config, blacklisted: e.target.checked };
+                                                        setCarrierConfigs({ ...carrierConfigs, carriers: newCarriers });
+                                                    }}
+                                                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div>
+                                                    <p className={cn("text-sm font-bold", config.blacklisted ? "text-slate-400 line-through" : "text-slate-800")}>
+                                                        {carrier.name}
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-400 font-mono">{carrier.scac}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase">Margin:</span>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder={carrierConfigs.default_margin.toString()}
+                                                        value={config.margin}
+                                                        onChange={(e) => {
+                                                            const newCarriers = { ...carrierConfigs.carriers };
+                                                            newCarriers[carrier.id] = { ...config, margin: e.target.value === "" ? "" : parseFloat(e.target.value) };
+                                                            setCarrierConfigs({ ...carrierConfigs, carriers: newCarriers });
+                                                        }}
+                                                        disabled={config.blacklisted}
+                                                        className="w-20 border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white text-right font-medium disabled:bg-slate-50 disabled:text-slate-300" 
+                                                    />
+                                                    <span className="absolute right-2 top-1.5 text-slate-300 text-xs">%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setIsManageModalOpen(false)}>Cancel</Button>
+                            <Button 
+                                onClick={handleSaveConfigs} 
+                                disabled={isSavingConfigs}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6"
+                            >
+                                {isSavingConfigs ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                Save Settings
+                            </Button>
+                        </DialogFooter>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

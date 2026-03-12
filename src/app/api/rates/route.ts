@@ -59,30 +59,60 @@ export async function POST(request: Request) {
         // 4. Fetch the normalized rates
         let rates = await ratingService.getAggregatedRates(shipment);
 
-        // Filter by carrier if carrierId is provided
-        if (carrierId) {
-            const { data: carrier } = await supabase
-                .from('carriers')
-                .select('scac')
-                .eq('id', carrierId)
+        // 5. Fetch carrier configs and mapping
+        let carrierConfigs = { default_margin: 15, carriers: {} as any };
+        if (customerId) {
+            const { data: customer } = await supabase
+                .from('customers')
+                .select('carrier_configs')
+                .eq('id', customerId)
                 .single();
-            
-            if (carrier?.scac) {
-                rates = rates.filter(r => r.scac === carrier.scac);
+            if (customer?.carrier_configs) {
+                carrierConfigs = customer.carrier_configs;
             }
         }
 
-        // 5. Apply markup and save to rate_quotes table
-        const quotesWithMargin = rates.map(quote => ({
-            ...quote,
-            customer_total_rate: parseFloat((quote.totalCost * 1.15).toFixed(2)) // 15% markup
-        }));
+        const { data: carriers } = await supabase
+            .from('carriers')
+            .select('id, scac')
+            .eq('api_enabled', true);
+        
+        const scacToId = (carriers || []).reduce((acc: any, c: any) => {
+            if (c.scac) acc[c.scac] = c.id;
+            return acc;
+        }, {});
+
+        // 6. Filter by blacklisted and calculate margins
+        const filteredRates = rates.filter(rate => {
+            const carrierId = scacToId[rate.scac];
+            if (carrierId && carrierConfigs.carriers[carrierId]?.blacklisted) {
+                return false;
+            }
+            return true;
+        });
+
+        const quotesWithMargin = filteredRates.map(quote => {
+            const carrierId = scacToId[quote.scac];
+            const carrierConfig = carrierId ? carrierConfigs.carriers[carrierId] : null;
+            const marginPercent = (carrierConfig?.margin !== undefined && carrierConfig?.margin !== "") 
+                ? carrierConfig.margin 
+                : carrierConfigs.default_margin;
+            
+            const marginMultiplier = 1 + (marginPercent / 100);
+            const customer_total_rate = parseFloat((quote.totalCost * marginMultiplier).toFixed(2));
+
+            return {
+                ...quote,
+                carrier_id: carrierId || null,
+                customer_total_rate
+            };
+        });
 
         // Log results to rate_quotes table
         if (quotesWithMargin.length > 0) {
             const quotesToInsert = quotesWithMargin.map(q => ({
                 org_id: profile.org_id,
-                carrier_id: carrierId || null, // If we didn't filter by carrier, this might be null or we could look up the carrier id by SCAC
+                carrier_id: q.carrier_id,
                 base_rate: q.details?.baseRate || q.totalCost * 0.8,
                 total_rate: q.totalCost,
                 customer_total_rate: q.customer_total_rate,
@@ -97,7 +127,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ quotes: quotesWithMargin.map(q => ({
             ...q,
-            customerCost: q.customer_total_rate // rename for back-compat with UI if needed
+            customerCost: q.customer_total_rate
         })) }, { status: 200 });
     } catch (error) {
         console.error('Error fetching rates:', error);
