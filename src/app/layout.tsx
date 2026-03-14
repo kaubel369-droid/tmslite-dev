@@ -10,8 +10,8 @@ import { signout } from '@/app/login/actions';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'TMSLite Dev',
-  description: 'Direct Carrier TMS and Rate Shop',
+  title: 'TMSLite Dashboard',
+  description: 'Freight Management Dashboard',
 };
 
 export default async function RootLayout({
@@ -48,7 +48,7 @@ export default async function RootLayout({
                   TMSLite
                 </Link>
                 <div className="flex gap-6 font-medium text-sm text-slate-600 hidden md:flex">
-                  <Link href="/" className="hover:text-indigo-600 transition-colors">Rate Shop</Link>
+                  <Link href="/" className="hover:text-indigo-600 transition-colors">Dashboard</Link>
                   <Link href="/loads" className="hover:text-indigo-600 transition-colors">Load Board</Link>
                   <div className="relative group py-5 -my-5">
                     <button className="hover:text-indigo-600 transition-colors flex items-center gap-1 h-full font-medium">
