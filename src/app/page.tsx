@@ -23,6 +23,11 @@ export default function Dashboard() {
   const [command, setCommand] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
+  
+  const [statsData, setStatsData] = useState<any>(null);
+  const [recentShipments, setRecentShipments] = useState<any[]>([]);
+  const [activityData, setActivityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function getProfile() {
@@ -37,7 +42,25 @@ export default function Dashboard() {
         setRole(profile?.role || 'User');
       }
     }
+
+    async function fetchDashboardData() {
+      try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+        if (data) {
+          setStatsData(data.stats);
+          setRecentShipments(data.recentShipments || []);
+          setActivityData(data.activityLog || []);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     getProfile();
+    fetchDashboardData();
   }, []);
 
   const handleRunCommand = async () => {
@@ -82,13 +105,13 @@ export default function Dashboard() {
   };
 
   const stats = [
-    { id: 'active-loads', label: 'Active Loads', value: '12', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { id: 'new-loads', label: 'New Loads', value: '4', icon: Plus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { id: 'active-customers', label: 'Active Customers', value: '28', icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { id: 'active-loads', label: 'Active Loads', value: loading ? '...' : (statsData?.activeLoads || '0'), icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'new-loads', label: 'New Loads', value: loading ? '...' : (statsData?.newLoads || '0'), icon: Plus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'active-customers', label: 'Active Customers', value: loading ? '...' : (statsData?.activeCustomers || '0'), icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
     { 
       id: 'monthly-revenue',
       label: 'Monthly Revenue', 
-      value: '$42,500', 
+      value: loading ? '...' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(statsData?.monthlyRevenue || 0), 
       icon: TrendingUp, 
       color: 'text-violet-600', 
       bg: 'bg-violet-50',
@@ -103,11 +126,11 @@ export default function Dashboard() {
     return true;
   });
 
-  const recentActivity = [
-    { id: 1, type: 'load', title: 'Load #5829 Delivered', time: '2 hours ago', status: 'Completed' },
-    { id: 2, type: 'load', title: 'New Quote for ABC Corp', time: '4 hours ago', status: 'Pending' },
-    { id: 3, type: 'alert', title: 'Delayed Shipment #5810', time: '5 hours ago', status: 'Alert' },
-    { id: 4, type: 'customer', title: 'New Customer: Zenith Logistics', time: '1 day ago', status: 'Active' },
+  const recentActivity = activityData.length > 0 ? activityData.map(item => ({
+    ...item,
+    time: new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + (new Date(item.time).toDateString() === new Date().toDateString() ? 'Today' : new Date(item.time).toLocaleDateString())
+  })) : [
+    { id: 'no-activity', type: 'info', title: 'No recent activity', time: '', status: 'Clean' }
   ];
 
   return (
@@ -224,16 +247,24 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <tr key={i} className="hover:bg-slate-50/50 transition-colors cursor-pointer">
-                          <td className="px-6 py-4 font-bold text-slate-700">#58{20 + i}</td>
-                          <td className="px-6 py-4 font-medium text-slate-600">Global Logistics Inc.</td>
-                          <td className="px-6 py-4 text-slate-500 font-medium">Chicago, IL → Dallas, TX</td>
+                      {loading ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center text-slate-400">Loading shipments...</td>
+                        </tr>
+                      ) : recentShipments.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-4 text-center text-slate-400">No shipments found.</td>
+                        </tr>
+                      ) : recentShipments.map((load) => (
+                        <tr key={load.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer" onClick={() => router.push('/loads')}>
+                          <td className="px-6 py-4 font-bold text-slate-700">#{load.load_number}</td>
+                          <td className="px-6 py-4 font-medium text-slate-600">{load.customer?.company_name || 'Generic Customer'}</td>
+                          <td className="px-6 py-4 text-slate-500 font-medium">{load.origin_zip || '--'} → {load.destination_zip || '--'}</td>
                           <td className="px-6 py-4">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                              i % 2 === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+                              ['Delivered', 'Invoiced'].includes(load.status) ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
                             }`}>
-                              {i % 2 === 0 ? 'Delivered' : 'In Transit'}
+                              {load.status}
                             </span>
                           </td>
                         </tr>
