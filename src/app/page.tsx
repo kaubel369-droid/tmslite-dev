@@ -197,7 +197,7 @@ export default function Dashboard() {
               feedback.type === 'error' ? 'text-red-600' : 'text-indigo-600'
             }`}>
               {feedback.type === 'success' ? <ArrowUpRight className="h-4 w-4" /> : 
-               feedback.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+              feedback.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
               {feedback.message}
             </div>
           )}
