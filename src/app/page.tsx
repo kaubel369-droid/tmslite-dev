@@ -15,8 +15,14 @@ import {
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 
+import { useRouter } from 'next/navigation';
+
 export default function Dashboard() {
+  const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
+  const [command, setCommand] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info', message: string } | null>(null);
 
   useEffect(() => {
     async function getProfile() {
@@ -33,6 +39,47 @@ export default function Dashboard() {
     }
     getProfile();
   }, []);
+
+  const handleRunCommand = async () => {
+    if (!command.trim()) return;
+    
+    setIsProcessing(true);
+    setFeedback(null);
+
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const input = command.toLowerCase();
+    
+    if (input.includes('load') || input.includes('board') || input.includes('shipment')) {
+      setFeedback({ type: 'success', message: 'Navigating to Load Board...' });
+      setTimeout(() => router.push('/loads'), 500);
+    } else if (input.includes('customer') || input.includes('client')) {
+      setFeedback({ type: 'success', message: 'Navigating to Customers...' });
+      setTimeout(() => router.push('/customers'), 500);
+    } else if (input.includes('carrier') || input.includes('truck')) {
+      setFeedback({ type: 'success', message: 'Navigating to Carriers...' });
+      setTimeout(() => router.push('/carriers'), 500);
+    } else if (input.includes('lead') || input.includes('sales')) {
+      setFeedback({ type: 'success', message: 'Navigating to Sales Leads...' });
+      setTimeout(() => router.push('/sales-leads'), 500);
+    } else if (input.includes('admin') || input.includes('manage') || input.includes('user')) {
+      setFeedback({ type: 'success', message: 'Navigating to Admin Settings...' });
+      setTimeout(() => router.push('/admin/users'), 500);
+    } else if (input.includes('shipper') || input.includes('consignee')) {
+      setFeedback({ type: 'success', message: 'Navigating to Shippers & Consignees...' });
+      setTimeout(() => router.push('/shipper-consignees'), 500);
+    } else if (input.includes('report') || input.includes('stats')) {
+      setFeedback({ type: 'info', message: 'Reporting features are coming soon to the dashboard.' });
+    } else {
+      setFeedback({ 
+        type: 'error', 
+        message: "I'm not sure how to help with that yet. Try 'Create a load' or 'Show customers'." 
+      });
+    }
+
+    setIsProcessing(false);
+  };
 
   const stats = [
     { id: 'active-loads', label: 'Active Loads', value: '12', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -95,22 +142,43 @@ export default function Dashboard() {
           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex items-center p-2">
             <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
-              <Activity className="h-6 w-6 animate-pulse" />
+              <Activity className={`${isProcessing ? 'animate-spin' : 'animate-pulse'} h-6 w-6`} />
             </div>
             <input 
               type="text" 
+              value={command}
+              onChange={(e) => setCommand(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleRunCommand()}
               placeholder="Ask AI to 'Create a load', 'Find a customer', or 'Show transit alerts'..." 
               className="flex-1 bg-transparent border-none focus:ring-0 px-4 text-slate-700 font-medium placeholder:text-slate-400 text-lg"
+              disabled={isProcessing}
             />
             <div className="flex items-center gap-2 pr-2">
               <kbd className="hidden sm:inline-flex h-6 items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-500">
                 <span className="text-xs">⌘</span>K
               </kbd>
-              <button className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95">
-                Run Command
+              <button 
+                onClick={handleRunCommand}
+                disabled={isProcessing || !command.trim()}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed min-w-[120px]"
+              >
+                {isProcessing ? 'Thinking...' : 'Run Command'}
               </button>
             </div>
           </div>
+          
+          {/* Feedback Message */}
+          {feedback && (
+            <div className={`mt-2 ml-4 flex items-center gap-2 text-sm font-bold animate-in fade-in slide-in-from-top-1 duration-300 ${
+              feedback.type === 'success' ? 'text-emerald-600' : 
+              feedback.type === 'error' ? 'text-red-600' : 'text-indigo-600'
+            }`}>
+              {feedback.type === 'success' ? <ArrowUpRight className="h-4 w-4" /> : 
+               feedback.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+              {feedback.message}
+            </div>
+          )}
+
           {/* Subtle AI gradient glow under the input */}
           <div className="absolute bottom-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-20"></div>
         </div>
