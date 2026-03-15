@@ -373,8 +373,8 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
     }
 };
 
-export default async function TemplateEditorPage({ params }: { params: { slug: string } }) {
-    const { slug } = params;
+export default async function TemplateEditorPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
     const supabase = await createClient();
 
     // Get organization ID
