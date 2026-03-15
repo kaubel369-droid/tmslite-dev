@@ -32,9 +32,10 @@ interface LTLRatingScreenProps {
     customerId?: string;
     carrierId?: string;
     initialData?: any;
+    onQuoteSaved?: () => void;
 }
 
-export default function LTLRatingScreen({ customerId, carrierId, initialData }: LTLRatingScreenProps) {
+export default function LTLRatingScreen({ customerId, carrierId, initialData, onQuoteSaved }: LTLRatingScreenProps) {
     const [origin, setOrigin] = useState<Address>({ zip: '', city: '', state: '' });
     const [destination, setDestination] = useState<Address>({ zip: '', city: '', state: '' });
     const [items, setItems] = useState<ProductLine[]>([
@@ -45,6 +46,8 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
     const [loading, setLoading] = useState(false);
     const [quotes, setQuotes] = useState<any[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [isSavingQuote, setIsSavingQuote] = useState(false);
+    const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
 
     // Career Manage States
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -216,6 +219,7 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
         setLoading(true);
         setError(null);
         setQuotes([]);
+        setSavedQuoteId(null);
 
         try {
             const shipment = {
@@ -245,6 +249,51 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
             setError(err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveQuote = async (quote: any) => {
+        if (!customerId) return;
+        setIsSavingQuote(true);
+        setError(null);
+
+        try {
+            const payload = {
+                customer_id: customerId,
+                carrier_id: quote.carrier_id,
+                carrier_name: quote.carrier,
+                scac: quote.scac,
+                base_rate: quote.details?.baseRate || quote.totalCost * 0.8,
+                fuel_surcharge: quote.details?.fuelSurcharge || 0,
+                accessorials_total: 0, // Could be calculated if available
+                total_carrier_rate: quote.totalCost,
+                customer_rate: quote.customerCost || quote.total_rate || quote.customer_total_rate,
+                transit_days: quote.transitDays,
+                origin_info: origin,
+                destination_info: destination,
+                items: items,
+                accessorials: selectedAccessorials
+            };
+
+            const res = await fetch('/api/quotes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to save quote');
+            }
+
+            const data = await res.json();
+            setSavedQuoteId(data.quote.id);
+            if (onQuoteSaved) onQuoteSaved();
+        } catch (err: any) {
+            console.error('Error saving quote:', err);
+            setError(err.message);
+        } finally {
+            setIsSavingQuote(false);
         }
     };
 
@@ -628,8 +677,22 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData }: 
                                                 ${(quote.customerCost || quote.totalCost * 1.15).toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <button className="bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-700 font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-2 ml-auto shadow-sm active:scale-95">
-                                                    Select
+                                                <button 
+                                                   onClick={() => handleSaveQuote(quote)}
+                                                   disabled={isSavingQuote || savedQuoteId === quote.id}
+                                                   className={cn(
+                                                       "font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-2 ml-auto shadow-sm active:scale-95",
+                                                       savedQuoteId === quote.id 
+                                                           ? "bg-emerald-50 text-emerald-600 border-2 border-emerald-100" 
+                                                           : "bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-700"
+                                                   )}
+                                                >
+                                                    {isSavingQuote && !savedQuoteId && !error ? (
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    ) : savedQuoteId === quote.id ? (
+                                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    ) : null}
+                                                    {savedQuoteId === quote.id ? 'Saved' : 'Select'}
                                                 </button>
                                             </td>
                                         </tr>

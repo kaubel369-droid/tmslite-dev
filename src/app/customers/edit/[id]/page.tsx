@@ -14,6 +14,18 @@ type Contact = { id: string; name: string; phone: string; ext: string; cell_phon
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
 type ShipperConsignee = { id: string; name: string; address: string; city: string; state: string; zip: string; phone: string; email: string; website: string; status: string; notes: string };
 type SalesRep = { id: string; first_name: string; last_name: string };
+type Quote = {
+    id: string;
+    quote_number: string;
+    carrier_name: string;
+    scac: string;
+    total_carrier_rate: number;
+    customer_rate: number;
+    transit_days: number;
+    origin_info: any;
+    destination_info: any;
+    created_at: string;
+};
 
 export default function EditCustomerPage() {
     const router = useRouter();
@@ -33,6 +45,7 @@ export default function EditCustomerPage() {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [shippers, setShippers] = useState<ShipperConsignee[]>([]);
     const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
+    const [quotes, setQuotes] = useState<Quote[]>([]);
 
     // Shipper Dialog State
     const [isShipperOpen, setIsShipperOpen] = useState(false);
@@ -89,8 +102,31 @@ export default function EditCustomerPage() {
             }
         };
 
-        if (id) fetchAllData();
+        const fetchQuotes = async () => {
+            try {
+                const res = await fetch(`/api/quotes?customerId=${id}`);
+                const data = await res.json();
+                setQuotes(data.quotes || []);
+            } catch (err) {
+                console.error("Failed to fetch quotes", err);
+            }
+        };
+
+        if (id) {
+            fetchAllData();
+            fetchQuotes();
+        }
     }, [id]);
+
+    const fetchQuotes = async () => {
+        try {
+            const res = await fetch(`/api/quotes?customerId=${id}`);
+            const data = await res.json();
+            setQuotes(data.quotes || []);
+        } catch (err) {
+            console.error("Failed to fetch quotes", err);
+        }
+    };
 
     // Customer Info Handlers
     const handleInfoChange = (e: any) => {
@@ -679,16 +715,74 @@ export default function EditCustomerPage() {
 
                     {/* Quotes Tab */}
                     <TabsContent value="quotes" className="outline-none">
-                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-16 flex flex-col items-center justify-center text-slate-500">
-                            <h3 className="text-xl font-medium text-slate-800 mb-2">Freight Quotes</h3>
-                            <p className="max-w-md text-center">There are no active quotes to display.</p>
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-indigo-600" /> 
+                                    Saved Freight Quotes ({quotes.length})
+                                </h2>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead>Quote #</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Carrier</TableHead>
+                                        <TableHead>Origin / Dest</TableHead>
+                                        <TableHead className="text-right">Carrier Rate</TableHead>
+                                        <TableHead className="text-right text-indigo-600">Customer Rate</TableHead>
+                                        <TableHead className="text-center">Transit</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {quotes.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                                <div className="flex flex-col items-center">
+                                                    <FileText className="h-12 w-12 text-slate-200 mb-3" />
+                                                    <p className="font-medium">No saved quotes found.</p>
+                                                    <p className="text-sm">Run a rate quote to save one here.</p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        quotes.map(quote => (
+                                            <TableRow key={quote.id} className="hover:bg-slate-50 transition-colors">
+                                                <TableCell className="font-bold text-indigo-600 font-mono">{quote.quote_number}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold">{quote.carrier_name}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono uppercase">{quote.scac}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="text-xs space-y-0.5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-[10px] bg-slate-100 px-1 rounded font-bold text-slate-500">ORG</span>
+                                                            {quote.origin_info?.city}, {quote.origin_info?.state} {quote.origin_info?.zip}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-[10px] bg-slate-100 px-1 rounded font-bold text-slate-500">DST</span>
+                                                            {quote.destination_info?.city}, {quote.destination_info?.state} {quote.destination_info?.zip}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium text-slate-600">${Number(quote.total_carrier_rate).toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-bold text-indigo-600">${Number(quote.customer_rate).toFixed(2)}</TableCell>
+                                                <TableCell className="text-center font-bold text-slate-800">{quote.transit_days} <span className="text-[10px] text-slate-400 font-normal">D</span></TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </TabsContent>
 
                     {/* Rating Tab */}
                     <TabsContent value="rating" className="outline-none">
                         <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-6">
-                            <LTLRatingScreen customerId={id} />
+                            <LTLRatingScreen customerId={id} onQuoteSaved={fetchQuotes} />
                         </div>
                     </TabsContent>
 
