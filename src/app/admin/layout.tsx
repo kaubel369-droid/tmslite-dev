@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { LayoutDashboard, Users, UserCog, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, UserCog, Settings, FileText } from 'lucide-react'
 
 export default async function AdminLayout({
     children,
@@ -52,6 +52,10 @@ export default async function AdminLayout({
                     <Link href="/admin/settings" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors">
                         <Settings className="h-4 w-4" />
                         Email Options
+                    </Link>
+                    <Link href="/admin/templates" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors">
+                        <FileText className="h-4 w-4" />
+                        Templates
                     </Link>
                 </nav>
             </aside>
