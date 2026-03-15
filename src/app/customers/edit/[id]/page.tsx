@@ -51,6 +51,7 @@ export default function EditCustomerPage() {
     const [shippers, setShippers] = useState<ShipperConsignee[]>([]);
     const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
     const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [accessorialsList, setAccessorialsList] = useState<any[]>([]);
 
     // Shipper Dialog State
     const [isShipperOpen, setIsShipperOpen] = useState(false);
@@ -124,8 +125,21 @@ export default function EditCustomerPage() {
         if (id) {
             fetchAllData();
             fetchQuotes();
+            fetchAccessorials();
         }
     }, [id]);
+
+    const fetchAccessorials = async () => {
+        try {
+            const res = await fetch('/api/accessorials');
+            if (res.ok) {
+                const data = await res.json();
+                setAccessorialsList(data.accessorials || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch accessorials", err);
+        }
+    };
 
     const fetchQuotes = async () => {
         try {
@@ -852,17 +866,23 @@ export default function EditCustomerPage() {
                                                 <Table>
                                                     <TableHeader className="bg-slate-50">
                                                         <TableRow>
-                                                            <TableHead className="py-2 text-[10px]">Description</TableHead>
+                                                            <TableHead className="py-2 text-[10px]">Pcs</TableHead>
+                                                            <TableHead className="py-2 text-[10px]">Type</TableHead>
                                                             <TableHead className="py-2 text-[10px] text-right">Class</TableHead>
                                                             <TableHead className="py-2 text-[10px] text-right">Weight</TableHead>
+                                                            <TableHead className="py-2 text-[10px] text-right">Dimensions</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
                                                         {selectedQuote?.items?.map((item: any, idx: number) => (
                                                             <TableRow key={idx}>
-                                                                <TableCell className="py-2 text-xs">{item.description}</TableCell>
+                                                                <TableCell className="py-2 text-xs font-medium">{item.pcs}</TableCell>
+                                                                <TableCell className="py-2 text-xs">{item.type}</TableCell>
                                                                 <TableCell className="py-2 text-xs text-right">{item.class}</TableCell>
                                                                 <TableCell className="py-2 text-xs text-right text-slate-500">{item.weight} lbs</TableCell>
+                                                                <TableCell className="py-2 text-xs text-right whitespace-nowrap">
+                                                                    {item.length}x{item.width}x{item.height}
+                                                                </TableCell>
                                                             </TableRow>
                                                         ))}
                                                     </TableBody>
@@ -875,11 +895,14 @@ export default function EditCustomerPage() {
                                             </h4>
                                             {selectedQuote?.accessorials && selectedQuote.accessorials.length > 0 ? (
                                                 <div className="flex flex-wrap gap-2">
-                                                    {selectedQuote.accessorials.map((acc: any, idx: number) => (
-                                                        <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-medium">
-                                                            {acc}
-                                                        </span>
-                                                    ))}
+                                                    {selectedQuote.accessorials.map((accId: any, idx: number) => {
+                                                        const acc = accessorialsList.find(a => a.id === accId);
+                                                        return (
+                                                            <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-medium">
+                                                                {acc ? acc.name : accId}
+                                                            </span>
+                                                        );
+                                                    })}
                                                 </div>
                                             ) : (
                                                 <p className="text-xs text-slate-400 italic">No accessorials selected.</p>
