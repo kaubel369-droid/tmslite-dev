@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, ArrowLeft, Save, FileText, Trash2, Pencil, Upload, Download, Phone, Mail, Users, MapPin, Loader2, Truck, Plus } from 'lucide-react';
+import { Building2, ArrowLeft, Save, FileText, Trash2, Pencil, Upload, Download, Phone, Mail, Users, MapPin, Loader2, Truck, Plus, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,11 +19,16 @@ type Quote = {
     quote_number: string;
     carrier_name: string;
     scac: string;
+    base_rate: number;
+    fuel_surcharge: number;
+    accessorials_total: number;
     total_carrier_rate: number;
     customer_rate: number;
     transit_days: number;
     origin_info: any;
     destination_info: any;
+    items: any[];
+    accessorials: any[];
     created_at: string;
 };
 
@@ -60,6 +65,10 @@ export default function EditCustomerPage() {
     // Document States
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    
+    // Quote View State
+    const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+    const [isViewQuoteOpen, setIsViewQuoteOpen] = useState(false);
 
     // Initial Fetch
     useEffect(() => {
@@ -732,12 +741,13 @@ export default function EditCustomerPage() {
                                         <TableHead className="text-right">Carrier Rate</TableHead>
                                         <TableHead className="text-right text-indigo-600">Customer Rate</TableHead>
                                         <TableHead className="text-center">Transit</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {quotes.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                            <TableCell colSpan={8} className="text-center py-12 text-slate-500">
                                                 <div className="flex flex-col items-center">
                                                     <FileText className="h-12 w-12 text-slate-200 mb-3" />
                                                     <p className="font-medium">No saved quotes found.</p>
@@ -771,12 +781,152 @@ export default function EditCustomerPage() {
                                                 <TableCell className="text-right font-medium text-slate-600">${Number(quote.total_carrier_rate).toFixed(2)}</TableCell>
                                                 <TableCell className="text-right font-bold text-indigo-600">${Number(quote.customer_rate).toFixed(2)}</TableCell>
                                                 <TableCell className="text-center font-bold text-slate-800">{quote.transit_days} <span className="text-[10px] text-slate-400 font-normal">D</span></TableCell>
+                                                <TableCell className="text-right">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedQuote(quote);
+                                                            setIsViewQuoteOpen(true);
+                                                        }}
+                                                        className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
+                                                        title="View Quote"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </button>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     )}
                                 </TableBody>
                             </Table>
                         </div>
+
+                        {/* Quote Detail Modal */}
+                        <Dialog open={isViewQuoteOpen} onOpenChange={setIsViewQuoteOpen}>
+                            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader className="border-b pb-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <DialogTitle className="text-2xl font-bold text-indigo-600 flex items-center gap-2">
+                                                Quote {selectedQuote?.quote_number}
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Saved on {selectedQuote && new Date(selectedQuote.created_at).toLocaleString()}
+                                            </DialogDescription>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Carrier</span>
+                                            <span className="font-bold text-lg">{selectedQuote?.carrier_name}</span>
+                                            <span className="text-xs text-slate-500 block">{selectedQuote?.scac}</span>
+                                        </div>
+                                    </div>
+                                </DialogHeader>
+
+                                <div className="py-6 space-y-8">
+                                    {/* Shipping Lane */}
+                                    <div className="grid grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-100">
+                                        <div>
+                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+                                                <MapPin className="h-3 w-3" /> Origin
+                                            </h4>
+                                            <div className="font-semibold text-slate-900 leading-tight">
+                                                {selectedQuote?.origin_info?.city}, {selectedQuote?.origin_info?.state} {selectedQuote?.origin_info?.zip}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+                                                <MapPin className="h-3 w-3" /> Destination
+                                            </h4>
+                                            <div className="font-semibold text-slate-900 leading-tight">
+                                                {selectedQuote?.destination_info?.city}, {selectedQuote?.destination_info?.state} {selectedQuote?.destination_info?.zip}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Items & Accessorials */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                                <Users className="h-4 w-4 text-indigo-600" /> Shipment Items
+                                            </h4>
+                                            <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                                <Table>
+                                                    <TableHeader className="bg-slate-50">
+                                                        <TableRow>
+                                                            <TableHead className="py-2 text-[10px]">Description</TableHead>
+                                                            <TableHead className="py-2 text-[10px] text-right">Class</TableHead>
+                                                            <TableHead className="py-2 text-[10px] text-right">Weight</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {selectedQuote?.items?.map((item: any, idx: number) => (
+                                                            <TableRow key={idx}>
+                                                                <TableCell className="py-2 text-xs">{item.description}</TableCell>
+                                                                <TableCell className="py-2 text-xs text-right">{item.class}</TableCell>
+                                                                <TableCell className="py-2 text-xs text-right text-slate-500">{item.weight} lbs</TableCell>
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                                                <Plus className="h-4 w-4 text-indigo-600" /> Accessorials
+                                            </h4>
+                                            {selectedQuote?.accessorials && selectedQuote.accessorials.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {selectedQuote.accessorials.map((acc: any, idx: number) => (
+                                                        <span key={idx} className="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-medium">
+                                                            {acc}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-slate-400 italic">No accessorials selected.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Rate Summary */}
+                                    <div className="border border-indigo-100 bg-indigo-50/30 rounded-xl p-6">
+                                        <h4 className="text-sm font-bold text-slate-900 mb-4">Rate Breakdown</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-500 font-medium">Base Linehaul</span>
+                                                <span className="font-semibold text-slate-900">${Number(selectedQuote?.base_rate).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-500 font-medium">Fuel Surcharge</span>
+                                                <span className="font-semibold text-slate-900">${Number(selectedQuote?.fuel_surcharge).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-slate-500 font-medium">Accessorials Total</span>
+                                                <span className="font-semibold text-slate-900">${Number(selectedQuote?.accessorials_total).toFixed(2)}</span>
+                                            </div>
+                                            <div className="pt-3 border-t border-indigo-100 flex justify-between items-end">
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Carrier Rate</span>
+                                                    <span className="text-lg font-bold text-slate-900">${Number(selectedQuote?.total_carrier_rate).toFixed(2)}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block mb-1">Final Customer Rate</span>
+                                                    <span className="text-2xl font-bold text-indigo-600">${Number(selectedQuote?.customer_rate).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <DialogFooter className="border-t pt-4">
+                                    <button 
+                                        onClick={() => setIsViewQuoteOpen(false)}
+                                        className="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
+                                    >
+                                        Close Details
+                                    </button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </TabsContent>
 
                     {/* Rating Tab */}
