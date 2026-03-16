@@ -80,7 +80,28 @@ export async function GET() {
                 time: c.created_at,
                 status: 'Active'
             }))
-        ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        ];
+
+        // 7. Fetch Compliance Alerts (Unsatisfactory ratings or expiring insurance)
+        const { data: complianceIssues } = await supabase
+            .from('carriers')
+            .select('id, name, safety_rating')
+            .eq('safety_rating', 'Unsatisfactory')
+            .limit(3);
+
+        if (complianceIssues) {
+            complianceIssues.forEach(issue => {
+                activityLog.push({
+                    id: `compliance-${issue.id}`,
+                    type: 'alert',
+                    title: `Compliance Alert: ${issue.name}`,
+                    time: new Date().toISOString(),
+                    status: 'Alert'
+                });
+            });
+        }
+
+        activityLog.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
         return NextResponse.json({
             stats: {

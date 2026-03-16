@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import './globals.css';
 import Link from 'next/link';
-import { PackageOpen, LogOut, Shield } from 'lucide-react';
+import { PackageOpen, LogOut, Shield, TrendingUp } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { signout } from '@/app/login/actions';
 
@@ -21,18 +21,18 @@ export default async function RootLayout({
 }>) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  let isAdmin = false;
+  
   let userInitial = '';
+  let profile = null;
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: p } = await supabase
       .from('profiles')
       .select('role, first_name')
       .eq('id', user.id)
       .single()
-
-    isAdmin = profile?.role === 'Admin';
+    
+    profile = p;
     userInitial = profile?.first_name?.[0] || user.email?.[0]?.toUpperCase() || 'U';
   }
 
@@ -68,8 +68,15 @@ export default async function RootLayout({
               </div>
 
               <div className="flex items-center gap-4">
-                {isAdmin && (
-                  <Link href="/admin/users" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700 transition-colors">
+                {(profile?.role === 'Admin' || profile?.role === 'Supervisor') && (
+                  <Link href="/admin/reports" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700 transition-colors">
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="hidden sm:inline">Reports</span>
+                  </Link>
+                )}
+
+                {profile?.role === 'Admin' && (
+                  <Link href="/admin/users" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700 transition-colors pl-4 border-l border-slate-200">
                     <Shield className="h-4 w-4" />
                     <span className="hidden sm:inline">Admin</span>
                   </Link>

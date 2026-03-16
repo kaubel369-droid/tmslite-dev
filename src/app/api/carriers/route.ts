@@ -89,6 +89,8 @@ export async function POST(request: Request) {
                 mc_number: body.mc_number,
                 scac: body.scac,
                 insurance_status: body.insurance_status,
+                safety_rating: body.safety_rating,
+                last_safety_check: body.last_safety_check,
                 notes: body.notes,
                 api_key: body.api_key,
                 api_secret: body.api_secret,

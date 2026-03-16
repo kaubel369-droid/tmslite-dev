@@ -53,12 +53,12 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // Admin route protection
+    // Admin/Supervisor route protection
     if (user && request.nextUrl.pathname.startsWith('/admin')) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (profile?.role !== 'Admin') {
+        if (profile?.role !== 'Admin' && profile?.role !== 'Supervisor') {
             const url = request.nextUrl.clone()
-            url.pathname = '/' // Redirect to dashboard if not admin
+            url.pathname = '/' // Redirect to dashboard if not authorized
             return NextResponse.redirect(url)
         }
     }

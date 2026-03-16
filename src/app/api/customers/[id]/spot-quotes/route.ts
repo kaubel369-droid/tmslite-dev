@@ -39,7 +39,15 @@ export async function POST(
         const body = await request.json();
         
         // Get organization ID from profile
-        const { data: profile } = await supabase.from('profiles').select('org_id').single();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Unauthorized');
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('org_id')
+            .eq('id', user.id)
+            .single();
+            
         if (!profile?.org_id) throw new Error('Organization not found');
 
         const { products_list, ...rest } = body;

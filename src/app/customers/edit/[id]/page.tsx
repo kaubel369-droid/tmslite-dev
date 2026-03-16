@@ -77,6 +77,8 @@ export default function EditCustomerPage() {
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [spotQuotes, setSpotQuotes] = useState<SpotQuote[]>([]);
     const [accessorialsList, setAccessorialsList] = useState<any[]>([]);
+    const [customerUsers, setCustomerUsers] = useState<any[]>([]);
+    const [allProfiles, setAllProfiles] = useState<any[]>([]);
 
     // Shipper Dialog State
     const [isShipperOpen, setIsShipperOpen] = useState(false);
@@ -99,6 +101,10 @@ export default function EditCustomerPage() {
     // Spot Quote State
     const [isSpotQuoteOpen, setIsSpotQuoteOpen] = useState(false);
     const [editingSpotQuoteId, setEditingSpotQuoteId] = useState<string | undefined>(undefined);
+
+    // User Management State
+    const [isLinkUserOpen, setIsLinkUserOpen] = useState(false);
+    const [linkingUser, setLinkingUser] = useState(false);
 
     // Initial Fetch
     useEffect(() => {
@@ -156,6 +162,8 @@ export default function EditCustomerPage() {
             fetchQuotes();
             fetchSpotQuotes();
             fetchAccessorials();
+            fetchCustomerUsers();
+            fetchAllProfiles();
         }
     }, [id]);
 
@@ -188,6 +196,59 @@ export default function EditCustomerPage() {
             setSpotQuotes(data.quotes || []);
         } catch (err) {
             console.error("Failed to fetch spot quotes", err);
+        }
+    };
+    const fetchCustomerUsers = async () => {
+        try {
+            const res = await fetch(`/api/customers/${id}/users`);
+            const data = await res.json();
+            setCustomerUsers(data.users || []);
+        } catch (err) {
+            console.error("Failed to fetch customer users", err);
+        }
+    };
+
+    const fetchAllProfiles = async () => {
+        try {
+            // Fetch profiles to link
+            const res = await fetch('/api/admin/users'); // Assuming this exists or using a similar endpoint
+            if (res.ok) {
+                const data = await res.json();
+                setAllProfiles(data.users || []);
+            }
+        } catch (err) {
+            console.error("Failed to fetch all profiles", err);
+        }
+    };
+
+    const handleLinkUser = async (profileId: string) => {
+        setLinkingUser(true);
+        try {
+            const res = await fetch(`/api/customers/${id}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profileId }),
+            });
+            if (!res.ok) throw new Error('Failed to link user');
+            fetchCustomerUsers();
+            setIsLinkUserOpen(false);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setLinkingUser(false);
+        }
+    };
+
+    const handleUnlinkUser = async (profileId: string) => {
+        if (!confirm('Are you sure you want to unlink this user from the customer?')) return;
+        try {
+            const res = await fetch(`/api/customers/${id}/users?profileId=${profileId}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) throw new Error('Failed to unlink user');
+            fetchCustomerUsers();
+        } catch (err: any) {
+            alert(err.message);
         }
     };
 
@@ -428,6 +489,7 @@ export default function EditCustomerPage() {
                         <TabsTrigger value="quotes">Quotes</TabsTrigger>
                         <TabsTrigger value="rating">Rating</TabsTrigger>
                         <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
+                        <TabsTrigger value="users">Users ({customerUsers.length})</TabsTrigger>
                     </TabsList>
 
                     {/* Customer Info Tab */}
@@ -1167,6 +1229,89 @@ export default function EditCustomerPage() {
                                                         <Download className="h-4 w-4" />
                                                     </a>
                                                     <button onClick={() => handleDocumentDelete(doc.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Delete (Supervisor/Admin Only)">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </TabsContent>
+
+                    {/* Users Tab */}
+                    <TabsContent value="users" className="outline-none">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                                    <Users className="h-5 w-5 text-indigo-600" />
+                                    Customer Portal Users
+                                </h2>
+                                <Dialog open={isLinkUserOpen} onOpenChange={setIsLinkUserOpen}>
+                                    <DialogTrigger asChild>
+                                        <button className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+                                            <Plus className="h-4 w-4" /> Link User Profile
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>Link User to Customer</DialogTitle>
+                                            <DialogDescription>Select an existing user profile to grant them access to this customer portal.</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="py-4 space-y-4 max-h-96 overflow-y-auto px-1">
+                                            {allProfiles.filter(p => (p.role === 'Customer' || p.role === 'Customer Service Rep') && !customerUsers.find(cu => cu.id === p.id)).map(profile => (
+                                                <div key={profile.id} className="flex items-center justify-between p-3 border rounded-xl hover:bg-slate-50 transition-colors">
+                                                    <div>
+                                                        <p className="font-bold text-slate-800">{profile.first_name} {profile.last_name}</p>
+                                                        <p className="text-sm text-slate-500">{profile.email}</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleLinkUser(profile.id)}
+                                                        disabled={linkingUser}
+                                                        className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50"
+                                                    >
+                                                        Link
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {allProfiles.filter(p => (p.role === 'Customer' || p.role === 'Customer Service Rep') && !customerUsers.find(cu => cu.id === p.id)).length === 0 && (
+                                                <p className="text-center text-slate-500 py-4">No available user profiles found.</p>
+                                            )}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead>User Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {customerUsers.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} className="text-center py-8 text-slate-500">No users linked to this customer yet.</TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        customerUsers.map(user => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium text-slate-900">{user.first_name} {user.last_name}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <span className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-xs font-bold border border-indigo-100">
+                                                        {user.role}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <button 
+                                                        onClick={() => handleUnlinkUser(user.id)}
+                                                        className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                                        title="Unlink User"
+                                                    >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </TableCell>

@@ -32,6 +32,7 @@ export default function EditCarrierPage() {
         company_name: '', address: '', city: '', state: '', zip: '',
         phone: '', status: 'Active',
         website: '', dot_number: '', ein: '', mc_number: '', scac: '', insurance_status: '', notes: '',
+        safety_rating: '', last_safety_check: '',
         api_key: '', api_secret: '', api_url: '', api_account_number: '', api_username: '', api_password: '', api_enabled: false
     });
     const [insuranceData, setInsuranceData] = useState({
@@ -289,6 +290,7 @@ export default function EditCarrierPage() {
                         <TabsTrigger value="contacts">Contacts ({contacts.length})</TabsTrigger>
                         <TabsTrigger value="rating">Rating</TabsTrigger>
                         <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
+                        <TabsTrigger value="compliance">Compliance</TabsTrigger>
                         {(userRole === 'Admin' || userRole === 'Supervisor') && (
                             <TabsTrigger value="api_settings">API Settings</TabsTrigger>
                         )}
@@ -609,6 +611,95 @@ export default function EditCarrierPage() {
                                 <div className="pt-4 flex justify-end">
                                     <button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 shadow-sm">
                                         {saving ? <span className="animate-pulse">Saving...</span> : <><Save className="h-4 w-4" /> Save Insurance</>}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </TabsContent>
+
+                    {/* Compliance Tab */}
+                    <TabsContent value="compliance" className="outline-none">
+                        <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
+                            <form onSubmit={handleInfoSave} className="space-y-8">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    <div className="lg:col-span-2 space-y-6">
+                                        <div className="border-b border-slate-100 pb-6">
+                                            <h2 className="text-lg font-semibold text-slate-800 mb-4">Safety & Compliance</h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Safety Rating</label>
+                                                    <select name="safety_rating" value={formData.safety_rating || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                                        <option value="">Select Rating</option>
+                                                        <option value="Satisfactory">Satisfactory</option>
+                                                        <option value="Conditional">Conditional</option>
+                                                        <option value="Unsatisfactory">Unsatisfactory</option>
+                                                        <option value="None">None / Not Rated</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Last Safety Check</label>
+                                                    <input type="datetime-local" name="last_safety_check" value={formData.last_safety_check ? new Date(formData.last_safety_check).toISOString().slice(0, 16) : ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-b border-slate-100 pb-6">
+                                            <h2 className="text-lg font-semibold text-slate-800 mb-4">Authority & Identifiers</h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-slate-700 mb-1">DOT Number</label>
+                                                    <input type="text" name="dot_number" value={formData.dot_number || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-slate-700 mb-1">MC Number</label>
+                                                    <input type="text" name="mc_number" value={formData.mc_number || ''} onChange={handleInfoChange} className="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+                                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Carrier Scorecard</h3>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm font-medium text-slate-600">On-Time Pickup</span>
+                                                    <span className="text-sm font-bold text-slate-800">98%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
+                                                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '98%' }}></div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm font-medium text-slate-600">On-Time Delivery</span>
+                                                    <span className="text-sm font-bold text-slate-800">95%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
+                                                    <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '95%' }}></div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm font-medium text-slate-600">Cargo Claims</span>
+                                                    <span className="text-sm font-bold text-slate-800">0.5%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
+                                                    <div className="bg-amber-500 h-2 rounded-full" style={{ width: '5%' }}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-8 p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                                                <div className="text-center">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Overall Grade</p>
+                                                    <p className="text-4xl font-black text-indigo-600">A-</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex justify-end">
+                                    <button type="submit" disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 shadow-sm">
+                                        {saving ? <span className="animate-pulse">Saving...</span> : <><Save className="h-4 w-4" /> Save Compliance Info</>}
                                     </button>
                                 </div>
                             </form>

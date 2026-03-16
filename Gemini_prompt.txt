@@ -438,6 +438,49 @@ Sales person should be able to add, edit, and delete sales leads assigned to the
   this rating screen will be used on the customer and carrier rating tabs, and the rate shop
 
 ************************************************* 
+Add a section called Templates to the Admin page
+On this page add the following:
+Logo: place to upload a logo for the company to used troughout the system and on reports(place a copy of the current TMSLite logo in the logo field)
+Forms: 
+BOL Template
+Customer Rate Quote LTL Template
+Customer Spot Rate Quote Template
+Customer Invoice Template
+Customer Load Confirmation Template
+Carrier Load Confirmation Template(used to confirm a load with a carrier)
+
+Find examples of each of these forms and use them as templates. 
+The templates should have the fields that we are using in the application. 
+The templates should be editable. 
+
+********************************************************
+On the customer Quotes tab split the screen into 2 sections
+The top will remain the same but the bottom will be a grid of spot quotes
+have a button to create a new spot quote that will open a pop up modal to enter the quote information. 
+You can view or edit a quote by clicking on it in the grid. But you cannot delete a quote.
+Create a new table for spot quotes called customer_spot_quotes
+With the following fields:
+  1. Quote Number(sytem generated start at 1000)    
+  2. Customer
+  3. Quote Date
+  4. Rate
+  5. Shipper location(full address populated by drop down list of Shippers/Consignees with the option to add a new shipper/consignee)
+  6. Consignee location(full address populated by drop down list of Shippers/Consignees with the option to add a new shipper/consignee)
+  7. Pcs
+  8.Type(pallets, cartons, skids, etc)  
+  9. Weight
+  10. Cubic ft
+  11. Products
+  12. Accessorials
+  13. Additional Instructions(note field)
+  
+  Update the Spot Quotes template to include all of these fields  
+
+  ***********************************************************
+  
+
+
+
 
   
 
