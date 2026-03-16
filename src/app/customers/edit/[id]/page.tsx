@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
 import LTLRatingScreen from '@/components/LTLRatingScreen';
+import SpotQuoteModal from '@/components/SpotQuoteModal';
+
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Document = { id: string; file_name: string; file_path: string; url: string; created_at: string };
@@ -32,6 +34,28 @@ type Quote = {
     created_at: string;
 };
 
+type SpotQuote = {
+    id: string;
+    quote_number: string;
+    quote_date: string;
+    rate: number;
+    carrier_rate: number;
+    shipper: ShipperConsignee;
+    consignee: ShipperConsignee;
+    carrier?: {
+        id: string;
+        name: string;
+    };
+    pcs: number;
+    type: string;
+    weight: number;
+    cubic_ft: number;
+    products: any[];
+    accessorials: any[];
+    additional_instructions: string;
+    created_at: string;
+};
+
 export default function EditCustomerPage() {
     const router = useRouter();
     const params = useParams();
@@ -51,6 +75,7 @@ export default function EditCustomerPage() {
     const [shippers, setShippers] = useState<ShipperConsignee[]>([]);
     const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
     const [quotes, setQuotes] = useState<Quote[]>([]);
+    const [spotQuotes, setSpotQuotes] = useState<SpotQuote[]>([]);
     const [accessorialsList, setAccessorialsList] = useState<any[]>([]);
 
     // Shipper Dialog State
@@ -70,6 +95,10 @@ export default function EditCustomerPage() {
     // Quote View State
     const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
     const [isViewQuoteOpen, setIsViewQuoteOpen] = useState(false);
+
+    // Spot Quote State
+    const [isSpotQuoteOpen, setIsSpotQuoteOpen] = useState(false);
+    const [editingSpotQuoteId, setEditingSpotQuoteId] = useState<string | undefined>(undefined);
 
     // Initial Fetch
     useEffect(() => {
@@ -125,6 +154,7 @@ export default function EditCustomerPage() {
         if (id) {
             fetchAllData();
             fetchQuotes();
+            fetchSpotQuotes();
             fetchAccessorials();
         }
     }, [id]);
@@ -148,6 +178,16 @@ export default function EditCustomerPage() {
             setQuotes(data.quotes || []);
         } catch (err) {
             console.error("Failed to fetch quotes", err);
+        }
+    };
+
+    const fetchSpotQuotes = async () => {
+        try {
+            const res = await fetch(`/api/customers/${id}/spot-quotes`);
+            const data = await res.json();
+            setSpotQuotes(data.quotes || []);
+        } catch (err) {
+            console.error("Failed to fetch spot quotes", err);
         }
     };
 
@@ -812,6 +852,116 @@ export default function EditCustomerPage() {
                                     )}
                                 </TableBody>
                             </Table>
+
+                            {/* Spot Quotes Section */}
+                            <div className="p-6 border-t border-slate-200 flex justify-between items-center bg-slate-50 mt-8">
+                                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                                    <Truck className="h-5 w-5 text-indigo-600" /> 
+                                    Customer Spot Quotes ({spotQuotes.length})
+                                </h2>
+                                <button 
+                                    onClick={() => {
+                                        setEditingSpotQuoteId(undefined);
+                                        setIsSpotQuoteOpen(true);
+                                    }}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                >
+                                    <Plus className="h-4 w-4" /> New Spot Quote
+                                </button>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-slate-50">
+                                        <TableHead>Quote #</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Carrier</TableHead>
+                                        <TableHead>Shipper</TableHead>
+                                        <TableHead>Consignee</TableHead>
+                                        <TableHead className="text-right">Rate</TableHead>
+                                        <TableHead className="text-right">Carrier Rate</TableHead>
+                                        <TableHead>Items</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {spotQuotes.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                                <div className="flex flex-col items-center">
+                                                    <Truck className="h-12 w-12 text-slate-200 mb-3" />
+                                                    <p className="font-medium">No spot quotes found.</p>
+                                                    <p className="text-sm">Create a new spot quote to get started.</p>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        spotQuotes.map(quote => (
+                                            <TableRow 
+                                                key={quote.id} 
+                                                className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                                onClick={() => {
+                                                    setEditingSpotQuoteId(quote.id);
+                                                    setIsSpotQuoteOpen(true);
+                                                }}
+                                            >
+                                                <TableCell className="font-bold text-indigo-600 font-mono">{quote.quote_number}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
+                                                <TableCell>
+                                                    {quote.carrier ? (
+                                                        <span className="font-semibold text-slate-700">{quote.carrier.name}</span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic">Not Assigned</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold">{quote.shipper?.name}</span>
+                                                        <span className="text-[10px] text-slate-500">{quote.shipper?.city}, {quote.shipper?.state}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold">{quote.consignee?.name}</span>
+                                                        <span className="text-[10px] text-slate-500">{quote.consignee?.city}, {quote.consignee?.state}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold text-indigo-600">${Number(quote.rate).toFixed(2)}</TableCell>
+                                                <TableCell className="text-right font-semibold text-slate-600">${Number(quote.carrier_rate || 0).toFixed(2)}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-xs font-medium text-slate-700">
+                                                            {quote.products?.length || 0} Products ({quote.products?.reduce((acc: number, p: any) => acc + (Number(p.pcs) || 0), 0)} Total Pcs)
+                                                        </span>
+                                                        {quote.accessorials?.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {quote.accessorials.slice(0, 2).map((accId: string, i: number) => {
+                                                                    const acc = accessorialsList.find(a => a.id === accId);
+                                                                    return (
+                                                                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded whitespace-nowrap">
+                                                                            {acc?.name || accId}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                                {quote.accessorials.length > 2 && (
+                                                                    <span className="text-[10px] text-slate-400">+{quote.accessorials.length - 2} more</span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <button 
+                                                        className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
+                                                        title="Edit Quote"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
 
                         {/* Quote Detail Modal */}
@@ -950,6 +1100,14 @@ export default function EditCustomerPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+
+                        <SpotQuoteModal 
+                            isOpen={isSpotQuoteOpen} 
+                            onClose={() => setIsSpotQuoteOpen(false)} 
+                            customerId={id} 
+                            quoteId={editingSpotQuoteId} 
+                            onSave={fetchSpotQuotes} 
+                        />
                     </TabsContent>
 
                     {/* Rating Tab */}

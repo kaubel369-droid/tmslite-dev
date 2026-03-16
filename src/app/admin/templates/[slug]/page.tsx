@@ -217,6 +217,7 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
     .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     .label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
     .val { font-size: 15px; font-weight: 600; }
+    .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
     .rate-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: right; }
     .price { font-size: 48px; font-weight: 900; color: #1e293b; }
 </style>
@@ -229,6 +230,7 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
         </div>
         <div style="text-align: right;">
             <div style="font-weight: bold;">{{company_name}}</div>
+            <div style="font-size: 13px; color: #64748b;">Date: {{quote_date}}</div>
             <div style="font-size: 13px; color: #64748b;">Valid until: 24 Hours from now</div>
         </div>
     </div>
@@ -244,11 +246,64 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
             <div class="val">{{consignee_name}}</div>
             <div style="font-size: 13px; color: #64748b;">{{consignee_address}}</div>
         </div>
+    <div style="margin-top: 30px;">
+        <div class="label">Carrier</div>
+        <div class="val">{{carrier_name}}</div>
+    </div>
+
+    <div class="items-grid">
+        <div>
+            <div class="label">Pieces / Type</div>
+            <div class="val">{{pcs}} {{type}}</div>
+        </div>
+        <div>
+            <div class="label">Weight</div>
+            <div class="val">{{weight}} lbs</div>
+        </div>
+        <div>
+            <div class="label">Cubic Ft</div>
+            <div class="val">{{cubic_ft}} cu ft</div>
+        </div>
     </div>
 
     <div style="margin-top: 30px;">
-        <div class="label">Commodity & Equipment</div>
-        <div class="val">General Freight | 53' Air Ride Van</div>
+        <div class="label">Products</div>
+        <div class="val">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 5px; background: white;">
+                <thead>
+                    <tr style="font-size: 10px; color: #94a3b8; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 5px; text-align: left;">QTY</th>
+                        <th style="padding: 5px; text-align: left;">TYPE</th>
+                        <th style="padding: 5px; text-align: left;">DESC</th>
+                        <th style="padding: 5px; text-align: right;">WT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each products}}
+                    <tr style="font-size: 12px; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 5px;">{{pcs}}</td>
+                        <td style="padding: 5px;">{{type}}</td>
+                        <td style="padding: 5px;">{{description}}</td>
+                        <td style="padding: 5px; text-align: right;">{{weight}} lbs</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <div class="label">Accessorials</div>
+        <div class="val">
+            {{#each accessorials_names}}
+            <span style="display: inline-block; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-right: 5px; margin-bottom: 5px; font-size: 12px;">{{this}}</span>
+            {{/each}}
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <div class="label">Additional Instructions</div>
+        <div class="val" style="font-weight: normal; font-style: italic;">{{additional_instructions}}</div>
     </div>
 
     <div class="rate-section">
