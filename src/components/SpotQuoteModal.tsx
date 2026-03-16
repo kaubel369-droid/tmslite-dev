@@ -248,6 +248,9 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
+                    carrier_id: formData.carrier_id || null,
+                    shipper_location_id: formData.shipper_location_id || null,
+                    consignee_location_id: formData.consignee_location_id || null,
                     rate: parseFloat(formData.rate) || 0,
                     carrier_rate: parseFloat(formData.carrier_rate) || 0,
                     pcs: totals.pcs,
@@ -257,11 +260,14 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     accessorials: selectedAccessorials // This will be JSONB
                 }),
             });
-            if (!res.ok) throw new Error('Failed to save quote');
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to save quote');
+            }
             onSave();
             onClose();
         } catch (err: any) {
-            alert(err.message);
+            alert(`Error: ${err.message}`);
         } finally {
             setSaving(false);
         }
