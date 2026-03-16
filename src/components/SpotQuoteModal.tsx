@@ -100,7 +100,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
 
     const fetchLocations = async () => {
         try {
-            const res = await fetch(`/api/shipper-consignees?customer_id=${customerId}`);
+            const res = await fetch('/api/shipper-consignees');
             const data = await res.json();
             setLocations(data.shipper_consignees || []);
         } catch (err) {
