@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, FileText, Paperclip, Truck, Plus, Trash2, Shield, Eye, EyeOff, Download, Loader2, Lock, Globe } from 'lucide-react';
+import { X, Save, FileText, Paperclip, Truck, Plus, Trash2, Shield, Eye, EyeOff, Download, Loader2, Lock, Globe, Printer } from 'lucide-react';
 import ShipperConsigneeModal from './ShipperConsigneeModal';
 
 type Tab = 'Load Information' | 'Notes' | 'Documents';
@@ -63,6 +63,8 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
     const [scModalOpen, setScModalOpen] = useState(false);
     const [scModalType, setScModalType] = useState<'Shipper' | 'Consignee'>('Shipper');
     const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState('bol');
+    const [isPrinting, setIsPrinting] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -358,6 +360,25 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
         }
     };
 
+    const handlePrint = async () => {
+        const id = loadId || formData.id;
+        if (!id) {
+            setError("Please save the load before printing.");
+            return;
+        }
+        
+        setIsPrinting(true);
+        try {
+            // Ensure data is saved before printing
+            await handleSave();
+            window.open(`/api/print?id=${id}&type=load&template=${selectedTemplate}`, '_blank');
+        } catch (err: any) {
+            setError(`Failed to save before printing: ${err.message}`);
+        } finally {
+            setIsPrinting(false);
+        }
+    };
+
     const openScModal = (type: 'Shipper' | 'Consignee') => {
         setScModalType(type);
         setScModalOpen(true);
@@ -387,9 +408,35 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                         <Truck className="h-5 w-5 text-indigo-600" />
                         {loadId ? `Edit Load ${formData.load_number}` : 'New Load Entry'}
                     </h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors bg-white p-1 rounded-full shadow-sm">
-                        <X className="h-6 w-6" />
-                    </button>
+
+                    <div className="flex items-center gap-3">
+                        {isEditing && (
+                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm">
+                                <select 
+                                    className="text-sm font-medium text-slate-700 bg-transparent border-none focus:ring-0 cursor-pointer outline-none"
+                                    value={selectedTemplate}
+                                    onChange={(e) => setSelectedTemplate(e.target.value)}
+                                >
+                                    <option value="bol">Bill of Lading</option>
+                                    <option value="customer-load-confirmation">Customer Confirmation</option>
+                                    <option value="carrier-load-confirmation">Carrier Confirmation</option>
+                                    <option value="customer-invoice">Customer Invoice</option>
+                                </select>
+                                <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+                                <button
+                                    onClick={handlePrint}
+                                    disabled={isPrinting || loading}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors text-sm font-semibold disabled:opacity-50"
+                                >
+                                    {isPrinting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+                                    Print
+                                </button>
+                            </div>
+                        )}
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors bg-white p-1 rounded-full shadow-sm">
+                            <X className="h-6 w-6" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tabs */}

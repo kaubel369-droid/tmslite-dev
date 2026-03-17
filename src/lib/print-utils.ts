@@ -23,6 +23,15 @@ export function processTemplate(template: string, data: Record<string, any>): st
         const processedProducts = data.products.map((product: any) => {
             let item = productTemplate;
             const itemData = { ...product };
+
+            // Handle {{#if key}} inside loop
+            const innerIfRegex = /{{#if (.*?)}}([\s\S]*?)(?:{{\/else}}([\s\S]*?))?{{\/if}}/g;
+            item = item.replace(innerIfRegex, (match, key, ifContent, elseContent) => {
+                const value = itemData[key.trim()];
+                const condition = Array.isArray(value) ? value.length > 0 : !!value;
+                return condition ? ifContent : (elseContent || '');
+            });
+
             // Replace keys inside the loop
             Object.keys(itemData).forEach(key => {
                 const regex = new RegExp(`{{${key}}}`, 'g');

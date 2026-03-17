@@ -10,72 +10,141 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
         type: 'BOL',
         content: `
 <style>
-    body { font-family: sans-serif; padding: 20px; color: #1e293b; }
-    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #334155; padding-bottom: 10px; margin-bottom: 20px; }
-    .title { font-size: 24px; font-weight: bold; color: #0f172a; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-    .section-title { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b; margin-bottom: 5px; }
-    .section-content { font-size: 14px; line-height: 1.4; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { text-align: left; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px; font-size: 12px; }
-    td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-    .footer { margin-top: 50px; border-top: 1px solid #e2e8f0; pt: 20px; font-size: 10px; color: #94a3b8; text-align: center; }
+    body { font-family: 'Inter', sans-serif; padding: 0; color: #1e293b; font-size: 11px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #0f172a; padding-bottom: 10px; }
+    .title { font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+    .load-info { font-size: 14px; font-weight: 700; color: #1e293b; margin-top: 4px; }
+    .company-info { text-align: right; }
+    .company-name { font-size: 20px; font-weight: 800; color: #0f172a; }
+    .date-info { font-size: 12px; color: #64748b; margin-top: 2px; }
+    
+    .preamble { font-size: 9px; line-height: 1.3; margin-bottom: 20px; color: #475569; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; border-radius: 4px; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 25px; }
+    .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+    .section-content { font-size: 13px; font-weight: 600; color: #0f172a; }
+    .section-address { font-size: 13px; color: #475569; font-weight: 400; margin-top: 2px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #0f172a; }
+    th { text-align: left; background: #f8fafc; border: 1px solid #0f172a; padding: 8px 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #1e293b; }
+    td { padding: 8px 10px; border: 1px solid #0f172a; font-size: 12px; color: #1e293b; }
+    .text-right { text-align: right; }
+    .font-bold { font-weight: 700; }
+    
+    .special-instructions { margin-top: 20px; padding: 12px; border: 1px solid #e2e8f0; font-size: 11px; border-radius: 4px; }
+    
+    .liability-grid { display: grid; grid-template-columns: 1fr 300px; gap: 0; margin-top: 20px; border: 1px solid #0f172a; }
+    .liability-section { padding: 12px; }
+    .declared-value { border-left: 2px solid #0f172a; padding: 12px; }
+    
+    .cert-text { font-size: 9px; font-style: italic; color: #475569; margin-top: 15px; text-align: center; }
+    
+    .signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px; }
+    .sig-line { border-top: 2px solid #0f172a; padding-top: 6px; }
+    .sig-label { font-weight: 800; font-size: 10px; text-transform: uppercase; }
+    .sig-sub { font-size: 9px; color: #64748b; margin-top: 2px; }
+    
+    .footer { margin-top: 40px; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 15px; }
 </style>
 
 <div class="header">
     <div>
         <div class="title">BILL OF LADING</div>
-        <div style="font-size: 12px; margin-top: 5px;">LOAD #: {{load_number}}</div>
+        <div class="load-info">LOAD #: {{load_number}}</div>
     </div>
-    <div style="text-align: right;">
-        <div style="font-weight: bold;">{{company_name}}</div>
-        <div style="font-size: 12px;">Date: {{pickup_date}}</div>
+    <div class="company-info">
+        <div class="company-name">{{company_name}}</div>
+        <div class="date-info">Date: {{pickup_date}}</div>
     </div>
+</div>
+
+<div class="preamble">
+    {{standard_preamble}}
 </div>
 
 <div class="grid">
     <div>
-        <div class="section-title">Shipper</div>
-        <div class="section-content">
-            <strong>{{shipper_name}}</strong><br>
-            {{shipper_address}}
-        </div>
+        <div class="section-title">Shipper (From)</div>
+        <div class="section-content">{{shipper_name}}</div>
+        <div class="section-address">{{shipper_address}}</div>
     </div>
     <div>
-        <div class="section-title">Consignee</div>
-        <div class="section-content">
-            <strong>{{consignee_name}}</strong><br>
-            {{consignee_address}}
-        </div>
+        <div class="section-title">Consignee (To)</div>
+        <div class="section-content">{{consignee_name}}</div>
+        <div class="section-address">{{consignee_address}}</div>
     </div>
-</div>
-
-<div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <div class="section-title">Special Instructions</div>
-    <div style="font-size: 13px;">Please call 24 hours prior to delivery. All freight must be counted and signed for by consignee.</div>
 </div>
 
 <table>
     <thead>
         <tr>
-            <th>DESCRIPTION</th>
-            <th>PIECES</th>
-            <th>WEIGHT</th>
-            <th>CLASS</th>
+            <th style="width: 80px;">QTY</th>
+            <th style="width: 80px;">TYPE</th>
+            <th>ITEM DESCRIPTION / CLASS</th>
+            <th style="width: 100px;">NMFC #</th>
+            <th style="width: 120px;">WEIGHT</th>
+            <th style="width: 60px;">HM</th>
         </tr>
     </thead>
     <tbody>
+        {{#each products}}
         <tr>
-            <td>General Freight</td>
-            <td>{{total_pallets}} PLT</td>
-            <td>{{total_weight}} LBS</td>
-            <td>70</td>
+            <td class="font-bold">{{pcs}}</td>
+            <td>{{type}}</td>
+            <td>{{description}} {{#if class}}/ CLASS: {{class}}{{/if}}</td>
+            <td>{{nmfc}}</td>
+            <td>{{weight}} LBS</td>
+            <td style="text-align: center;"></td>
         </tr>
+        {{/each}}
     </tbody>
+    <tfoot>
+        <tr style="font-weight: 800; background: #f8fafc;">
+            <td colspan="2" class="text-right">TOTALS:</td>
+            <td class="font-bold">{{total_pallets}} Handling Units</td>
+            <td></td>
+            <td class="font-bold">{{total_weight}} LBS</td>
+            <td></td>
+        </tr>
+    </tfoot>
 </table>
 
+<div class="special-instructions">
+    <strong>Special Instructions:</strong> {{bol_notes}}
+</div>
+
+<div class="liability-grid">
+    <div class="liability-section">
+        <div class="section-title" style="border: none;">Liability Limitation</div>
+        <div style="font-size: 10px; color: #475569;">{{liability_statement}}</div>
+    </div>
+    <div class="declared-value">
+        <div class="section-title" style="border: none;">Declared Value</div>
+        <div style="font-size: 14px; font-weight: 700; margin-top: 10px;">$ <span style="border-bottom: 1px dashed #cbd5e1; display: inline-block; width: 150px;">&nbsp;</span></div>
+    </div>
+</div>
+
+<div class="cert-text">
+    {{shipper_certification}}
+</div>
+
+<div class="signature-grid">
+    <div>
+        <div class="sig-line">
+            <span class="sig-label">Shipper Signature / Date</span>
+            <div class="sig-sub">Property described above is received in good order.</div>
+        </div>
+    </div>
+    <div>
+        <div class="sig-line">
+            <span class="sig-label">Carrier Signature / Date</span>
+            <div class="sig-sub">Driver signature confirms unit count and condition.</div>
+        </div>
+    </div>
+</div>
+
 <div class="footer">
-    Generated by {{company_name}} TMS. Reference PRO: {{pro_number}} | BOL: {{bol_number}}
+    Generated by {{company_name}} TMS. PRO: {{pro_number}} | BOL: {{bol_number}}
 </div>
 `
     },
@@ -449,7 +518,7 @@ export default async function TemplateEditorPage({ params }: { params: Promise<{
         .single();
 
     const defaultData = DEFAULT_TEMPLATES[slug] || { 
-        name: slug.replace(/-/g, ' ').toUpperCase(), 
+        name: (slug || 'new').replace(/-/g, ' ').toUpperCase(), 
         type: 'General', 
         content: '<!-- New Template -->' 
     };

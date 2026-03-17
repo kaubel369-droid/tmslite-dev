@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Save, ArrowLeft, Eye, Code, Search, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { processTemplate } from '@/lib/print-utils';
 
 interface TemplateEditorProps {
     initialContent: string;
@@ -18,6 +19,80 @@ export default function TemplateEditor({ initialContent, templateName, slug, org
     const [saving, setSaving] = useState(false);
     const [view, setView] = useState<'edit' | 'preview'>('edit');
     const router = useRouter();
+
+    const mockData = {
+        company_name: 'TMSLite Logistics',
+        logo_url: 'https://via.placeholder.com/150x60?text=LOGO',
+        load_number: 'LOAD-12345',
+        quote_number: 'Q-98765',
+        quote_date: '03/17/2026',
+        customer_name: 'Acme Corporation',
+        shipper_name: 'Global Manufacturing Inc.',
+        shipper_address: '123 Industrial Way, Chicago, IL 60601',
+        consignee_name: 'Retail Distribution Center',
+        consignee_address: '456 Delivery Lane, Los Angeles, CA 90001',
+        pickup_date: '03/20/2026',
+        delivery_date: '03/24/2026',
+        total_weight: '42,500',
+        total_pallets: '24',
+        customer_rate: '$2,450.00',
+        bol_number: 'BOL-987654',
+        pro_number: 'PRO-12345678',
+        bol_notes: 'Please call 24 hours prior to delivery. All freight must be counted and signed for by consignee.',
+        pcs: 24,
+        type: 'Pallets',
+        weight: 42500,
+        cubic_ft: 1200,
+        products: [
+            { pcs: 10, type: 'PLT', description: 'Industrial Parts', weight: 20000, nmfc: '12345-01', class: '70' },
+            { pcs: 14, type: 'PLT', description: 'Raw Materials', weight: 22500, nmfc: '67890-02', class: '85' }
+        ],
+        accessorials_names: ['Liftgate Pickup', 'Residential Delivery'],
+        additional_instructions: 'Please call 24h prior to arrival.',
+        standard_preamble: 'RECEIVED, subject to the classifications and tariffs in effect on the date of the issue of this Bill of Lading, the property described below, in apparent good order, except as noted (contents and condition of contents of packages unknown), marked, consigned, and destined as indicated below, which said carrier (the word carrier being understood throughout this contract as meaning any person or corporation in possession of the property under the contract) agrees to carry to its usual place of delivery at said destination...',
+        shipper_certification: 'This is to certify that the above named materials are properly classified, described, packaged, marked and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.',
+        liability_statement: 'Unless the shipper declares a higher value and pays the applicable surcharge, carrier liability for loss or damage is limited to $0.50 per pound per package.'
+    };
+
+    const previewHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+            <style>
+                body { 
+                    margin: 0; 
+                    padding: 0; 
+                    background-color: #f1f5f9; 
+                    display: flex; 
+                    justify-content: center; 
+                    padding-top: 40px;
+                    padding-bottom: 40px;
+                }
+                .paper {
+                    background-color: white;
+                    width: 8.5in;
+                    min-height: 11in;
+                    padding: 0.5in;
+                    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+                    border-radius: 4px;
+                    box-sizing: border-box;
+                }
+                @media print {
+                    body { background-color: white; padding: 0; }
+                    .paper { box-shadow: none; width: 100%; border-radius: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="paper">
+                ${processTemplate(content || '', mockData)}
+            </div>
+        </body>
+        </html>
+    `;
 
     const placeholders = [
         { key: '{{company_name}}', desc: 'Your company name' },
@@ -35,6 +110,12 @@ export default function TemplateEditor({ initialContent, templateName, slug, org
         { key: '{{customer_rate}}', desc: 'Total rate charged to customer' },
         { key: '{{bol_number}}', desc: 'Bill of Lading number' },
         { key: '{{pro_number}}', desc: 'Carrier PRO number' },
+        { key: '{{bol_notes}}', desc: 'Special instructions from Load Notes' },
+        { key: '{{standard_preamble}}', desc: 'Standard contract of carriage language' },
+        { key: '{{shipper_certification}}', desc: 'Shipper signature certification text' },
+        { key: '{{liability_statement}}', desc: 'Standard carrier liability limitation' },
+        { key: '{{nmfc}}', desc: 'Product NMFC code (inside products loop)' },
+        { key: '{{class}}', desc: 'Product Freight Class (inside products loop)' },
     ];
 
     const handleSave = async () => {
@@ -117,18 +198,12 @@ export default function TemplateEditor({ initialContent, templateName, slug, org
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 bg-slate-100 p-8 overflow-y-auto">
-                            <div className="w-full h-full bg-white shadow-xl mx-auto max-w-[800px] p-12 min-h-[1056px] rounded-sm border border-slate-200">
-                                {/* Simple preview logic - in a real app this would be an iframe or a complex renderer */}
-                                <div dangerouslySetInnerHTML={{ 
-                                    __html: content
-                                        .replace(/{{company_name}}/g, 'TMSLite Logistics')
-                                        .replace(/{{load_number}}/g, 'LOAD-12345')
-                                        .replace(/{{customer_name}}/g, 'Acme Corp')
-                                        .replace(/{{bol_number}}/g, 'B1234567')
-                                        .replace(/{{pro_number}}/g, 'P1234567')
-                                }} />
-                            </div>
+                        <div className="flex-1 overflow-hidden">
+                            <iframe 
+                                srcDoc={previewHtml}
+                                className="w-full h-full bg-slate-100"
+                                title="Template Preview"
+                            />
                         </div>
                     )}
                 </div>
