@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, Plus, MapPin } from 'lucide-react';
+import { Loader2, Plus, MapPin, Printer } from 'lucide-react';
 import { formatPhoneNumber } from '@/lib/utils';
+import PrintButton from '@/components/PrintButton';
 
 interface ShipperConsignee {
     id: string;
@@ -55,6 +56,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
         carrier_rate: '',
         shipper_location_id: '',
         consignee_location_id: '',
+        type: 'Pallets',
         products_list: [
             { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
         ] as ProductLine[],
@@ -88,6 +90,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     carrier_rate: '',
                     shipper_location_id: '',
                     consignee_location_id: '',
+                    type: 'Pallets',
                     products_list: [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
                     ],
@@ -142,6 +145,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     carrier_rate: data.quote.carrier_rate?.toString() || '',
                     shipper_location_id: data.quote.shipper_location_id || '',
                     consignee_location_id: data.quote.consignee_location_id || '',
+                    type: data.quote.type || 'Pallets',
                     products_list: Array.isArray(data.quote.products) ? data.quote.products : [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
                     ],
@@ -328,6 +332,25 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                             </div>
                         </div>
 
+                        {/* Shipment Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100 pb-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700">Shipment Type</label>
+                                <select 
+                                    name="type" 
+                                    value={formData.type} 
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm"
+                                >
+                                    <option value="Pallets">Pallets</option>
+                                    <option value="Loose">Loose</option>
+                                    <option value="Crates">Crates</option>
+                                    <option value="Drums">Drums</option>
+                                    <option value="Pieces">Pieces</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Consignee */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                             <div className="space-y-2">
@@ -383,6 +406,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             <th className="px-4 py-3 w-20">L(in)</th>
                                             <th className="px-4 py-3 w-20">W(in)</th>
                                             <th className="px-4 py-3 w-20">H(in)</th>
+                                            <th className="px-4 py-3 min-w-[150px]">Description</th>
                                             <th className="px-4 py-3 text-right">Cubic Ft</th>
                                             <th className="px-4 py-3 w-10"></th>
                                         </tr>
@@ -420,6 +444,9 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                                 </td>
                                                 <td className="px-2 py-2">
                                                     <input type="number" value={item.height} onChange={(e) => updateProductLine(idx, 'height', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <input type="text" value={item.description || ''} onChange={(e) => updateProductLine(idx, 'description', e.target.value)} placeholder="Product description" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                                 </td>
                                                 <td className="px-4 py-2 text-right font-medium text-slate-700 text-xs">
                                                     {item.cubic_feet}
@@ -540,14 +567,19 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                             />
                         </div>
 
-                        <DialogFooter>
-                            <button 
-                                type="button" 
-                                onClick={onClose} 
-                                className="px-4 py-2 text-slate-600 font-medium hover:text-slate-800"
-                            >
-                                Cancel
-                            </button>
+                        <DialogFooter className="flex justify-between items-center sm:justify-between">
+                            <div className="flex gap-2">
+                                {quoteId && (
+                                    <PrintButton id={quoteId} type="spot-quote" variant="outline" className="px-4 py-2" />
+                                )}
+                                <button 
+                                    type="button" 
+                                    onClick={onClose} 
+                                    className="px-4 py-2 text-slate-600 font-medium hover:text-slate-800"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                             <button 
                                 type="submit" 
                                 disabled={saving}

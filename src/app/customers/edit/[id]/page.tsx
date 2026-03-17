@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatPhoneNumber } from '@/lib/utils';
 import LTLRatingScreen from '@/components/LTLRatingScreen';
 import SpotQuoteModal from '@/components/SpotQuoteModal';
+import PrintButton from '@/components/PrintButton';
 
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
@@ -40,6 +41,7 @@ type SpotQuote = {
     quote_date: string;
     rate: number;
     carrier_rate: number;
+    carrier_name?: string;
     shipper: ShipperConsignee;
     consignee: ShipperConsignee;
     carrier?: {
@@ -898,16 +900,19 @@ export default function EditCustomerPage() {
                                                 <TableCell className="text-right font-bold text-indigo-600">${Number(quote.customer_rate).toFixed(2)}</TableCell>
                                                 <TableCell className="text-center font-bold text-slate-800">{quote.transit_days} <span className="text-[10px] text-slate-400 font-normal">D</span></TableCell>
                                                 <TableCell className="text-right">
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedQuote(quote);
-                                                            setIsViewQuoteOpen(true);
-                                                        }}
-                                                        className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
-                                                        title="View Quote"
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </button>
+                                                    <div className="flex justify-end gap-1">
+                                                        <button 
+                                                            onClick={() => {
+                                                                setSelectedQuote(quote);
+                                                                setIsViewQuoteOpen(true);
+                                                            }}
+                                                            className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
+                                                            title="View Quote"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </button>
+                                                        <PrintButton id={quote.id} type="quote" />
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -969,11 +974,9 @@ export default function EditCustomerPage() {
                                                 <TableCell className="font-bold text-indigo-600 font-mono">{quote.quote_number}</TableCell>
                                                 <TableCell className="whitespace-nowrap">{new Date(quote.quote_date).toLocaleDateString()}</TableCell>
                                                 <TableCell>
-                                                    {quote.carrier ? (
-                                                        <span className="font-semibold text-slate-700">{quote.carrier.name}</span>
-                                                    ) : (
-                                                        <span className="text-slate-400 italic">Not Assigned</span>
-                                                    )}
+                                                    <span className={quote.carrier_name === 'Not Assigned' ? "text-slate-400 italic" : "font-semibold text-slate-700"}>
+                                                        {quote.carrier_name}
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
@@ -1012,12 +1015,19 @@ export default function EditCustomerPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <button 
-                                                        className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
-                                                        title="Edit Quote"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </button>
+                                                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                                        <button 
+                                                            className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors" 
+                                                            title="Edit Quote"
+                                                            onClick={() => {
+                                                                setEditingSpotQuoteId(quote.id);
+                                                                setIsSpotQuoteOpen(true);
+                                                            }}
+                                                        >
+                                                            <Pencil className="h-4 w-4" />
+                                                        </button>
+                                                        <PrintButton id={quote.id} type="spot-quote" />
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -1152,7 +1162,10 @@ export default function EditCustomerPage() {
                                     </div>
                                 </div>
 
-                                <DialogFooter className="border-t pt-4">
+                                <DialogFooter className="border-t pt-4 flex justify-between items-center">
+                                    {selectedQuote && (
+                                        <PrintButton id={selectedQuote.id} type="quote" variant="outline" className="px-6 py-2" />
+                                    )}
                                     <button 
                                         onClick={() => setIsViewQuoteOpen(false)}
                                         className="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"

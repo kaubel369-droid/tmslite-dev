@@ -1,0 +1,324 @@
+import { getServiceRoleClient } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { processTemplate, getFullAddress } from '@/lib/print-utils';
+
+const DEFAULT_TEMPLATES: Record<string, string> = {
+    'customer-rate-quote-ltl': `
+<style>
+    body { font-family: Inter, sans-serif; padding: 40px; color: #334155; }
+    .quote-box { border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; background: white; }
+    .tag { display: inline-block; background: #e0e7ff; color: #4338ca; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; margin-bottom: 12px; }
+    .quote-title { font-size: 28px; font-weight: 800; color: #1e293b; margin-bottom: 32px; }
+    .logo-container { position: absolute; top: 40px; right: 40px; }
+    .logo-container img { max-height: 50px; }
+    .route { display: flex; align-items: center; gap: 24px; margin-bottom: 40px; border-bottom: 1px solid #f1f5f9; padding-bottom: 24px; }
+    .location { flex: 1; }
+    .loc-label { font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+    .loc-val { font-size: 16px; font-weight: 700; color: #1e293b; }
+    .rate-display { background: #f8fafc; border-radius: 12px; padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+</style>
+
+<div class="quote-box" style="position: relative;">
+    {{#if logo_url}}
+    <div class="logo-container">
+        <img src="{{logo_url}}" alt="Company Logo" />
+    </div>
+    {{/if}}
+    <div class="tag">Standard LTL Quote</div>
+    <div class="quote-title">Rate Quotation #{{quote_number}}</div>
+
+    <div class="route">
+        <div class="location">
+            <div class="loc-label">Origin</div>
+            <div class="loc-val">{{shipper_name}}</div>
+            <div style="font-size: 13px; color: #64748b; margin-top: 4px;">{{shipper_address}}</div>
+        </div>
+        <div style="font-size: 24px; color: #cbd5e1;">&rarr;</div>
+        <div class="location">
+            <div class="loc-label">Destination</div>
+            <div class="loc-val">{{consignee_name}}</div>
+            <div style="font-size: 13px; color: #64748b; margin-top: 4px;">{{consignee_address}}</div>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 32px;">
+        <div class="loc-label">Shipment Details</div>
+        <div style="font-size: 14px;"><strong>Weight:</strong> {{total_weight}} LBS | <strong>Dimensions:</strong> Standard Pallets ({{total_pallets}})</div>
+    </div>
+
+    <div class="rate-display">
+        <div>
+            <div style="font-size: 13px; font-weight: 600; color: #64748b;">All-In Estimated Rate</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Subject to re-weigh and re-class</div>
+        </div>
+        <div style="font-size: 36px; font-weight: 800; color: #4338ca;">{{customer_rate}}</div>
+    </div>
+
+    <div style="margin-top: 32px; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+        Quote provided by {{company_name}}. Rates are valid for 7 days. Standard transit times apply.
+    </div>
+</div>
+`,
+    'customer-spot-rate-quote': `
+<style>
+    body { font-family: sans-serif; padding: 40px; color: #1e293b; background: #f1f5f9; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 40px; max-width: 800px; margin: 0 auto; border-top: 6px solid #6366f1; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+    .logo img { max-height: 60px; margin-bottom: 10px; }
+    .quote-id { font-size: 12px; font-weight: 800; color: #6366f1; background: #e0e7ff; padding: 4px 12px; border-radius: 99px; }
+    .title { font-size: 28px; font-weight: 800; margin: 15px 0; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-bottom: 5px; }
+    .val { font-size: 15px; font-weight: 600; }
+    .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
+    .rate-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: right; }
+    .price { font-size: 48px; font-weight: 900; color: #1e293b; }
+</style>
+
+<div class="card">
+    <div class="header">
+        <div>
+            {{#if logo_url}}
+            <div class="logo">
+                <img src="{{logo_url}}" alt="Company Logo" />
+            </div>
+            {{/if}}
+            <span class="quote-id">SPOT QUOTE #{{quote_number}}</span>
+            <h1 class="title">Rate Proposal</h1>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-weight: bold;">{{company_name}}</div>
+            <div style="font-size: 13px; color: #64748b;">Date: {{quote_date}}</div>
+            <div style="font-size: 13px; color: #64748b;">Valid until: 24 Hours from now</div>
+        </div>
+    </div>
+
+    <div class="details">
+        <div>
+            <div class="label">Origin</div>
+            <div class="val">{{shipper_name}}</div>
+            <div style="font-size: 13px; color: #64748b;">{{shipper_address}}</div>
+        </div>
+        <div>
+            <div class="label">Destination</div>
+            <div class="val">{{consignee_name}}</div>
+            <div style="font-size: 13px; color: #64748b;">{{consignee_address}}</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <div class="label">Carrier</div>
+        <div class="val">{{carrier_name}}</div>
+    </div>
+
+    <div class="items-grid">
+        <div>
+            <div class="label">Pieces / Type</div>
+            <div class="val">{{pcs}} {{type}}</div>
+        </div>
+        <div>
+            <div class="label">Weight</div>
+            <div class="val">{{weight}} lbs</div>
+        </div>
+        <div>
+            <div class="label">Cubic Ft</div>
+            <div class="val">{{cubic_ft}} cu ft</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <div class="label">Products</div>
+        <div class="val">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 5px; background: white;">
+                <thead>
+                    <tr style="font-size: 10px; color: #94a3b8; border-bottom: 1px solid #e2e8f0;">
+                        <th style="padding: 5px; text-align: left;">QTY</th>
+                        <th style="padding: 5px; text-align: left;">TYPE</th>
+                        <th style="padding: 5px; text-align: left;">DESC</th>
+                        <th style="padding: 5px; text-align: right;">WT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each products}}
+                    <tr style="font-size: 12px; border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 5px;">{{pcs}}</td>
+                        <td style="padding: 5px;">{{type}}</td>
+                        <td style="padding: 5px;">{{description}}</td>
+                        <td style="padding: 5px; text-align: right;">{{weight}} lbs</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <div class="label">Accessorials</div>
+        <div class="val">
+            {{#each accessorials_names}}
+            <span style="display: inline-block; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-right: 5px; margin-bottom: 5px; font-size: 12px;">{{this}}</span>
+            {{/each}}
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <div class="label">Additional Instructions</div>
+        <div class="val" style="font-weight: normal; font-style: italic;">{{additional_instructions}}</div>
+    </div>
+
+    <div class="rate-section">
+        <div class="label">All-In Spot Rate</div>
+        <div class="price">{{customer_rate}}</div>
+    </div>
+</div>
+`
+};
+
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const type = searchParams.get('type'); // 'quote' or 'spot-quote'
+
+    if (!id || !type) {
+        return new Response('Missing id or type', { status: 400 });
+    }
+
+    const supabase = getServiceRoleClient();
+
+    // Get organization ID and name
+    const { data: org } = await supabase.from('organizations').select('id, name').limit(1).single();
+    if (!org) {
+        return new Response('Organization not found', { status: 404 });
+    }
+
+    let templateSlug = type === 'quote' ? 'customer-rate-quote-ltl' : 'customer-spot-rate-quote';
+    
+    // Attempt to fetch template from DB
+    const { data: dbTemplate } = await supabase
+        .from('document_templates')
+        .select('content')
+        .eq('org_id', org.id)
+        .eq('slug', templateSlug)
+        .single();
+
+    const templateContent = dbTemplate?.content || DEFAULT_TEMPLATES[templateSlug];
+
+    if (!templateContent) {
+        return new Response('Template not found', { status: 404 });
+    }
+
+    // Fetch company logo
+    const { data: logoSetting } = await supabase
+        .from('settings')
+        .select('setting_value')
+        .eq('org_id', org.id)
+        .eq('setting_key', 'company_logo')
+        .single();
+    
+    const logo_url = (logoSetting?.setting_value as any)?.url || null;
+
+    let printData: any = {
+        company_name: org.name,
+        logo_url
+    };
+
+    if (type === 'quote') {
+        const { data: quote } = await supabase.from('quotes').select('*').eq('id', id).single();
+        if (!quote) return new Response('Quote not found', { status: 404 });
+
+        printData = {
+            ...printData,
+            quote_number: quote.quote_number,
+            shipper_name: quote.origin_info?.name || 'Shipper',
+            shipper_address: getFullAddress(quote.origin_info),
+            consignee_name: quote.destination_info?.name || 'Consignee',
+            consignee_address: getFullAddress(quote.destination_info),
+            total_weight: quote.items?.reduce((acc: number, item: any) => acc + (Number(item.weight) || 0), 0) || 0,
+            total_pallets: quote.items?.reduce((acc: number, item: any) => acc + (Number(item.pcs) || 0), 0) || 0,
+            customer_rate: `$${Number(quote.customer_rate).toFixed(2)}`
+        };
+    } else {
+        const { data: spotQuote } = await supabase
+            .from('customer_spot_quotes')
+            .select(`
+                *,
+                shipper:shipper_consignees!shipper_location_id(*),
+                consignee:shipper_consignees!consignee_location_id(*),
+                carriers!carrier_id(id, name)
+            `)
+            .eq('id', id)
+            .single();
+        
+        if (!spotQuote) return new Response('Spot quote not found', { status: 404 });
+
+        // Safely extract carrier name
+        const carrierData = (spotQuote as any).carriers;
+        const carrier_name = carrierData 
+            ? (Array.isArray(carrierData) ? carrierData[0]?.name : (carrierData as any).name)
+            : 'Not Assigned';
+
+        // Get accessorials names if available
+        let accessorials_names: string[] = [];
+        if (spotQuote.accessorials && spotQuote.accessorials.length > 0) {
+            const { data: accs } = await supabase
+                .from('accessorials')
+                .select('name')
+                .in('id', spotQuote.accessorials);
+            accessorials_names = accs?.map(a => a.name) || [];
+        }
+
+        printData = {
+            ...printData,
+            quote_number: spotQuote.quote_number,
+            quote_date: new Date(spotQuote.quote_date).toLocaleDateString(),
+            shipper_name: spotQuote.shipper?.name || 'Shipper',
+            shipper_address: getFullAddress(spotQuote.shipper),
+            consignee_name: spotQuote.consignee?.name || 'Consignee',
+            consignee_address: getFullAddress(spotQuote.consignee),
+            carrier_name,
+            pcs: spotQuote.pcs,
+            type: spotQuote.type || 'Pallets',
+            weight: spotQuote.weight,
+            cubic_ft: spotQuote.cubic_ft,
+            products: spotQuote.products || [],
+            accessorials_names,
+            additional_instructions: spotQuote.additional_instructions || 'None',
+            customer_rate: `$${Number(spotQuote.rate).toFixed(2)}`
+        };
+    }
+
+    const html = processTemplate(templateContent, printData);
+
+    const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Print ${type === 'quote' ? 'Quote' : 'Spot Quote'} ${printData.quote_number}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; }
+        @media print {
+            @page { margin: 0; }
+            body { margin: 1.6cm; }
+        }
+    </style>
+</head>
+<body>
+    ${html}
+    <script>
+        window.onload = function() {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
+    `;
+
+    return new Response(fullHtml, {
+        headers: {
+            'Content-Type': 'text/html',
+        },
+    });
+}

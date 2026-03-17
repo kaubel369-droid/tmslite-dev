@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { getServiceRoleClient } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -6,7 +6,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id: customerId } = await params;
-    const supabase = await createClient();
+    const supabase = getServiceRoleClient();
 
     try {
         const { data: quotes, error } = await supabase
@@ -15,14 +15,21 @@ export async function GET(
                 *,
                 shipper:shipper_consignees!shipper_location_id(*),
                 consignee:shipper_consignees!consignee_location_id(*),
-                carrier:carriers(id, name)
+                carriers!carrier_id(id, name)
             `)
             .eq('customer_id', customerId)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        return NextResponse.json({ quotes });
+        const formattedQuotes = quotes?.map(q => ({
+            ...q,
+            carrier_name: (q as any).carriers
+                ? (Array.isArray((q as any).carriers) ? (q as any).carriers[0]?.name : (q as any).carriers.name)
+                : 'Not Assigned'
+        }));
+
+        return NextResponse.json({ quotes: formattedQuotes });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -33,31 +40,27 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id: customerId } = await params;
-    const supabase = await createClient();
 
     try {
         const body = await request.json();
-        
+        const supabase = getServiceRoleClient();
+
         // Get organization ID from profile
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Unauthorized');
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const { data: profile } = await supabase
             .from('profiles')
             .select('org_id')
             .eq('id', user.id)
             .single();
-            
-        if (!profile?.org_id) throw new Error('Organization not found');
-
-        const { products_list, ...rest } = body;
 
         const { data: quote, error } = await supabase
             .from('customer_spot_quotes')
             .insert({
-                ...rest,
+                ...body,
                 customer_id: customerId,
-                org_id: profile.org_id
+                org_id: profile?.org_id
             })
             .select()
             .single();
