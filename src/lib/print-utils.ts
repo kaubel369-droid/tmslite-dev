@@ -4,7 +4,7 @@ export function processTemplate(template: string, data: Record<string, any>): st
 
     // Handle {{#if key}} ... {{else}} ... {{/if}}
     // This is a simple implementation that doesn't support nested ifs
-    const ifElseRegex = /{{#if (.*?)}}([\s\S]*?)(?:{{\/else}}([\s\S]*?))?{{\/if}}/g;
+    const ifElseRegex = /{{#if (.*?)}}([\s\S]*?)(?:{{else}}([\s\S]*?))?{{\/if}}/g;
     result = result.replace(ifElseRegex, (match, key, ifContent, elseContent) => {
         const value = data[key.trim()];
         const condition = Array.isArray(value) ? value.length > 0 : !!value;
@@ -25,7 +25,7 @@ export function processTemplate(template: string, data: Record<string, any>): st
             const itemData = { ...product };
 
             // Handle {{#if key}} inside loop
-            const innerIfRegex = /{{#if (.*?)}}([\s\S]*?)(?:{{\/else}}([\s\S]*?))?{{\/if}}/g;
+            const innerIfRegex = /{{#if (.*?)}}([\s\S]*?)(?:{{else}}([\s\S]*?))?{{\/if}}/g;
             item = item.replace(innerIfRegex, (match, key, ifContent, elseContent) => {
                 const value = itemData[key.trim()];
                 const condition = Array.isArray(value) ? value.length > 0 : !!value;

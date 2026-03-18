@@ -56,12 +56,21 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
         carrier_rate: '',
         shipper_location_id: '',
         consignee_location_id: '',
+        shipper_zip: '',
+        shipper_city: '',
+        shipper_state: '',
+        consignee_zip: '',
+        consignee_city: '',
+        consignee_state: '',
         type: 'Pallets',
         products_list: [
             { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
         ] as ProductLine[],
         additional_instructions: ''
     });
+
+    const [useShipperZip, setUseShipperZip] = useState(false);
+    const [useConsigneeZip, setUseConsigneeZip] = useState(false);
 
     // New Location Form State
     const [isAddingLocation, setIsAddingLocation] = useState(false);
@@ -90,6 +99,12 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     carrier_rate: '',
                     shipper_location_id: '',
                     consignee_location_id: '',
+                    shipper_zip: '',
+                    shipper_city: '',
+                    shipper_state: '',
+                    consignee_zip: '',
+                    consignee_city: '',
+                    consignee_state: '',
                     type: 'Pallets',
                     products_list: [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
@@ -97,6 +112,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     additional_instructions: ''
                 });
                 setSelectedAccessorials([]);
+                setUseShipperZip(false);
+                setUseConsigneeZip(false);
             }
         }
     }, [isOpen, quoteId]);
@@ -145,6 +162,12 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     carrier_rate: data.quote.carrier_rate?.toString() || '',
                     shipper_location_id: data.quote.shipper_location_id || '',
                     consignee_location_id: data.quote.consignee_location_id || '',
+                    shipper_zip: data.quote.shipper_zip || '',
+                    shipper_city: data.quote.shipper_city || '',
+                    shipper_state: data.quote.shipper_state || '',
+                    consignee_zip: data.quote.consignee_zip || '',
+                    consignee_city: data.quote.consignee_city || '',
+                    consignee_state: data.quote.consignee_state || '',
                     type: data.quote.type || 'Pallets',
                     products_list: Array.isArray(data.quote.products) ? data.quote.products : [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
@@ -152,6 +175,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     additional_instructions: data.quote.additional_instructions || ''
                 });
                 setSelectedAccessorials(Array.isArray(data.quote.accessorials) ? data.quote.accessorials : []);
+                setUseShipperZip(!!data.quote.shipper_zip);
+                setUseConsigneeZip(!!data.quote.consignee_zip);
             }
         } catch (err) {
             console.error('Failed to fetch quote details', err);
@@ -163,6 +188,31 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'shipper_zip' && value.length === 5) {
+            lookupZip(value, 'shipper');
+        } else if (name === 'consignee_zip' && value.length === 5) {
+            lookupZip(value, 'consignee');
+        }
+    };
+
+    const lookupZip = async (zip: string, target: 'shipper' | 'consignee') => {
+        try {
+            const res = await fetch(`/api/zip-codes/${zip}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.locations && data.locations.length > 0) {
+                    const loc = data.locations[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        [`${target}_city`]: loc.city,
+                        [`${target}_state`]: loc.state_id
+                    }));
+                }
+            }
+        } catch (err) {
+            console.error('Zip lookup failed', err);
+        }
     };
 
     const openAddLocation = (target: 'shipper' | 'consignee') => {
@@ -253,8 +303,14 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                 body: JSON.stringify({
                     ...formData,
                     carrier_id: formData.carrier_id || null,
-                    shipper_location_id: formData.shipper_location_id || null,
-                    consignee_location_id: formData.consignee_location_id || null,
+                    shipper_location_id: useShipperZip ? null : (formData.shipper_location_id || null),
+                    consignee_location_id: useConsigneeZip ? null : (formData.consignee_location_id || null),
+                    shipper_zip: useShipperZip ? formData.shipper_zip : null,
+                    shipper_city: useShipperZip ? formData.shipper_city : null,
+                    shipper_state: useShipperZip ? formData.shipper_state : null,
+                    consignee_zip: useConsigneeZip ? formData.consignee_zip : null,
+                    consignee_city: useConsigneeZip ? formData.consignee_city : null,
+                    consignee_state: useConsigneeZip ? formData.consignee_state : null,
                     rate: parseFloat(formData.rate) || 0,
                     carrier_rate: parseFloat(formData.carrier_rate) || 0,
                     pcs: totals.pcs,
@@ -295,24 +351,53 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     <label className="text-sm font-semibold text-slate-700">Shipper Location</label>
                                     <button 
                                         type="button" 
-                                        onClick={() => openAddLocation('shipper')}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                        onClick={() => setUseShipperZip(!useShipperZip)}
+                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                                     >
-                                        <Plus className="h-3 w-3" /> New Shipper
+                                        {useShipperZip ? 'Or Select Location' : 'Or Use Zip Only'}
                                     </button>
                                 </div>
-                                <select 
-                                    name="shipper_location_id" 
-                                    value={formData.shipper_location_id} 
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
-                                >
-                                    <option value="">-- Select Shipper --</option>
-                                    {locations.map(loc => (
-                                        <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
-                                    ))}
-                                </select>
+                                {useShipperZip ? (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            name="shipper_zip" 
+                                            value={formData.shipper_zip} 
+                                            onChange={handleInputChange} 
+                                            placeholder="Zip Code"
+                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                        />
+                                        <input 
+                                            type="text" 
+                                            value={`${formData.shipper_city}${formData.shipper_city ? ', ' : ''}${formData.shipper_state}`}
+                                            readOnly
+                                            placeholder="City, ST"
+                                            className="flex-1 px-3 py-2 border border-slate-100 rounded-lg bg-slate-50 text-slate-500 italic"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <select 
+                                            name="shipper_location_id" 
+                                            value={formData.shipper_location_id} 
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                        >
+                                            <option value="">-- Select Shipper --</option>
+                                            {locations.map(loc => (
+                                                <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
+                                            ))}
+                                        </select>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => openAddLocation('shipper')}
+                                            className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                        >
+                                            <Plus className="h-2 w-2" /> New Shipper
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700 text-indigo-600">Customer Rate (All-In)</label>
@@ -358,24 +443,53 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     <label className="text-sm font-semibold text-slate-700">Consignee Location</label>
                                     <button 
                                         type="button" 
-                                        onClick={() => openAddLocation('consignee')}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                        onClick={() => setUseConsigneeZip(!useConsigneeZip)}
+                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                                     >
-                                        <Plus className="h-3 w-3" /> New Consignee
+                                        {useConsigneeZip ? 'Or Select Location' : 'Or Use Zip Only'}
                                     </button>
                                 </div>
-                                <select 
-                                    name="consignee_location_id" 
-                                    value={formData.consignee_location_id} 
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
-                                >
-                                    <option value="">-- Select Consignee --</option>
-                                    {locations.map(loc => (
-                                        <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
-                                    ))}
-                                </select>
+                                {useConsigneeZip ? (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            name="consignee_zip" 
+                                            value={formData.consignee_zip} 
+                                            onChange={handleInputChange} 
+                                            placeholder="Zip Code"
+                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                        />
+                                        <input 
+                                            type="text" 
+                                            value={`${formData.consignee_city}${formData.consignee_city ? ', ' : ''}${formData.consignee_state}`}
+                                            readOnly
+                                            placeholder="City, ST"
+                                            className="flex-1 px-3 py-2 border border-slate-100 rounded-lg bg-slate-50 text-slate-500 italic"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <select 
+                                            name="consignee_location_id" 
+                                            value={formData.consignee_location_id} 
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                        >
+                                            <option value="">-- Select Consignee --</option>
+                                            {locations.map(loc => (
+                                                <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
+                                            ))}
+                                        </select>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => openAddLocation('consignee')}
+                                            className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                        >
+                                            <Plus className="h-2 w-2" /> New Consignee
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

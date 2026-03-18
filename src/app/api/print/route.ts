@@ -193,6 +193,38 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </tbody>
 </table>
 
+<div class="bill-label" style="margin-top: 30px;">Commodities</div>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 1px solid #e2e8f0;">
+    <thead>
+        <tr style="background: #f8fafc;">
+            <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; font-size: 11px;">QTY</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; font-size: 11px;">TYPE</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; font-size: 11px;">ITEM DESCRIPTION / CLASS</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; font-size: 11px;">NMFC #</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e2e8f0; font-size: 11px;">WEIGHT</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each products}}
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px; font-weight: bold;">{{pcs}}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px;">{{type}}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px;">{{description}} {{#if class}}/ CLASS: {{class}}{{/if}}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px;">{{nmfc}}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px;">{{weight}} LBS</td>
+        </tr>
+        {{/each}}
+    </tbody>
+    <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+            <td colspan="2" style="padding: 10px; text-align: right; font-size: 12px;">TOTALS:</td>
+            <td style="padding: 10px; font-size: 12px;">{{total_pallets}} Handling Units</td>
+            <td style="padding: 10px;"></td>
+            <td style="padding: 10px; font-size: 12px;">{{total_weight}} LBS</td>
+        </tr>
+    </tfoot>
+</table>
+
 <div class="total-box">
     <div class="total-row">
         <span style="font-size: 12px; color: #64748b;">Subtotal</span>
@@ -226,8 +258,17 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 </style>
 
 <div class="quote-box">
-    <div class="tag">Standard LTL Quote</div>
-    <div class="quote-title">Rate Quotation #{{load_number}}</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+        <div>
+            {{#if logo_url}}
+            <img src="{{logo_url}}" style="max-height: 50px; display: block;" />
+            {{/if}}
+        </div>
+        <div style="text-align: right;">
+            <div class="tag">Standard LTL Quote</div>
+            <div class="quote-title" style="margin-bottom: 0;">Rate Quotation #{{quote_number}}</div>
+        </div>
+    </div>
 
     <div class="route">
         <div class="location">
@@ -243,9 +284,48 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
         </div>
     </div>
 
+    <div style="margin-bottom: 24px;">
+        <div class="loc-label">Carrier</div>
+        <div style="font-size: 16px; font-weight: 700;">{{carrier_name}}</div>
+    </div>
+
     <div style="margin-bottom: 32px;">
         <div class="loc-label">Shipment Details</div>
-        <div style="font-size: 14px;"><strong>Weight:</strong> {{total_weight}} LBS | <strong>Dimensions:</strong> Standard Pallets ({{total_pallets}})</div>
+        <div style="font-size: 14px; margin-bottom: 12px;"><strong>Weight:</strong> {{total_weight}} LBS | <strong>Handling Units:</strong> {{total_pallets}}</div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 5px; background: white;">
+            <thead>
+                <tr style="font-size: 10px; color: #94a3b8; border-bottom: 1px solid #e2e8f0;">
+                    <th style="padding: 5px; text-align: left;">QTY</th>
+                    <th style="padding: 5px; text-align: left;">TYPE</th>
+                    <th style="padding: 5px; text-align: left;">CLASS</th>
+                    <th style="padding: 5px; text-align: right;">WEIGHT</th>
+                    <th style="padding: 5px; text-align: right;">DIMS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each products}}
+                <tr style="font-size: 12px; border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 5px;">{{pcs}}</td>
+                    <td style="padding: 5px;">{{type}}</td>
+                    <td style="padding: 5px;">{{class}}</td>
+                    <td style="padding: 5px; text-align: right;">{{weight}} lbs</td>
+                    <td style="padding: 5px; text-align: right;">{{length}}x{{width}}x{{height}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-bottom: 32px;">
+        <div class="loc-label">Accessorials</div>
+        <div style="font-size: 14px;">
+            {{#if accessorials_text}}
+            {{accessorials_text}}
+            {{else}}
+            <span style="font-size: 12px; color: #94a3b8; font-style: italic;">No accessorials selected.</span>
+            {{/if}}
+        </div>
     </div>
 
     <div class="rate-display">
@@ -279,7 +359,10 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 <div class="card">
     <div class="header">
         <div>
-            <span class="quote-id">SPOT QUOTE #{{load_number}}</span>
+            {{#if logo_url}}
+            <img src="{{logo_url}}" style="max-height: 50px; display: block; margin-bottom: 15px;" />
+            {{/if}}
+            <span class="quote-id">SPOT QUOTE #{{quote_number}}</span>
             <h1 class="title">Rate Proposal</h1>
         </div>
         <div style="text-align: right;">
@@ -292,12 +375,12 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     <div class="details">
         <div>
             <div class="label">Origin</div>
-            <div class="val">{{shipper_name}}</div>
+            {{#if shipper_name}}<div class="val">{{shipper_name}}</div>{{/if}}
             <div style="font-size: 13px; color: #64748b;">{{shipper_address}}</div>
         </div>
         <div>
             <div class="label">Destination</div>
-            <div class="val">{{consignee_name}}</div>
+            {{#if consignee_name}}<div class="val">{{consignee_name}}</div>{{/if}}
             <div style="font-size: 13px; color: #64748b;">{{consignee_address}}</div>
         </div>
     </div>
@@ -305,21 +388,6 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     <div style="margin-top: 30px;">
         <div class="label">Carrier</div>
         <div class="val">{{carrier_name}}</div>
-    </div>
-
-    <div class="items-grid">
-        <div>
-            <div class="label">Pieces / Type</div>
-            <div class="val">{{pcs}} {{type}}</div>
-        </div>
-        <div>
-            <div class="label">Weight</div>
-            <div class="val">{{weight}} lbs</div>
-        </div>
-        <div>
-            <div class="label">Cubic Ft</div>
-            <div class="val">{{cubic_ft}} cu ft</div>
-        </div>
     </div>
 
     <div style="margin-top: 30px;">
@@ -351,9 +419,11 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     <div style="margin-top: 20px;">
         <div class="label">Accessorials</div>
         <div class="val">
-            {{#each accessorials_names}}
-            <span style="display: inline-block; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-right: 5px; margin-bottom: 5px; font-size: 12px;">{{this}}</span>
-            {{/each}}
+            {{#if accessorials_text}}
+            {{accessorials_text}}
+            {{else}}
+            <span style="font-size: 12px; font-weight: normal; font-style: italic; color: #94a3b8;">None</span>
+            {{/if}}
         </div>
     </div>
 
@@ -416,10 +486,37 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </div>
 </div>
 
-<div style="margin-top: 20px; border: 1px solid #000; padding: 15px;">
-    <div class="label">Load Description</div>
-    <div style="font-size: 13px;">{{total_pallets}} Pallets, {{total_weight}} LBS of General Freight.</div>
-</div>
+<div style="margin-top: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase;">Commodities</div>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; font-size: 12px;">
+    <thead>
+        <tr style="background: #f8fafc;">
+            <th style="padding: 8px; border: 1px solid #000; text-align: left;">QTY</th>
+            <th style="padding: 8px; border: 1px solid #000; text-align: left;">TYPE</th>
+            <th style="padding: 8px; border: 1px solid #000; text-align: left;">ITEM DESCRIPTION / CLASS</th>
+            <th style="padding: 8px; border: 1px solid #000; text-align: left;">NMFC #</th>
+            <th style="padding: 8px; border: 1px solid #000; text-align: left;">WEIGHT</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each products}}
+        <tr>
+            <td style="padding: 8px; border: 1px solid #000; font-weight: bold;">{{pcs}}</td>
+            <td style="padding: 8px; border: 1px solid #000;">{{type}}</td>
+            <td style="padding: 8px; border: 1px solid #000;">{{description}} {{#if class}}/ CLASS: {{class}}{{/if}}</td>
+            <td style="padding: 8px; border: 1px solid #000;">{{nmfc}}</td>
+            <td style="padding: 8px; border: 1px solid #000;">{{weight}} LBS</td>
+        </tr>
+        {{/each}}
+    </tbody>
+    <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+            <td colspan="2" style="padding: 8px; border: 1px solid #000; text-align: right;">TOTALS:</td>
+            <td style="padding: 8px; border: 1px solid #000;">{{total_pallets}} Handling Units</td>
+            <td style="padding: 8px; border: 1px solid #000;"></td>
+            <td style="padding: 8px; border: 1px solid #000;">{{total_weight}} LBS</td>
+        </tr>
+    </tfoot>
+</table>
 
 <div style="margin-top: 20px; text-align: right;">
     <div style="font-size: 16px;"><strong>Agreed Rate: {{customer_rate}}</strong></div>
@@ -470,8 +567,40 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 </div>
 
 <div style="margin-top: 20px;">
-    <strong>EQUIPMENT REQUIRED:</strong> 53' Dry Van | <strong>WEIGHT:</strong> {{total_weight}} LBS
+    <strong>EQUIPMENT REQUIRED:</strong> 53' Dry Van
 </div>
+
+<div style="margin-top: 30px; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 5px;">COMMODITY DETAILS</div>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0; font-size: 12px;">
+    <thead>
+        <tr style="background: #f8fafc;">
+            <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">QTY</th>
+            <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">TYPE</th>
+            <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">ITEM DESCRIPTION / CLASS</th>
+            <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">NMFC #</th>
+            <th style="padding: 10px; border: 1px solid #e2e8f0; text-align: left;">WEIGHT</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each products}}
+        <tr>
+            <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">{{pcs}}</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{type}}</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{description}} {{#if class}}/ CLASS: {{class}}{{/if}}</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{nmfc}}</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{weight}} LBS</td>
+        </tr>
+        {{/each}}
+    </tbody>
+    <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+            <td colspan="2" style="padding: 10px; border: 1px solid #e2e8f0; text-align: right;">TOTALS:</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{total_pallets}} Handling Units</td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;"></td>
+            <td style="padding: 10px; border: 1px solid #e2e8f0;">{{total_weight}} LBS</td>
+        </tr>
+    </tfoot>
+</table>
 
 <table class="rate-table">
     <tr>
@@ -552,15 +681,29 @@ export async function GET(request: Request) {
         const { data: quote } = await supabase.from('quotes').select('*').eq('id', id).single();
         if (!quote) return new Response('Quote not found', { status: 404 });
 
+        // Get accessorials names if available
+        let accessorials_names: string[] = [];
+        if (quote.accessorials && quote.accessorials.length > 0) {
+            const { data: accs } = await supabase
+                .from('accessorials')
+                .select('name')
+                .in('id', quote.accessorials);
+            accessorials_names = accs?.map(a => a.name) || [];
+        }
+
         printData = {
             ...printData,
             quote_number: quote.quote_number,
+            carrier_name: quote.carrier_name || 'Carrier',
             shipper_name: quote.origin_info?.name || 'Shipper',
             shipper_address: getFullAddress(quote.origin_info),
             consignee_name: quote.destination_info?.name || 'Consignee',
             consignee_address: getFullAddress(quote.destination_info),
             total_weight: quote.items?.reduce((acc: number, item: any) => acc + (Number(item.weight) || 0), 0) || 0,
             total_pallets: quote.items?.reduce((acc: number, item: any) => acc + (Number(item.pcs) || 0), 0) || 0,
+            products: quote.items || [],
+            accessorials_names,
+            accessorials_text: accessorials_names.join(', '),
             customer_rate: `$${Number(quote.customer_rate).toFixed(2)}`
         };
     } else if (type === 'spot-quote') {
@@ -597,10 +740,14 @@ export async function GET(request: Request) {
             ...printData,
             quote_number: spotQuote.quote_number,
             quote_date: new Date(spotQuote.quote_date).toLocaleDateString(),
-            shipper_name: spotQuote.shipper?.name || 'Shipper',
-            shipper_address: getFullAddress(spotQuote.shipper),
-            consignee_name: spotQuote.consignee?.name || 'Consignee',
-            consignee_address: getFullAddress(spotQuote.consignee),
+            shipper_name: spotQuote.shipper?.name || '',
+            shipper_address: spotQuote.shipper 
+                ? getFullAddress(spotQuote.shipper) 
+                : (spotQuote.shipper_zip ? `${spotQuote.shipper_city}, ${spotQuote.shipper_state} ${spotQuote.shipper_zip}` : ''),
+            consignee_name: spotQuote.consignee?.name || '',
+            consignee_address: spotQuote.consignee 
+                ? getFullAddress(spotQuote.consignee) 
+                : (spotQuote.consignee_zip ? `${spotQuote.consignee_city}, ${spotQuote.consignee_state} ${spotQuote.consignee_zip}` : ''),
             carrier_name,
             pcs: spotQuote.pcs,
             type: spotQuote.type || 'Pallets',
@@ -608,6 +755,7 @@ export async function GET(request: Request) {
             cubic_ft: spotQuote.cubic_ft,
             products: spotQuote.products || [],
             accessorials_names,
+            accessorials_text: accessorials_names.join(', '),
             additional_instructions: spotQuote.additional_instructions || 'None',
             customer_rate: `$${Number(spotQuote.rate).toFixed(2)}`
         };

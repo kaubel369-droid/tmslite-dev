@@ -44,6 +44,12 @@ type SpotQuote = {
     carrier_name?: string;
     shipper: ShipperConsignee;
     consignee: ShipperConsignee;
+    shipper_zip?: string;
+    shipper_city?: string;
+    shipper_state?: string;
+    consignee_zip?: string;
+    consignee_city?: string;
+    consignee_state?: string;
     carrier?: {
         id: string;
         name: string;
@@ -979,15 +985,23 @@ export default function EditCustomerPage() {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold">{quote.shipper?.name}</span>
-                                                        <span className="text-[10px] text-slate-500">{quote.shipper?.city}, {quote.shipper?.state}</span>
+                                                    <div className="flex flex-col text-xs">
+                                                        <span className="font-semibold text-slate-900">{quote.shipper?.name || (quote.shipper_zip ? 'Zip Entry' : '-')}</span>
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-tight">
+                                                            {quote.shipper 
+                                                                ? `${quote.shipper.city}, ${quote.shipper.state}` 
+                                                                : (quote.shipper_zip ? `${quote.shipper_city}, ${quote.shipper_state} ${quote.shipper_zip}` : '-')}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-semibold">{quote.consignee?.name}</span>
-                                                        <span className="text-[10px] text-slate-500">{quote.consignee?.city}, {quote.consignee?.state}</span>
+                                                    <div className="flex flex-col text-xs">
+                                                        <span className="font-semibold text-slate-900">{quote.consignee?.name || (quote.consignee_zip ? 'Zip Entry' : '-')}</span>
+                                                        <span className="text-[10px] text-slate-500 uppercase tracking-tight">
+                                                            {quote.consignee 
+                                                                ? `${quote.consignee.city}, ${quote.consignee.state}` 
+                                                                : (quote.consignee_zip ? `${quote.consignee_city}, ${quote.consignee_state} ${quote.consignee_zip}` : '-')}
+                                                        </span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold text-indigo-600">${Number(quote.rate).toFixed(2)}</TableCell>

@@ -48,6 +48,7 @@ export default function TemplateEditor({ initialContent, templateName, slug, org
             { pcs: 14, type: 'PLT', description: 'Raw Materials', weight: 22500, nmfc: '67890-02', class: '85' }
         ],
         accessorials_names: ['Liftgate Pickup', 'Residential Delivery'],
+        accessorials_text: 'Liftgate Pickup, Residential Delivery',
         additional_instructions: 'Please call 24h prior to arrival.',
         standard_preamble: 'RECEIVED, subject to the classifications and tariffs in effect on the date of the issue of this Bill of Lading, the property described below, in apparent good order, except as noted (contents and condition of contents of packages unknown), marked, consigned, and destined as indicated below, which said carrier (the word carrier being understood throughout this contract as meaning any person or corporation in possession of the property under the contract) agrees to carry to its usual place of delivery at said destination...',
         shipper_certification: 'This is to certify that the above named materials are properly classified, described, packaged, marked and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.',
