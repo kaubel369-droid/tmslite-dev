@@ -63,6 +63,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
         consignee_city: '',
         consignee_state: '',
         type: 'Pallets',
+        shipment_type: 'LTL',
         products_list: [
             { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
         ] as ProductLine[],
@@ -106,6 +107,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     consignee_city: '',
                     consignee_state: '',
                     type: 'Pallets',
+                    shipment_type: 'LTL',
                     products_list: [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
                     ],
@@ -169,6 +171,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     consignee_city: data.quote.consignee_city || '',
                     consignee_state: data.quote.consignee_state || '',
                     type: data.quote.type || 'Pallets',
+                    shipment_type: data.quote.shipment_type || 'LTL',
                     products_list: Array.isArray(data.quote.products) ? data.quote.products : [
                         { pcs: 1, type: 'PLT', weight: 0, class: '65', length: 48, width: 48, height: 48, pallets: 1, cubic_feet: 64, description: '' }
                     ],
@@ -421,24 +424,30 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                         </div>
 
                         {/* Shipment Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100 pb-4">
+                        <div className="grid grid-cols-1 gap-6 pt-4 border-t border-slate-100 pb-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700">Shipment Type</label>
                                 <select 
-                                    name="type" 
-                                    value={formData.type} 
+                                    name="shipment_type" 
+                                    value={formData.shipment_type} 
                                     onChange={handleInputChange}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm"
                                 >
-                                    <option value="Pallets">Pallets</option>
-                                    <option value="Loose">Loose</option>
-                                    <option value="Crates">Crates</option>
-                                    <option value="Drums">Drums</option>
-                                    <option value="Pieces">Pieces</option>
+                                    <option value="LTL">LTL</option>
+                                    <option value="Truckload">Truckload</option>
+                                    <option value="Partial">Partial</option>
+                                    <option value="Flatbed">Flatbed</option>
+                                    <option value="Van">Van</option>
+                                    <option value="Reefer">Reefer</option>
+                                    <option value="Rail">Rail</option>
+                                    <option value="Ocean">Ocean</option>
+                                    <option value="Air">Air</option>
+                                    <option value="Expedited">Expedited</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                         </div>
-
+        
                         {/* Consignee */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
                             <div className="space-y-2">

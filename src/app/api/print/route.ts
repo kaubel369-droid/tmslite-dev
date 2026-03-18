@@ -385,9 +385,15 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
         </div>
     </div>
 
-    <div style="margin-top: 30px;">
-        <div class="label">Carrier</div>
-        <div class="val">{{carrier_name}}</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px;">
+        <div>
+            <div class="label">Shipment Type</div>
+            <div class="val">{{shipment_type}}</div>
+        </div>
+        <div>
+            <div class="label">Carrier</div>
+            <div class="val">{{carrier_name}}</div>
+        </div>
     </div>
 
     <div style="margin-top: 30px;">
@@ -749,6 +755,7 @@ export async function GET(request: Request) {
                 ? getFullAddress(spotQuote.consignee) 
                 : (spotQuote.consignee_zip ? `${spotQuote.consignee_city}, ${spotQuote.consignee_state} ${spotQuote.consignee_zip}` : ''),
             carrier_name,
+            shipment_type: spotQuote.shipment_type || 'LTL',
             pcs: spotQuote.pcs,
             type: spotQuote.type || 'Pallets',
             weight: spotQuote.weight,

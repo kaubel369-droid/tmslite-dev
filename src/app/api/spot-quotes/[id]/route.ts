@@ -54,7 +54,7 @@ export async function PUT(
         const { 
             carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
             shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
-            type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
+            type, shipment_type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
         } = body;
 
         const { data: quote, error } = await serviceAuth
@@ -62,7 +62,7 @@ export async function PUT(
             .update({
                 carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
                 shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
-                type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
+                type, shipment_type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
             })
             .eq('id', id)
             .select()

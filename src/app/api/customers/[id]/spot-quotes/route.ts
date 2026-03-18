@@ -60,7 +60,7 @@ export async function POST(
         const { 
             carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
             shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
-            type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
+            type, shipment_type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
         } = body;
 
         const { data: quote, error } = await serviceAuth
@@ -68,7 +68,7 @@ export async function POST(
             .insert({
                 carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
                 shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
-                type, additional_instructions, products, accessorials, pcs, weight, cubic_ft,
+                type, shipment_type, additional_instructions, products, accessorials, pcs, weight, cubic_ft,
                 customer_id: customerId,
                 org_id: profile?.org_id
             })
