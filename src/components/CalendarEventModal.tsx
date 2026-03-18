@@ -135,8 +135,18 @@ export default function CalendarEventModal({ isOpen, onClose, onSave, initialDat
         // New event
         if (assignType === 'Role' && selectedRole) {
           // Bulk insert for role
-          const targetUsers = allUsers.filter(u => u.role === selectedRole);
-          if (targetUsers.length === 0) throw new Error(`No users found with role: ${selectedRole}`);
+          let targetUsers = allUsers.filter(u => u.role === selectedRole);
+          
+          // Special logic for dual role
+          if (selectedRole === 'Sales Rep/Customer Service Rep') {
+            targetUsers = allUsers.filter(u => 
+              u.role === 'Sales Rep' || 
+              u.role === 'Customer Service Rep' || 
+              u.role === 'Sales Rep/Customer Service Rep'
+            );
+          }
+
+          if (targetUsers.length === 0) throw new Error(`No users found for selected role: ${selectedRole}`);
           
           const payloads = targetUsers.map(u => ({
             ...basePayload,
