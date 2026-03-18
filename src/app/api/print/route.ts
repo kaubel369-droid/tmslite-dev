@@ -53,10 +53,6 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </div>
 </div>
 
-<div class="preamble">
-    {{standard_preamble}}
-</div>
-
 <div class="grid">
     <div>
         <div class="section-title">Shipper (From)</div>
@@ -119,6 +115,10 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </div>
 </div>
 
+<div class="preamble" style="margin-top: 20px;">
+    {{standard_preamble}}
+</div>
+
 <div class="cert-text">
     {{shipper_certification}}
 </div>
@@ -159,6 +159,9 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 
 <div class="inv-header">
     <div>
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; margin-bottom: 15px; display: block;" />
+        {{/if}}
         <div class="inv-title">INVOICE</div>
         <div style="margin-top: 10px; font-weight: 600;"># INV-{{load_number}}</div>
     </div>
@@ -368,7 +371,10 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     'customer-load-confirmation': `
 <style>
     body { font-family: 'Helvetica', sans-serif; padding: 30px; }
-    .conf-header { text-align: center; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    .conf-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    .conf-logo-container { width: 200px; text-align: left; }
+    .conf-title-container { text-align: center; flex-grow: 1; }
+    .conf-empty-container { width: 200px; }
     .conf-title { font-size: 26px; font-weight: bold; letter-spacing: 2px; }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0px; border: 1px solid #000; }
     .info-cell { padding: 10px; border: 0.5px solid #000; }
@@ -377,8 +383,16 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 </style>
 
 <div class="conf-header">
-    <div class="conf-title">CUSTOMER LOAD CONFIRMATION</div>
-    <div style="font-size: 14px; margin-top: 5px;">Reference Number: {{load_number}}</div>
+    <div class="conf-logo-container">
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; display: block;" />
+        {{/if}}
+    </div>
+    <div class="conf-title-container">
+        <div class="conf-title">CUSTOMER LOAD CONFIRMATION</div>
+        <div style="font-size: 14px; margin-top: 5px;">Reference Number: {{load_number}}</div>
+    </div>
+    <div class="conf-empty-container"></div>
 </div>
 
 <div class="info-grid">
@@ -428,6 +442,9 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 
 <div class="header">
     <div>
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; margin-bottom: 15px; display: block;" />
+        {{/if}}
         <h1 style="margin: 0;">CARRIER RATE CONFIRMATION</h1>
         <div style="font-size: 14px;">TMS Reference: {{load_number}}</div>
     </div>
@@ -609,14 +626,6 @@ export async function GET(request: Request) {
         
         if (!load) return new Response('Load not found', { status: 404 });
 
-        // Fetch organization logo from settings
-        const { data: logoSetting } = await supabase
-            .from('settings')
-            .select('setting_value')
-            .eq('org_id', load.org_id)
-            .eq('setting_key', 'org_logo_url')
-            .single();
-
         printData = {
             ...printData,
             load_number: load.load_number,
@@ -635,10 +644,9 @@ export async function GET(request: Request) {
             customer_rate: `$${Number(load.customer_rate || 0).toFixed(2)}`,
             carrier_rate: `$${Number(load.carrier_rate || 0).toFixed(2)}`,
             bol_notes: load.bol_notes || 'None',
-            logo_url: logoSetting?.setting_value,
             standard_preamble: 'RECEIVED, subject to the classifications and tariffs in effect on the date of the issue of this Bill of Lading, the property described below, in apparent good order, except as noted (contents and condition of contents of packages unknown), marked, consigned, and destined as indicated below, which said carrier (the word carrier being understood throughout this contract as meaning any person or corporation in possession of the property under the contract) agrees to carry to its usual place of delivery at said destination...',
-            liability_statement: 'Unless the shipper declares a higher value and pays the applicable surcharge, carrier liability for loss or damage is limited to $0.50 per pound per package.',
             shipper_certification: 'This is to certify that the above named materials are properly classified, described, packaged, marked and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.',
+            liability_statement: 'Unless the shipper declares a higher value and pays the applicable surcharge, carrier liability for loss or damage is limited to $0.50 per pound per package.',
             products: (load.load_products || []).map((p: any) => ({
                 ...p,
                 pcs: p.pcs || p.pallets,

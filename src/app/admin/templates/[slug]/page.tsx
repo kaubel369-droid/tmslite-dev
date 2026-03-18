@@ -58,10 +58,6 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
     </div>
 </div>
 
-<div class="preamble">
-    {{standard_preamble}}
-</div>
-
 <div class="grid">
     <div>
         <div class="section-title">Shipper (From)</div>
@@ -124,6 +120,10 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
     </div>
 </div>
 
+<div class="preamble" style="margin-top: 20px;">
+    {{standard_preamble}}
+</div>
+
 <div class="cert-text">
     {{shipper_certification}}
 </div>
@@ -168,6 +168,9 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
 
 <div class="inv-header">
     <div>
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; margin-bottom: 15px; display: block;" />
+        {{/if}}
         <div class="inv-title">INVOICE</div>
         <div style="margin-top: 10px; font-weight: 600;"># INV-{{load_number}}</div>
     </div>
@@ -388,7 +391,10 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
         content: `
 <style>
     body { font-family: 'Helvetica', sans-serif; padding: 30px; }
-    .conf-header { text-align: center; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    .conf-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; }
+    .conf-logo-container { width: 200px; text-align: left; }
+    .conf-title-container { text-align: center; flex-grow: 1; }
+    .conf-empty-container { width: 200px; }
     .conf-title { font-size: 26px; font-weight: bold; letter-spacing: 2px; }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0px; border: 1px solid #000; }
     .info-cell { padding: 10px; border: 0.5px solid #000; }
@@ -397,8 +403,16 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
 </style>
 
 <div class="conf-header">
-    <div class="conf-title">CUSTOMER LOAD CONFIRMATION</div>
-    <div style="font-size: 14px; margin-top: 5px;">Reference Number: {{load_number}}</div>
+    <div class="conf-logo-container">
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; display: block;" />
+        {{/if}}
+    </div>
+    <div class="conf-title-container">
+        <div class="conf-title">CUSTOMER LOAD CONFIRMATION</div>
+        <div style="font-size: 14px; margin-top: 5px;">Reference Number: {{load_number}}</div>
+    </div>
+    <div class="conf-empty-container"></div>
 </div>
 
 <div class="info-grid">
@@ -452,6 +466,9 @@ const DEFAULT_TEMPLATES: Record<string, { name: string, type: string, content: s
 
 <div class="header">
     <div>
+        {{#if logo_url}}
+        <img src="{{logo_url}}" style="max-height: 50px; margin-bottom: 15px; display: block;" />
+        {{/if}}
         <h1 style="margin: 0;">CARRIER RATE CONFIRMATION</h1>
         <div style="font-size: 14px;">TMS Reference: {{load_number}}</div>
     </div>
