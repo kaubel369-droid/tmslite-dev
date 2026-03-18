@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PackageOpen, LogOut, Shield, TrendingUp } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { signout } from '@/app/login/actions';
+import Sidebar from '@/components/Sidebar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -96,9 +97,18 @@ export default async function RootLayout({
             </div>
           </nav>
         )}
-        <main className="flex-1">
-          {children}
-        </main>
+        {user ? (
+          <div className="flex flex-1 overflow-hidden">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto bg-slate-50/50">
+              {children}
+            </main>
+          </div>
+        ) : (
+          <main className="flex-1">
+            {children}
+          </main>
+        )}
       </body>
     </html>
   );

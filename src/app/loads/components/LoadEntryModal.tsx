@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, FileText, Paperclip, Truck, Plus, Trash2, Shield, Eye, EyeOff, Download, Loader2, Lock, Globe, Printer } from 'lucide-react';
 import ShipperConsigneeModal from './ShipperConsigneeModal';
+import CalendarEventModal from '@/components/CalendarEventModal';
 
 type Tab = 'Load Information' | 'Notes' | 'Documents';
 
@@ -65,6 +66,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
     const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState('bol');
     const [isPrinting, setIsPrinting] = useState(false);
+    const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -432,6 +434,15 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                     Print
                                 </button>
                             </div>
+                        )}
+                        {isEditing && (
+                            <button
+                                type="button"
+                                onClick={() => setIsCalendarModalOpen(true)}
+                                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-1.5 px-3 rounded-lg flex items-center gap-2 transition-colors shadow-sm text-sm"
+                            >
+                                Add New Event
+                            </button>
                         )}
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors bg-white p-1 rounded-full shadow-sm">
                             <X className="h-6 w-6" />
@@ -970,6 +981,13 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     onClose={() => setScModalOpen(false)}
                     onSaveSuccess={handleScSaveSuccess}
                     type={scModalType}
+                />
+
+                <CalendarEventModal
+                    isOpen={isCalendarModalOpen}
+                    onClose={() => setIsCalendarModalOpen(false)}
+                    onSave={() => setIsCalendarModalOpen(false)}
+                    initialDescription={formData.load_number || 'New Load'}
                 />
             </div>
         </div>

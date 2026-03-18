@@ -11,6 +11,7 @@ import { formatPhoneNumber } from '@/lib/utils';
 import LTLRatingScreen from '@/components/LTLRatingScreen';
 import SpotQuoteModal from '@/components/SpotQuoteModal';
 import PrintButton from '@/components/PrintButton';
+import CalendarEventModal from '@/components/CalendarEventModal';
 
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
@@ -113,6 +114,8 @@ export default function EditCustomerPage() {
     // User Management State
     const [isLinkUserOpen, setIsLinkUserOpen] = useState(false);
     const [linkingUser, setLinkingUser] = useState(false);
+
+    const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
     // Initial Fetch
     useEffect(() => {
@@ -485,6 +488,13 @@ export default function EditCustomerPage() {
                             <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {formData.phone}</span>
                         </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsCalendarModalOpen(true)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                        Add New Event
+                    </button>
                 </header>
 
                 {error && <div className="bg-red-50 text-red-600 border border-red-200 p-4 rounded-xl mb-6">{error}</div>}
@@ -1352,6 +1362,13 @@ export default function EditCustomerPage() {
 
                 </Tabs>
             </div>
+
+            <CalendarEventModal
+                isOpen={isCalendarModalOpen}
+                onClose={() => setIsCalendarModalOpen(false)}
+                onSave={() => setIsCalendarModalOpen(false)}
+                initialDescription={formData.company_name}
+            />
         </div>
     );
 }

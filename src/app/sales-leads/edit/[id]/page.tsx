@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatPhoneNumber } from '@/lib/utils';
+import CalendarEventModal from '@/components/CalendarEventModal';
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
 type Activity = { id: string; activity_date: string; activity_type: string; description: string; notes: string };
@@ -41,6 +42,8 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
     const [contactForm, setContactForm] = useState({ name: '', phone: '', ext: '', cell_phone: '', email: '', position: '', notes: '' });
+
+    const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         company_name: '',
@@ -323,31 +326,40 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                     >
                         <ArrowLeft className="h-4 w-4" /> Back to Sales Leads
                     </Link>
-                    {formData.status === 'Converted' ? (
-                        <div className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                            <span>This lead was successfully converted.</span>
-                            <Link href={`/customers/edit/${formData.converted_to_customer_id}`} className="underline">View Customer</Link>
-                        </div>
-                    ) : (
-                        ['New', 'Contacted', 'Qualified'].includes(formData.status) && (
-                            <button
-                                type="button"
-                                onClick={handleConvert}
-                                disabled={converting}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
-                            >
-                                {converting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" /> Converting...
-                                    </>
-                                ) : (
-                                    <>
-                                        Convert to Customer <ArrowRight className="h-4 w-4" />
-                                    </>
-                                )}
-                            </button>
-                        )
-                    )}
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setIsCalendarModalOpen(true)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                        >
+                            Add New Event
+                        </button>
+                        {formData.status === 'Converted' ? (
+                            <div className="text-sm font-medium text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <span>This lead was successfully converted.</span>
+                                <Link href={`/customers/edit/${formData.converted_to_customer_id}`} className="underline">View Customer</Link>
+                            </div>
+                        ) : (
+                            ['New', 'Contacted', 'Qualified'].includes(formData.status) && (
+                                <button
+                                    type="button"
+                                    onClick={handleConvert}
+                                    disabled={converting}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+                                >
+                                    {converting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" /> Converting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Convert to Customer <ArrowRight className="h-4 w-4" />
+                                        </>
+                                    )}
+                                </button>
+                            )
+                        )}
+                    </div>
                 </div>
 
                 <header className="mb-8">
@@ -767,6 +779,13 @@ export default function EditSalesLeadPage({ params }: { params: Promise<{ id: st
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <CalendarEventModal
+                isOpen={isCalendarModalOpen}
+                onClose={() => setIsCalendarModalOpen(false)}
+                onSave={() => setIsCalendarModalOpen(false)}
+                initialDescription={formData.company_name}
+            />
         </div>
     );
 }
