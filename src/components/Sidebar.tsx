@@ -47,23 +47,11 @@ export default function Sidebar() {
       }
 
       const todayStr = format(new Date(), 'yyyy-MM-dd');
-      let query = supabase
+      const { data, error } = await supabase
         .from('calendar_events')
         .select('*')
-        .eq('event_date', todayStr);
-      
-      // Fetch profile to check role
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profile && profile.role !== 'Admin' && profile.role !== 'Supervisor') {
-        query = query.eq('user_id', user.id);
-      }
-
-      const { data, error } = await query;
+        .eq('event_date', todayStr)
+        .or(`user_id.eq.${user.id},created_by.eq.${user.id}`);
       
       if (!error && data) {
         setTodaysEvents(data);

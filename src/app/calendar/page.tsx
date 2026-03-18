@@ -57,28 +57,15 @@ export default function CalendarPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
       const start = startOfMonth(currentDate);
       const end = endOfMonth(currentDate);
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('calendar_events')
         .select('*')
         .gte('event_date', format(start, 'yyyy-MM-dd'))
-        .lte('event_date', format(end, 'yyyy-MM-dd'));
-
-      // Regular users only see their own events.
-      // Admins/Supervisors see everything (handled by lack of filter, RLS still applies).
-      if (profile && profile.role !== 'Admin' && profile.role !== 'Supervisor') {
-        query = query.eq('user_id', user.id);
-      }
-
-      const { data, error } = await query;
+        .lte('event_date', format(end, 'yyyy-MM-dd'))
+        .or(`user_id.eq.${user.id},created_by.eq.${user.id}`);
 
       if (data && !error) {
         setEvents(data);
