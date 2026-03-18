@@ -1,4 +1,5 @@
 import { getServiceRoleClient } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -44,12 +45,15 @@ export async function PUT(
 
     try {
         const body = await request.json();
-        const supabase = getServiceRoleClient();
+        const supabase = await createClient();
+        const serviceAuth = getServiceRoleClient();
         
-        // Remove fields that shouldn't be updated
+        // Ensure user is authenticated
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         // const { id: _, org_id, customer_id, quote_number, created_at, products_list, ...updateData } = body;
 
-        const { data: quote, error } = await supabase
+        const { data: quote, error } = await serviceAuth
             .from('customer_spot_quotes')
             .update(body)
             .eq('id', id)

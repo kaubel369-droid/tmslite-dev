@@ -1,4 +1,5 @@
 import { getServiceRoleClient } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -43,9 +44,10 @@ export async function POST(
 
     try {
         const body = await request.json();
-        const supabase = getServiceRoleClient();
+        const supabase = await createClient();
+        const serviceAuth = getServiceRoleClient();
 
-        // Get organization ID from profile
+        // Get organization ID from profile using authenticated client
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -55,7 +57,7 @@ export async function POST(
             .eq('id', user.id)
             .single();
 
-        const { data: quote, error } = await supabase
+        const { data: quote, error } = await serviceAuth
             .from('customer_spot_quotes')
             .insert({
                 ...body,
