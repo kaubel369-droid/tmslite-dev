@@ -53,26 +53,55 @@ export default function CalendarPage() {
   const supabase = createClient();
 
   const fetchEvents = async () => {
-    const start = startOfMonth(currentDate);
-    const end = endOfMonth(currentDate);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data, error } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .gte('event_date', format(start, 'yyyy-MM-dd'))
-      .lte('event_date', format(end, 'yyyy-MM-dd'));
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-    if (data && !error) {
-      setEvents(data);
+      const start = startOfMonth(currentDate);
+      const end = endOfMonth(currentDate);
+
+      let query = supabase
+        .from('calendar_events')
+        .select('*')
+        .gte('event_date', format(start, 'yyyy-MM-dd'))
+        .lte('event_date', format(end, 'yyyy-MM-dd'));
+
+      // Regular users only see their own events.
+      // Admins/Supervisors see everything (handled by lack of filter, RLS still applies).
+      if (profile && profile.role !== 'Admin' && profile.role !== 'Supervisor') {
+        query = query.eq('user_id', user.id);
+      }
+
+      const { data, error } = await query;
+
+      if (data && !error) {
+        setEvents(data);
+      }
+    } catch (err) {
+      console.error('Error fetching events:', err);
     }
   };
 
   useEffect(() => {
     fetchEvents();
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchEvents();
+    });
+
     const handleUpdate = () => fetchEvents();
     window.addEventListener('calendar-updated', handleUpdate);
-    return () => window.removeEventListener('calendar-updated', handleUpdate);
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('calendar-updated', handleUpdate);
+    };
   }, [currentDate]);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));

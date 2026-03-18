@@ -39,21 +39,43 @@ export default function Sidebar() {
   const isCalendarActive = pathname === '/calendar';
 
   const fetchTodaysEvents = async () => {
-    const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const { data } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .eq('event_date', todayStr);
-    
-    if (data) setTodaysEvents(data);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setTodaysEvents([]);
+        return;
+      }
+
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('event_date', todayStr)
+        .eq('user_id', user.id);
+      
+      if (!error && data) {
+        setTodaysEvents(data);
+      }
+    } catch (err) {
+      console.error('Error fetching today\'s events:', err);
+    }
   };
 
   useEffect(() => {
     fetchTodaysEvents();
 
+    // Listen for auth changes to re-fetch
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchTodaysEvents();
+    });
+
     const handleUpdate = () => fetchTodaysEvents();
     window.addEventListener('calendar-updated', handleUpdate);
-    return () => window.removeEventListener('calendar-updated', handleUpdate);
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('calendar-updated', handleUpdate);
+    };
   }, []);
 
   const appointments = todaysEvents.filter(e => e.event_type === 'Appointment');
