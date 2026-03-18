@@ -297,11 +297,14 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                 cubic_ft: acc.cubic_ft + (Number(item.cubic_feet) || 0)
             }), { pcs: 0, weight: 0, cubic_ft: 0 });
 
+            // Filter out internal state fields that don't belong in the DB
+            const { products_list: _, ...validFormData } = formData;
+
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...formData,
+                    ...validFormData,
                     carrier_id: formData.carrier_id || null,
                     shipper_location_id: useShipperZip ? null : (formData.shipper_location_id || null),
                     consignee_location_id: useConsigneeZip ? null : (formData.consignee_location_id || null),

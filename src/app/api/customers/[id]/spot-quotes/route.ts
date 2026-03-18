@@ -57,10 +57,18 @@ export async function POST(
             .eq('id', user.id)
             .single();
 
+        const { 
+            carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
+            shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
+            type, additional_instructions, products, accessorials, pcs, weight, cubic_ft
+        } = body;
+
         const { data: quote, error } = await serviceAuth
             .from('customer_spot_quotes')
             .insert({
-                ...body,
+                carrier_id, rate, carrier_rate, shipper_location_id, consignee_location_id,
+                shipper_zip, shipper_city, shipper_state, consignee_zip, consignee_city, consignee_state,
+                type, additional_instructions, products, accessorials, pcs, weight, cubic_ft,
                 customer_id: customerId,
                 org_id: profile?.org_id
             })
