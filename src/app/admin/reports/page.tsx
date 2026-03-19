@@ -279,100 +279,121 @@ export default function ReportsPage() {
                     </button>
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 print-section">
-                    <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="bg-indigo-50 p-3 rounded-xl">
-                                <DollarSign className="h-6 w-6 text-indigo-600" />
-                            </div>
-                            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Total Margin</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-900">${latestWeek?.margin.toLocaleString()}</span>
-                            <span className={`flex items-center text-sm font-bold ${isMarginUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                {isMarginUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                                {Math.abs(Number(marginIncrease))}%
-                            </span>
-                        </div>
-                        <p className="text-slate-400 text-sm mt-1">v.s. last week</p>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="bg-emerald-50 p-3 rounded-xl">
-                                <TrendingUp className="h-6 w-6 text-emerald-600" />
-                            </div>
-                            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Weekly Volume</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-900">{latestWeek?.volume}</span>
-                            <span className="text-slate-400 text-sm font-medium">Shipments</span>
-                        </div>
-                        <p className="text-slate-400 text-sm mt-1">Current period</p>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="bg-amber-50 p-3 rounded-xl">
-                                <Users className="h-6 w-6 text-amber-600" />
-                            </div>
-                            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Leads Active</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-900">{data?.leadChart.reduce((a: any, b: any) => a + (b.name !== 'Converted' ? b.value : 0), 0)}</span>
-                            <span className="text-slate-400 text-sm font-medium">Prospects</span>
-                        </div>
-                        <p className="text-slate-400 text-sm mt-1">Awaiting follow-up</p>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 mb-4">
-                            <div className="bg-indigo-50 p-3 rounded-xl">
-                                <Briefcase className="h-6 w-6 text-indigo-600" />
-                            </div>
-                            <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Conversion Rate</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-900">
-                                {((data?.leadChart.find((l: any) => l.name === 'Converted')?.value || 0) / (data?.leadChart.reduce((a: any, b: any) => a + b.value, 0) || 1) * 100).toFixed(0)}%
-                            </span>
-                        </div>
-                        <p className="text-slate-400 text-sm mt-1">Lead to Customer</p>
-                    </div>
-                </div>
-
                 {/* Charts Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Volume & Margin Trends */}
                     {selectedReports.trends && (
-                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 print-section">
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* KPI Cards (Localized to Trends) */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 print-section">
+                                <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-indigo-50 p-3 rounded-xl">
+                                            <DollarSign className="h-6 w-6 text-indigo-600" />
+                                        </div>
+                                        <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Total Margin</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-slate-900">${latestWeek?.margin.toLocaleString()}</span>
+                                        <span className={`flex items-center text-sm font-bold ${isMarginUp ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {isMarginUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                                            {Math.abs(Number(marginIncrease))}%
+                                        </span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm mt-1">v.s. last week</p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-emerald-50 p-3 rounded-xl">
+                                            <TrendingUp className="h-6 w-6 text-emerald-600" />
+                                        </div>
+                                        <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Weekly Volume</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-slate-900">{latestWeek?.volume}</span>
+                                        <span className="text-slate-400 text-sm font-medium">Shipments</span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm mt-1">Current period</p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-amber-50 p-3 rounded-xl">
+                                            <Users className="h-6 w-6 text-amber-600" />
+                                        </div>
+                                        <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Leads Active</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-slate-900">{data?.leadChart.reduce((a: any, b: any) => a + (b.name !== 'Converted' ? b.value : 0), 0)}</span>
+                                        <span className="text-slate-400 text-sm font-medium">Prospects</span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm mt-1">Awaiting follow-up</p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="bg-indigo-50 p-3 rounded-xl">
+                                            <Briefcase className="h-6 w-6 text-indigo-600" />
+                                        </div>
+                                        <span className="text-slate-500 font-bold text-sm uppercase tracking-wider">Conversion Rate</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-black text-slate-900">
+                                            {((data?.leadChart.find((l: any) => l.name === 'Converted')?.value || 0) / (data?.leadChart.reduce((a: any, b: any) => a + b.value, 0) || 1) * 100).toFixed(0)}%
+                                        </span>
+                                    </div>
+                                    <p className="text-slate-400 text-sm mt-1">Lead to Customer</p>
+                                </div>
+                            </div>
                         <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <TrendingUp className="h-5 w-5 text-indigo-600" />
                             Volume & Margin Trends
                         </h3>
-                        <div className="h-80 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data?.weeklyChart}>
-                                    <defs>
-                                        <linearGradient id="colorMargin" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="week" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val/1000}k`} />
-                                    <Tooltip 
-                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                                        labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
-                                    />
-                                    <Area type="monotone" dataKey="margin" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorMargin)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+                            <div className="h-80 w-full mb-8">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={data?.weeklyChart}>
+                                        <defs>
+                                            <linearGradient id="colorMargin" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis dataKey="week" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                                            labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                                        />
+                                        <Area type="monotone" dataKey="margin" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorMargin)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
 
+                            <div className="overflow-hidden rounded-xl border border-slate-200">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                        <tr>
+                                            <th className="px-4 py-3 font-bold text-slate-700">Week Starting</th>
+                                            <th className="px-4 py-3 font-bold text-slate-700 text-right">Volume</th>
+                                            <th className="px-4 py-3 font-bold text-slate-700 text-right">Margin</th>
+                                            <th className="px-4 py-3 font-bold text-slate-700 text-right">Margin %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {[...data?.weeklyChart].reverse().map((row: any, i: number) => (
+                                            <tr key={i} className="hover:bg-slate-50/50">
+                                                <td className="px-4 py-3 text-slate-600 font-medium">{row.week}</td>
+                                                <td className="px-4 py-3 text-slate-900 font-bold text-right">{row.volume}</td>
+                                                <td className="px-4 py-3 text-indigo-600 font-bold text-right">${row.margin.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-slate-500 text-right">{((row.margin / (row.revenue || 1)) * 100).toFixed(1)}%</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     )}
  
                     {/* Lead Conversion Pipeline */}
@@ -382,7 +403,7 @@ export default function ReportsPage() {
                             <Users className="h-5 w-5 text-indigo-600" />
                             Sales Pipeline Distribution
                         </h3>
-                        <div className="h-80 w-full flex items-center">
+                        <div className="h-80 w-full flex items-center mb-8">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -403,6 +424,32 @@ export default function ReportsPage() {
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
+
+                        <div className="overflow-hidden rounded-xl border border-slate-200">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-4 py-3 font-bold text-slate-700">Pipeline Status</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">Count</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {data?.leadChart.map((row: any, i: number) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="px-4 py-3 flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                                                <span className="text-slate-600 font-medium">{row.name}</span>
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-900 font-bold text-right">{row.value}</td>
+                                            <td className="px-4 py-3 text-slate-500 text-right">
+                                                {((row.value / (data?.leadChart.reduce((a: any, b: any) => a + b.value, 0) || 1)) * 100).toFixed(0)}%
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     )}
@@ -414,7 +461,7 @@ export default function ReportsPage() {
                             <DollarSign className="h-5 w-5 text-indigo-600" />
                             Revenue vs Operating Cost
                         </h3>
-                        <div className="h-96 w-full">
+                        <div className="h-96 w-full mb-8">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={data?.weeklyChart}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -428,6 +475,33 @@ export default function ReportsPage() {
                                     <Bar dataKey="cost" fill="#e2e8f0" radius={[4, 4, 0, 0]} name="Carrier Cost" />
                                 </BarChart>
                             </ResponsiveContainer>
+                        </div>
+
+                        <div className="overflow-hidden rounded-xl border border-slate-200">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-4 py-3 font-bold text-slate-700">Week Starting</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">Revenue</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">Carrier Cost</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">Net Margin</th>
+                                        <th className="px-4 py-3 font-bold text-slate-700 text-right">Efficiency</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {[...data?.weeklyChart].reverse().map((row: any, i: number) => (
+                                        <tr key={i} className="hover:bg-slate-50/50">
+                                            <td className="px-4 py-3 text-slate-600 font-medium">{row.week}</td>
+                                            <td className="px-4 py-3 text-slate-900 font-bold text-right">${row.revenue.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-slate-500 text-right">${row.cost.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-emerald-600 font-bold text-right">${row.margin.toLocaleString()}</td>
+                                            <td className="px-4 py-3 text-slate-400 text-right">
+                                                {((row.margin / (row.revenue || 1)) * 100).toFixed(1)}%
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     )}
