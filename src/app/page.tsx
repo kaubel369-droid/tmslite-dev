@@ -146,10 +146,6 @@ export default function Dashboard() {
             <p className="text-slate-500 font-medium">Welcome back! Here's what's happening today.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
-              <Activity className="h-4 w-4" />
-              View Reports
-            </button>
             <Link 
               href="/loads" 
               className="flex items-center gap-2 bg-indigo-600 px-4 py-2 rounded-xl text-sm font-bold text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-100"

@@ -41,7 +41,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-white flex flex-col`}>
         {user && (
-          <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white shadow-sm">
+          <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white shadow-sm print:hidden">
             <div className="flex h-16 items-center px-6 max-w-7xl mx-auto w-full justify-between">
               <div className="flex items-center gap-8">
                 <Link href="/" className="flex items-center gap-2 text-indigo-700 font-bold text-lg tracking-tight">

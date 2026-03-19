@@ -85,7 +85,7 @@ export default function Sidebar() {
   return (
     <>
       <div 
-        className={`flex flex-col bg-slate-50 border-r border-slate-200 transition-all duration-300 relative ${
+        className={`flex flex-col bg-slate-50 border-r border-slate-200 transition-all duration-300 relative print:hidden ${
           isCollapsed ? 'w-16' : 'w-64'
         }`}
       >

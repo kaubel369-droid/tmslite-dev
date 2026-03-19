@@ -477,6 +477,78 @@ With the following fields:
   Update the Spot Quotes template to include all of these fields  
 
   ***********************************************************
+  Add a calander to application that will display the following:
+  1. Appointments
+  2. Tasks
+  3. Events
+
+  The information for the calender should be user specific. 
+  Add a button to the calender page to add a new appointment, task, or event. 
+  Add a table for appointments, tasks, and events called calender_events
+  With the following fields:
+  1. Event Number(system generated start at 1000)
+  2. Event Date
+  3. Event Time
+  4. Event Type
+  5. Event Description
+  6. Event Notes
+  7. Event User
+  8. Event Status
+  9. Event Created Date
+  10. Event Created By
+  11. Event Last Modified Date
+  12. Event Last Modified By
+  
+    add a left pane to the whole app that is collapsible and will display the following:
+    Have it display 'Today's Appointments', 'Today's Tasks', 'Today's Events'
+    and a button to add a new appointment, task, or event.
+    Put the main button for the calender in the left pane on the very top
+    the calender should dispay holidays and weekends in a different color
+
+  Add any other calender features you think would be useful.  
+    
+
+    ***********************************************************
+
+    on the customer spot quote page there is a drop down for Shipment type between the shipper and consignee. 
+    It should be a drop down with the following options:
+    1. LTL
+    2. Truckload
+    3. Partial
+    4. Flatbed
+    5. Van
+    6. Reefer
+    7. Rail
+    8. Ocean
+    9. Air
+    10. Expedited
+    11. Other
+
+    you may need to add another column in the table to store the shipment type  
+
+    ***********************************************************
+      on the customer page add another tab called reports. It should only be visable to admins and supervisors.
+      the reports tab should display the following reports:
+      1. customer revenue report (revenue and margin)
+      2. customer loads summary report (number of loads, revenue and margin, grouped by shipment type)
+      3. customer loads detail report (display all the fields from the load data entry screen )
+      
+      I want to be able to select a date range for the reports. 
+      I want to be able to print the report or export to Excel.
+
+      ***********************************************************
+      
+      
+      
+      
+
+    
+ 
+
+    
+    
+    
+  
   
 
 

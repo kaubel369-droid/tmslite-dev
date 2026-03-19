@@ -12,6 +12,8 @@ import LTLRatingScreen from '@/components/LTLRatingScreen';
 import SpotQuoteModal from '@/components/SpotQuoteModal';
 import PrintButton from '@/components/PrintButton';
 import CalendarEventModal from '@/components/CalendarEventModal';
+import CustomerReports from '@/components/CustomerReports';
+import { createClient } from '@/utils/supabase/client';
 
 
 type Contact = { id: string; name: string; phone: string; ext: string; cell_phone: string; email: string; position: string; notes: string };
@@ -88,6 +90,7 @@ export default function EditCustomerPage() {
     const [accessorialsList, setAccessorialsList] = useState<any[]>([]);
     const [customerUsers, setCustomerUsers] = useState<any[]>([]);
     const [allProfiles, setAllProfiles] = useState<any[]>([]);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     // Shipper Dialog State
     const [isShipperOpen, setIsShipperOpen] = useState(false);
@@ -168,6 +171,19 @@ export default function EditCustomerPage() {
             }
         };
 
+        const fetchUserRole = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                setUserRole(profile?.role || null);
+            }
+        };
+
         if (id) {
             fetchAllData();
             fetchQuotes();
@@ -175,6 +191,7 @@ export default function EditCustomerPage() {
             fetchAccessorials();
             fetchCustomerUsers();
             fetchAllProfiles();
+            fetchUserRole();
         }
     }, [id]);
 
@@ -508,6 +525,9 @@ export default function EditCustomerPage() {
                         <TabsTrigger value="rating">Rating</TabsTrigger>
                         <TabsTrigger value="documents">Documents ({documents.length})</TabsTrigger>
                         <TabsTrigger value="users">Users ({customerUsers.length})</TabsTrigger>
+                        {(userRole === 'Admin' || userRole === 'Supervisor') && (
+                            <TabsTrigger value="reports">Reports</TabsTrigger>
+                        )}
                     </TabsList>
 
                     {/* Customer Info Tab */}
@@ -1359,6 +1379,14 @@ export default function EditCustomerPage() {
                             </Table>
                         </div>
                     </TabsContent>
+
+                    {(userRole === 'Admin' || userRole === 'Supervisor') && (
+                        <TabsContent value="reports" className="outline-none">
+                            <div className="bg-white border border-slate-200 border-t-0 shadow-sm rounded-b-xl p-8">
+                                <CustomerReports customerId={id} />
+                            </div>
+                        </TabsContent>
+                    )}
 
                 </Tabs>
             </div>

@@ -15,8 +15,17 @@ import {
     ArrowUpRight, 
     ArrowDownRight,
     Loader2,
-    ShieldAlert
+    ShieldAlert,
+    Printer,
+    Download,
+    CheckSquare,
+    Square,
+    Calendar,
+    FileText
 } from 'lucide-react';
+import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
+import { cn } from '@/lib/utils';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -24,6 +33,12 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
     const [authorized, setAuthorized] = useState(false);
     const [data, setData] = useState<any>(null);
+    const [selectedReports, setSelectedReports] = useState({
+        trends: true,
+        pipeline: true,
+        revenue: true
+    });
+    const [companyInfo, setCompanyInfo] = useState({ name: '', logo: '' });
     const router = useRouter();
     const supabase = createClient();
 
@@ -53,6 +68,19 @@ export default function ReportsPage() {
                 const res = await fetch('/api/admin/reports');
                 const json = await res.json();
                 setData(json);
+
+                // Fetch Company Metadata
+                const { data: settings } = await supabase
+                    .from('organization_settings')
+                    .select('company_name, logo_url')
+                    .single();
+                
+                if (settings) {
+                    setCompanyInfo({
+                        name: settings.company_name || 'TMSLite Logistics',
+                        logo: settings.logo_url || ''
+                    });
+                }
             } catch (err) {
                 console.error('Failed to fetch report data', err);
             } finally {
@@ -62,6 +90,44 @@ export default function ReportsPage() {
 
         checkAuthAndFetch();
     }, []);
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleExportExcel = () => {
+        if (!data) return;
+
+        const wb = XLSX.utils.book_new();
+
+        if (selectedReports.trends || selectedReports.revenue) {
+            const trendData = data.weeklyChart.map((w: any) => ({
+                'Week Starting': w.week,
+                'Volume': w.volume,
+                'Gross Revenue': w.revenue,
+                'Carrier Cost': w.cost,
+                'Net Margin': w.margin,
+                'Margin %': ((w.margin / (w.revenue || 1)) * 100).toFixed(1) + '%'
+            }));
+            const wsTrends = XLSX.utils.json_to_sheet(trendData);
+            XLSX.utils.book_append_sheet(wb, wsTrends, 'Financial Trends');
+        }
+
+        if (selectedReports.pipeline) {
+            const pipelineData = data.leadChart.map((l: any) => ({
+                'Pipeline Status': l.name,
+                'Count': l.value
+            }));
+            const wsPipeline = XLSX.utils.json_to_sheet(pipelineData);
+            XLSX.utils.book_append_sheet(wb, wsPipeline, 'Sales Pipeline');
+        }
+
+        XLSX.writeFile(wb, `Admin_Intelligence_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    };
+
+    const toggleReport = (report: keyof typeof selectedReports) => {
+        setSelectedReports(prev => ({ ...prev, [report]: !prev[report] }));
+    };
 
     if (loading) {
         return (
@@ -102,15 +168,119 @@ export default function ReportsPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 p-8 pt-6">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-10">
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Business Intelligence</h1>
-                    <p className="text-slate-500 text-lg font-medium">Strategic overview of your logistics network and sales performance.</p>
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    @page { size: auto; margin: 10mm; }
+                    
+                    /* Reset all containers */
+                    html, body, .min-h-screen, .max-w-7xl, .p-8, main, #root {
+                        height: auto !important;
+                        min-height: 0 !important;
+                        overflow: visible !important;
+                        position: static !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        width: 100% !important;
+                        background: white !important;
+                        display: block !important;
+                    }
+                    
+                    /* Hide sidebars and dashboard chrome */
+                    nav, aside, footer, header, .sidebar, [role="navigation"], .no-print, .print\\:hidden {
+                        display: none !important;
+                    }
+
+                    /* Handle Page Breaks */
+                    .print-section {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        margin-bottom: 2rem !important;
+                        display: block !important;
+                    }
+
+                    /* Utility for print-only visibility */
+                    .print\\:block { display: block !important; }
+                }
+            ` }} />
+
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Professional Print Header */}
+                <div className="hidden print:block border-b-4 border-slate-900 pb-6 mb-8">
+                    <div className="flex justify-between items-start">
+                        <div className="flex gap-4 items-center">
+                            {companyInfo.logo ? (
+                                <img src={companyInfo.logo} alt="Logo" className="h-16 w-auto object-contain" />
+                            ) : (
+                                <div className="h-16 w-16 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-2xl">
+                                    TMS
+                                </div>
+                            )}
+                            <div>
+                                <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                                    {companyInfo.name}
+                                </h1>
+                                <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-0.5">
+                                    Business Intelligence Report
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Report Generated</div>
+                            <div className="text-sm font-bold text-slate-900">{format(new Date(), 'MMMM dd, yyyy')}</div>
+                            <div className="text-xs text-slate-500">{format(new Date(), 'pp')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Header & Controls */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 print:hidden">
+                    <div>
+                        <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Business Intelligence</h1>
+                        <p className="text-slate-500 text-lg font-medium">Strategic overview of your logistics network and sales performance.</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-end gap-3">
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={handleExportExcel}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-bold shadow-sm"
+                            >
+                                <Download className="h-4 w-4" /> Export Excel
+                            </button>
+                            <button 
+                                onClick={handlePrint}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-bold shadow-sm"
+                            >
+                                <Printer className="h-4 w-4" /> Print Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Select Reports Controls */}
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center gap-6 print:hidden">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mr-2 flex items-center gap-2">
+                        <FileText className="h-3 w-3" /> Select Reports:
+                    </span>
+                    
+                    <button onClick={() => toggleReport('trends')} className="flex items-center gap-2 text-sm font-semibold group transition-all">
+                        {selectedReports.trends ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />}
+                        <span className={selectedReports.trends ? 'text-slate-900' : 'text-slate-400'}>Trends</span>
+                    </button>
+
+                    <button onClick={() => toggleReport('pipeline')} className="flex items-center gap-2 text-sm font-semibold group transition-all">
+                        {selectedReports.pipeline ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />}
+                        <span className={selectedReports.pipeline ? 'text-slate-900' : 'text-slate-400'}>Sales Pipeline</span>
+                    </button>
+
+                    <button onClick={() => toggleReport('revenue')} className="flex items-center gap-2 text-sm font-semibold group transition-all">
+                        {selectedReports.revenue ? <CheckSquare className="h-4 w-4 text-indigo-600" /> : <Square className="h-4 w-4 text-slate-300 group-hover:text-slate-400" />}
+                        <span className={selectedReports.revenue ? 'text-slate-900' : 'text-slate-400'}>Revenue vs Cost</span>
+                    </button>
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10 print-section">
                     <div className="bg-white p-6 rounded-22xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="bg-indigo-50 p-3 rounded-xl">
@@ -175,7 +345,8 @@ export default function ReportsPage() {
                 {/* Charts Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     {/* Volume & Margin Trends */}
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    {selectedReports.trends && (
+                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 print-section">
                         <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <TrendingUp className="h-5 w-5 text-indigo-600" />
                             Volume & Margin Trends
@@ -202,8 +373,11 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
+                    )}
+ 
                     {/* Lead Conversion Pipeline */}
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    {selectedReports.pipeline && (
+                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 print-section">
                         <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <Users className="h-5 w-5 text-indigo-600" />
                             Sales Pipeline Distribution
@@ -231,8 +405,11 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
+                    )}
+ 
                     {/* Weekly Revenue vs Cost */}
-                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 lg:col-span-2">
+                    {selectedReports.revenue && (
+                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 lg:col-span-2 print-section">
                         <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                             <DollarSign className="h-5 w-5 text-indigo-600" />
                             Revenue vs Operating Cost
@@ -253,6 +430,7 @@ export default function ReportsPage() {
                             </ResponsiveContainer>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </div>
