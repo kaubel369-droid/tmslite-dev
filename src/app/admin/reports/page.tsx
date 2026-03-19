@@ -172,8 +172,8 @@ export default function ReportsPage() {
                 @media print {
                     @page { size: auto; margin: 10mm; }
                     
-                    /* Reset all containers */
-                    html, body, .min-h-screen, .max-w-7xl, .p-8, main, #root {
+                    /* Reset all containers to allow multi-page printing */
+                    html, body, .min-h-screen, .max-w-7xl, .p-8, main, #root, [class*="overflow-"], .flex-1 {
                         height: auto !important;
                         min-height: 0 !important;
                         overflow: visible !important;
@@ -190,12 +190,14 @@ export default function ReportsPage() {
                         display: none !important;
                     }
 
-                    /* Handle Page Breaks */
+                    /* Ensure charts and tables allow page breaks */
                     .print-section {
                         page-break-inside: avoid !important;
                         break-inside: avoid !important;
-                        margin-bottom: 2rem !important;
+                        margin-bottom: 3rem !important;
                         display: block !important;
+                        width: 100% !important;
+                        position: relative !important;
                     }
 
                     /* Utility for print-only visibility */

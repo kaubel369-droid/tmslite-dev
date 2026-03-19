@@ -246,6 +246,42 @@ export default function CustomerReports({ customerId }: CustomerReportsProps) {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 print:text-black print:bg-white print:p-0">
+            <style dangerouslySetInnerHTML={{ __html: `
+                @media print {
+                    @page { size: auto; margin: 10mm; }
+                    
+                    /* Reset all containers to allow multi-page printing */
+                    html, body, .min-h-screen, .max-w-7xl, .p-8, main, #root, [class*="overflow-"], .flex-1 {
+                        height: auto !important;
+                        min-height: 0 !important;
+                        overflow: visible !important;
+                        position: static !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        width: 100% !important;
+                        background: white !important;
+                        display: block !important;
+                    }
+                    
+                    /* Hide sidebars and dashboard chrome */
+                    nav, aside, footer, header, .sidebar, [role="navigation"], .no-print, .print\\:hidden {
+                        display: none !important;
+                    }
+
+                    /* Ensure report sections allow page breaks */
+                    .print-section {
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        margin-bottom: 3rem !important;
+                        display: block !important;
+                        width: 100% !important;
+                        position: relative !important;
+                    }
+
+                    /* Utility for print-only visibility */
+                    .print\\:block { display: block !important; }
+                }
+            ` }} />
             {/* Professional Print Header */}
             <div className="hidden print:block mb-10 border-b-4 border-slate-900 pb-8">
                 <div className="flex justify-between items-start">
