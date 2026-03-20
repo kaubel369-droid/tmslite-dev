@@ -35,10 +35,12 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
+    const isPublicRoute = request.nextUrl.pathname.startsWith('/track')
 
     if (
         !user &&
-        !isAuthRoute
+        !isAuthRoute &&
+        !isPublicRoute
     ) {
         // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone()
@@ -48,18 +50,31 @@ export async function updateSession(request: NextRequest) {
 
     if (user && isAuthRoute) {
         // user is logged in, redirect to dashboard
+        // We'll handle refined redirect based on role below
         const url = request.nextUrl.clone()
         url.pathname = '/'
         return NextResponse.redirect(url)
     }
 
-    // Admin/Supervisor route protection
-    if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    // Role-based protection and redirection
+    if (user) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        if (profile?.role !== 'Admin' && profile?.role !== 'Supervisor') {
+        const role = profile?.role;
+
+        // 1. Redirect Customers away from internal dashboard
+        if (role === 'Customer' && (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/loads' || request.nextUrl.pathname === '/customers')) {
             const url = request.nextUrl.clone()
-            url.pathname = '/' // Redirect to dashboard if not authorized
+            url.pathname = '/portal'
             return NextResponse.redirect(url)
+        }
+
+        // 2. Protect Admin/Supervisor routes
+        if (request.nextUrl.pathname.startsWith('/admin')) {
+            if (role !== 'Admin' && role !== 'Supervisor') {
+                const url = request.nextUrl.clone()
+                url.pathname = '/' // Redirect to dashboard if not authorized
+                return NextResponse.redirect(url)
+            }
         }
     }
 
