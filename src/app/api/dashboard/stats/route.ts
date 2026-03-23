@@ -27,6 +27,12 @@ export async function GET() {
             .select('*', { count: 'exact', head: true })
             .eq('status', 'Active');
 
+        // 3b. Get Pending Spot Quotes Count (where carrier_id is null)
+        const { count: pendingQuotesCount } = await supabase
+            .from('customer_spot_quotes')
+            .select('*', { count: 'exact', head: true })
+            .is('carrier_id', null);
+
         // 4. Calculate Monthly Revenue (sum of customer_rate for current month)
         const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const { data: revenueData, error: revenueError } = await supabase
@@ -65,6 +71,13 @@ export async function GET() {
             .order('created_at', { ascending: false })
             .limit(2);
 
+        const { data: latestSpotQuotes } = await supabase
+            .from('customer_spot_quotes')
+            .select('id, quote_number, created_at')
+            .is('carrier_id', null)
+            .order('created_at', { ascending: false })
+            .limit(3);
+
         const activityLog = [
             ...(latestLoads || []).map(l => ({
                 id: `load-${l.id}`,
@@ -79,6 +92,13 @@ export async function GET() {
                 title: `New Customer: ${c.company_name}`,
                 time: c.created_at,
                 status: 'Active'
+            })),
+            ...(latestSpotQuotes || []).map(q => ({
+                id: `spot-${q.id}`,
+                type: 'spot-quote',
+                title: `NEW Spot Quote: #${q.quote_number}`,
+                time: q.created_at,
+                status: 'Pending'
             }))
         ];
 
@@ -108,7 +128,8 @@ export async function GET() {
                 activeLoads: activeLoadsCount || 0,
                 newLoads: newLoadsCount || 0,
                 activeCustomers: customersCount || 0,
-                monthlyRevenue: monthlyRevenue
+                monthlyRevenue: monthlyRevenue,
+                pendingQuotes: pendingQuotesCount || 0
             },
             recentShipments: recentShipments || [],
             activityLog: activityLog

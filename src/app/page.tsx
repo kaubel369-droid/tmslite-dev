@@ -10,7 +10,8 @@ import {
   Clock, 
   ArrowUpRight, 
   Activity,
-  Plus
+  Plus,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
@@ -117,6 +118,15 @@ export default function Dashboard() {
       bg: 'bg-violet-50',
       roleRestricted: true 
     },
+    { 
+      id: 'pending-quotes',
+      label: 'Pending Spot Quotes', 
+      value: loading ? '...' : (statsData?.pendingQuotes || '0'), 
+      icon: Zap, 
+      color: 'text-amber-600', 
+      bg: 'bg-amber-50',
+      roleRestricted: true 
+    },
   ];
 
   const visibleStats = stats.filter(stat => {
@@ -203,7 +213,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div id="stats-grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${visibleStats.length} gap-4`}>
+        <div id="stats-grid" className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`}>
           {visibleStats.map((stat) => (
             <div key={stat.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
@@ -283,9 +293,11 @@ export default function Dashboard() {
                   <div key={item.id} className="flex gap-4">
                     <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
                       item.type === 'alert' ? 'bg-red-50 text-red-600' : 
+                      item.type === 'spot-quote' ? 'bg-amber-50 text-amber-600' :
                       item.type === 'load' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
                     }`}>
                       {item.type === 'alert' ? <AlertCircle className="h-5 w-5" /> : 
+                       item.type === 'spot-quote' ? <Zap className="h-5 w-5" /> :
                        item.type === 'load' ? <Truck className="h-5 w-5" /> : <Users className="h-5 w-5" />}
                     </div>
                     <div>

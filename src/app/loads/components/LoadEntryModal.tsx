@@ -78,7 +78,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess,
             } else {
                 setFormData({
                     load_number: '',
-                    customer_id: '',
+                    customer_id: restrictedCustomerId || '',
                     shipper_id: '',
                     consignee_id: '',
                     status: 'Not Dispatched',
@@ -103,15 +103,12 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess,
                     mileage: '',
                     products: [{ pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }]
                 });
-                if (restrictedCustomerId) {
-                    setFormData((prev: any) => ({ ...prev, customer_id: restrictedCustomerId, status: 'Not Dispatched' }));
-                }
                 setDocuments([]);
             }
             setActiveTab('Load Information');
             setError(null);
         }
-    }, [isOpen, loadId]);
+    }, [isOpen, loadId, restrictedCustomerId]);
 
     const fetchDropdownData = async () => {
         try {

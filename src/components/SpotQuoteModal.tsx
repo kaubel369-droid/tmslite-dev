@@ -39,9 +39,10 @@ interface SpotQuoteModalProps {
     customerId: string;
     quoteId?: string;
     onSave: () => void;
+    isCustomer?: boolean;
 }
 
-export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, onSave }: SpotQuoteModalProps) {
+export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, onSave, isCustomer }: SpotQuoteModalProps) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [locations, setLocations] = useState<ShipperConsignee[]>([]);
@@ -350,11 +351,11 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                     <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
                 ) : (
                     <form onSubmit={handleQuoteSave} className="space-y-6 py-4">
-                        {/* Shipper & Rate */}
+                        {/* Shipper & Rate or just Shipper */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-sm font-semibold text-slate-700">Shipper Location</label>
+                                    <label className="text-sm font-semibold text-slate-700">Shipper Location *</label>
                                     <button 
                                         type="button" 
                                         onClick={() => setUseShipperZip(!useShipperZip)}
@@ -405,22 +406,25 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     </div>
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700 text-indigo-600">Customer Rate (All-In)</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-slate-400">$</span>
-                                    <input 
-                                        type="number" 
-                                        name="rate" 
-                                        value={formData.rate} 
-                                        onChange={handleInputChange} 
-                                        step="0.01" 
-                                        placeholder="0.00"
-                                        required
-                                        className="w-full pl-7 pr-3 py-2 border border-indigo-200 rounded-lg bg-indigo-50 font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500" 
-                                    />
+
+                            {!isCustomer && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 text-indigo-600">Customer Rate (All-In)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-2 text-slate-400">$</span>
+                                        <input 
+                                            type="number" 
+                                            name="rate" 
+                                            value={formData.rate} 
+                                            onChange={handleInputChange} 
+                                            step="0.01" 
+                                            placeholder="0.00"
+                                            required
+                                            className="w-full pl-7 pr-3 py-2 border border-indigo-200 rounded-lg bg-indigo-50 font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500" 
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Shipment Info */}
@@ -648,38 +652,76 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                             </div>
                         </div>
 
-                        {/* Carrier & Carrier Rate */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700">Carrier</label>
-                                <select 
-                                    name="carrier_id" 
-                                    value={formData.carrier_id} 
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                                >
-                                    <option value="">-- Select Carrier (Optional) --</option>
-                                    {carriers.map(carrier => (
-                                        <option key={carrier.id} value={carrier.id}>{carrier.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700">Carrier Rate</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-slate-400">$</span>
-                                    <input 
-                                        type="number" 
-                                        name="carrier_rate" 
-                                        value={formData.carrier_rate} 
-                                        onChange={handleInputChange} 
-                                        step="0.01" 
-                                        placeholder="0.00"
-                                        className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" 
-                                    />
+                        {/* Rate and Carrier Info for Customers */}
+                        {isCustomer ? (
+                            <div className="pt-4 border-t border-slate-100">
+                                <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                                    <label className="block text-sm font-bold text-indigo-900 uppercase tracking-widest mb-3">Customer Rate (All-In)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-3.5 text-indigo-400 text-xl font-bold">$</span>
+                                        <input 
+                                            type="number" 
+                                            name="rate" 
+                                            value={formData.rate} 
+                                            onChange={handleInputChange} 
+                                            step="0.01" 
+                                            placeholder="0.00"
+                                            required
+                                            className="w-full pl-10 pr-4 py-4 border-2 border-indigo-200 rounded-xl bg-white text-2xl font-black text-indigo-700 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-indigo-100" 
+                                        />
+                                    </div>
+                                    <p className="text-xs text-indigo-600 mt-2 font-medium italic">Please enter the total customer-facing rate for this spot quote.</p>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700 text-indigo-600">Customer Rate (All-In)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-2 text-slate-400">$</span>
+                                        <input 
+                                            type="number" 
+                                            name="rate" 
+                                            value={formData.rate} 
+                                            onChange={handleInputChange} 
+                                            step="0.01" 
+                                            placeholder="0.00"
+                                            required
+                                            className="w-full pl-7 pr-3 py-2 border border-indigo-200 rounded-lg bg-indigo-50 font-bold text-indigo-700 outline-none focus:ring-2 focus:ring-indigo-500" 
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">Carrier</label>
+                                    <select 
+                                        name="carrier_id" 
+                                        value={formData.carrier_id} 
+                                        onChange={handleInputChange}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                    >
+                                        <option value="">-- Select Carrier (Optional) --</option>
+                                        {carriers.map(carrier => (
+                                            <option key={carrier.id} value={carrier.id}>{carrier.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700">Carrier Rate</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-2 text-slate-400">$</span>
+                                        <input 
+                                            type="number" 
+                                            name="carrier_rate" 
+                                            value={formData.carrier_rate} 
+                                            onChange={handleInputChange} 
+                                            step="0.01" 
+                                            placeholder="0.00"
+                                            className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Instructions */}
                         <div className="space-y-2">

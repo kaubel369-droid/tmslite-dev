@@ -11,7 +11,8 @@ import {
   ArrowLeft,
   Loader2,
   ChevronRight,
-  Plus
+  Plus,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
@@ -22,6 +23,8 @@ import { cn } from '@/lib/utils';
 export default function SavedQuotesPage() {
   const router = useRouter();
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [spotQuotes, setSpotQuotes] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'LTL' | 'Spot'>('LTL');
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -45,10 +48,18 @@ export default function SavedQuotesPage() {
         setProfile(p);
 
         if (p?.customer_id) {
-          const res = await fetch(`/api/quotes?customerId=${p.customer_id}`);
-          if (res.ok) {
-            const data = await res.json();
+          const [ltlRes, spotRes] = await Promise.all([
+            fetch(`/api/quotes?customerId=${p.customer_id}`),
+            fetch(`/api/customers/${p.customer_id}/spot-quotes`)
+          ]);
+
+          if (ltlRes.ok) {
+            const data = await ltlRes.json();
             setQuotes(data.quotes || []);
+          }
+          if (spotRes.ok) {
+            const data = await spotRes.json();
+            setSpotQuotes(data.quotes || []);
           }
         }
       } catch (error) {
@@ -115,7 +126,7 @@ export default function SavedQuotesPage() {
             <div>
               <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
                 <FileText className="h-7 w-7 text-indigo-600" />
-                Saved LTL Quotes
+                Saved Quotes
               </h1>
               <p className="text-slate-500 font-medium text-sm">Review and accept your recent rate quotes.</p>
             </div>
@@ -127,6 +138,28 @@ export default function SavedQuotesPage() {
           </Link>
         </div>
 
+        {/* Tabs */}
+        <div className="flex bg-white p-1 rounded-2xl border border-slate-200">
+          <button 
+            onClick={() => setActiveTab('LTL')}
+            className={cn(
+              "flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+              activeTab === 'LTL' ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-500 hover:text-indigo-600"
+            )}
+          >
+            <Truck className="h-4 w-4" /> LTL Quotes ({quotes.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('Spot')}
+            className={cn(
+              "flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2",
+              activeTab === 'Spot' ? "bg-violet-600 text-white shadow-md shadow-violet-100" : "text-slate-500 hover:text-violet-600"
+            )}
+          >
+            <Zap className="h-4 w-4" /> Spot Quotes ({spotQuotes.length})
+          </button>
+        </div>
+
         {/* Quotes List */}
         <div className="space-y-4">
           {loading ? (
@@ -134,14 +167,14 @@ export default function SavedQuotesPage() {
               <Loader2 className="h-10 w-10 animate-spin text-indigo-300" />
               <p className="font-bold">Loading your quotes...</p>
             </div>
-          ) : quotes.length === 0 ? (
+          ) : (activeTab === 'LTL' ? quotes : spotQuotes).length === 0 ? (
             <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-4">
               <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
                 <FileText className="h-8 w-8 text-slate-300" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-800">No quotes found</h3>
-                <p className="text-slate-500 text-sm">You haven't saved any LTL quotes yet.</p>
+                <h3 className="text-lg font-bold text-slate-800">No {activeTab} quotes found</h3>
+                <p className="text-slate-500 text-sm">You haven't saved any {activeTab} quotes yet.</p>
               </div>
               <Link href="/portal">
                 <Button variant="outline" className="mt-4 border-2">
@@ -150,7 +183,7 @@ export default function SavedQuotesPage() {
               </Link>
             </div>
           ) : (
-            quotes.map((quote) => (
+            (activeTab === 'LTL' ? quotes : spotQuotes).map((quote) => (
               <div key={quote.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all group">
                 <div className="flex flex-col md:flex-row">
                   {/* Main Info */}
@@ -158,12 +191,26 @@ export default function SavedQuotesPage() {
                     <div className="flex-1 space-y-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="bg-slate-100 p-2 rounded-xl group-hover:bg-indigo-50 transition-colors">
-                            <Truck className="h-5 w-5 text-slate-600 group-hover:text-indigo-600" />
+                          <div className={cn(
+                            "p-2 rounded-xl transition-colors",
+                            activeTab === 'LTL' ? "bg-slate-100 group-hover:bg-indigo-50" : "bg-slate-100 group-hover:bg-violet-50"
+                          )}>
+                            {activeTab === 'LTL' ? (
+                              <Truck className="h-5 w-5 text-slate-600 group-hover:text-indigo-600" />
+                            ) : (
+                              <Zap className="h-5 w-5 text-slate-600 group-hover:text-violet-600" />
+                            )}
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carrier / SCAC</p>
-                            <p className="font-bold text-slate-800">{quote.carrier_name || quote.scac || 'LTL Carrier'}</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                              {activeTab === 'LTL' ? 'Carrier / SCAC' : 'Shipment Type'}
+                            </p>
+                            <p className="font-bold text-slate-800 italic">
+                              {activeTab === 'LTL' 
+                                ? (quote.carrier_name || quote.scac || 'LTL Carrier')
+                                : (quote.shipment_type || 'Spot Quote')
+                              }
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -177,25 +224,43 @@ export default function SavedQuotesPage() {
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                             <MapPin className="h-3 w-3" /> Origin
                           </p>
-                          <p className="text-sm font-bold text-slate-800">{quote.origin_info?.city}, {quote.origin_info?.state} {quote.origin_info?.zip}</p>
+                          <p className="text-sm font-bold text-slate-800 truncate">
+                            {activeTab === 'LTL' 
+                              ? `${quote.origin_info?.city}, ${quote.origin_info?.state} ${quote.origin_info?.zip}`
+                              : `${quote.shipper?.city || quote.shipper_city}, ${quote.shipper?.state || quote.shipper_state} ${quote.shipper?.zip || quote.shipper_zip}`
+                            }
+                          </p>
                         </div>
                         <ChevronRight className="h-5 w-5 text-slate-300" />
                         <div className="flex-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                             <MapPin className="h-3 w-3" /> Destination
                           </p>
-                          <p className="text-sm font-bold text-slate-800">{quote.destination_info?.city}, {quote.destination_info?.state} {quote.destination_info?.zip}</p>
+                          <p className="text-sm font-bold text-slate-800 truncate">
+                            {activeTab === 'LTL' 
+                              ? `${quote.destination_info?.city}, ${quote.destination_info?.state} ${quote.destination_info?.zip}`
+                              : `${quote.consignee?.city || quote.consignee_city}, ${quote.consignee?.state || quote.consignee_state} ${quote.consignee?.zip || quote.consignee_zip}`
+                            }
+                          </p>
                         </div>
                       </div>
 
                       <div className="flex flex-wrap gap-4">
                         <div className="flex items-center gap-2 text-slate-600">
                           <Package className="h-4 w-4" />
-                          <span className="text-xs font-medium">{quote.items?.length || 0} Products</span>
+                          <span className="text-xs font-medium">
+                            {activeTab === 'LTL' ? (quote.items?.length || 0) : (quote.pcs || 0)} Units
+                          </span>
                         </div>
+                        {activeTab === 'LTL' && (
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-xs font-medium">{quote.transit_days} Est. Days</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-slate-600">
-                          <Clock className="h-4 w-4" />
-                          <span className="text-xs font-medium">{quote.transit_days} Est. Days</span>
+                          <Clock className="h-4 w-4 text-slate-400" />
+                          <span className="text-xs font-medium">{quote.weight || quote.total_weight} lbs</span>
                         </div>
                       </div>
                     </div>
@@ -204,21 +269,39 @@ export default function SavedQuotesPage() {
                   {/* Financial & Action */}
                   <div className="bg-slate-50 md:w-1/4 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-slate-100 space-y-4">
                     <div className="text-center">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Estimated Rate</p>
-                      <p className="text-3xl font-black text-indigo-600">${parseFloat(quote.customer_rate).toFixed(2)}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Estimated Rate</p>
+                      <p className={cn(
+                        "text-3xl font-black",
+                        activeTab === 'LTL' ? "text-indigo-600" : "text-violet-600"
+                      )}>
+                        ${parseFloat(quote.customer_rate || quote.rate || 0).toFixed(2)}
+                      </p>
                     </div>
-                    <Button 
-                      onClick={() => handleAcceptQuote(quote)}
-                      disabled={acceptingId === quote.id}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2"
-                    >
-                      {acceptingId === quote.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4" />
-                      )}
-                      Accept Quote
-                    </Button>
+                    {activeTab === 'LTL' ? (
+                      <Button 
+                        onClick={() => handleAcceptQuote(quote)}
+                        disabled={acceptingId === quote.id}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2"
+                      >
+                        {acceptingId === quote.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        Accept Quote
+                      </Button>
+                    ) : (
+                      <div className="w-full space-y-2">
+                        <Button 
+                          variant="outline"
+                          className="w-full border-violet-200 text-violet-700 font-bold py-2 rounded-xl text-xs"
+                          onClick={() => window.location.href = `mailto:dispatch@example.com?subject=Spot Quote Inquiry: ${quote.id}`}
+                        >
+                          Enquire About Quote
+                        </Button>
+                        <p className="text-[10px] text-slate-400 text-center font-medium italic italic leading-tight">Spot quotes require manual processing</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -22,7 +22,8 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import LoadEntryModal from '@/app/loads/components/LoadEntryModal';
 import LTLRatingScreen from '@/components/LTLRatingScreen';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import SpotQuoteModal from '@/components/SpotQuoteModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 export default function CustomerPortal() {
@@ -37,6 +38,8 @@ export default function CustomerPortal() {
   const [loading, setLoading] = useState(true);
   const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isSpotQuoteModalOpen, setIsSpotQuoteModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -113,9 +116,16 @@ export default function CustomerPortal() {
             <Button 
               onClick={() => setIsQuoteModalOpen(true)}
               variant="outline"
-              className="border-2 border-slate-200 hover:border-indigo-600 hover:text-indigo-600 font-bold rounded-xl flex items-center gap-2"
+              className="border-2 border-indigo-100 hover:border-indigo-600 hover:text-indigo-600 font-bold rounded-xl flex items-center gap-2 transition-all"
             >
               <Zap className="h-4 w-4" /> Get LTL Quote
+            </Button>
+            <Button 
+              onClick={() => setIsSpotQuoteModalOpen(true)}
+              variant="outline"
+              className="border-2 border-violet-100 hover:border-violet-600 hover:text-violet-600 font-bold rounded-xl flex items-center gap-2 transition-all"
+            >
+              <ArrowUpRight className="h-4 w-4" /> Get Spot Quote
             </Button>
           </div>
         </div>
@@ -231,11 +241,18 @@ export default function CustomerPortal() {
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Saved Quotes</label>
                     <Link href="/portal/quotes" className="text-sm font-bold text-indigo-600 hover:underline">
-                      View Saved LTL Quotes
+                      View Saved Quotes
                     </Link>
                   </div>
                 </div>
               </div>
+              <Button 
+                onClick={() => setIsProfileModalOpen(true)}
+                variant="ghost" 
+                className="w-full mt-6 text-slate-500 hover:text-indigo-600 font-bold text-xs flex items-center gap-2 border border-dashed border-slate-200 hover:border-indigo-200 rounded-xl"
+              >
+                View Full Profile <ArrowUpRight className="h-3 w-3" />
+              </Button>
             </div>
 
             <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-2xl text-white shadow-lg shadow-indigo-100">
@@ -261,14 +278,92 @@ export default function CustomerPortal() {
         />
 
         <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
             <LTLRatingScreen 
               customerId={profile?.customer_id}
               isCustomer={true}
               onQuoteSaved={() => {
-                // Optionally show a toast or refresh
+                setIsQuoteModalOpen(false);
+                // toast.success('LTL Quote saved successfully!');
               }}
             />
+          </DialogContent>
+        </Dialog>
+
+        <SpotQuoteModal 
+          isOpen={isSpotQuoteModalOpen}
+          onClose={() => setIsSpotQuoteModalOpen(false)}
+          customerId={profile?.customer_id}
+          isCustomer={true}
+          onSave={() => {
+            setIsSpotQuoteModalOpen(false);
+            // toast.success('Spot Quote submitted successfully!');
+          }}
+        />
+
+        {/* Business Profile Modal */}
+        <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black text-slate-800 flex items-center gap-2">
+                <Building2 className="h-6 w-6 text-indigo-600" />
+                Business Profile
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-6 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Company Name</label>
+                  <p className="font-bold text-slate-700">{profile?.customers?.company_name || 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer ID</label>
+                  <p className="font-mono text-xs text-slate-500">{profile?.customer_id || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                  <User className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Primary Administrator</label>
+                  <p className="text-lg font-black text-slate-800">{profile?.full_name || profile?.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mail className="h-3 w-3 text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700 truncate">{profile?.email}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Phone className="h-3 w-3 text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">{profile?.phone || 'Not Provided'}</p>
+                </div>
+              </div>
+
+              {profile?.customers?.address && (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-3 w-3 text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Registered Office</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">{profile.customers.address}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setIsProfileModalOpen(false)} variant="secondary" className="w-full font-bold">
+                Close Profile
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
