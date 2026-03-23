@@ -15,7 +15,8 @@ import {
   Building2,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
@@ -54,9 +55,10 @@ export default function CustomerPortal() {
         console.log('User ID:', user.id);
         
         // Fetch profile to get customer_id
+        // Using explicit join key to avoid PGRST201 "more than one relationship found"
         const { data: p, error: profileError } = await supabase
           .from('profiles')
-          .select('*, customers(*)')
+          .select('*, customers!profiles_customer_id_fkey(*)')
           .eq('id', user.id)
           .single();
         
@@ -137,6 +139,22 @@ export default function CustomerPortal() {
             </Button>
           </div>
         </div>
+
+        {/* Account Alert for Missing Customer ID */}
+        {!loading && (!profile || !profile.customer_id) && (
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6 shadow-xl shadow-amber-50 mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="bg-amber-100 p-4 rounded-2xl">
+              <AlertTriangle className="h-10 w-10 text-amber-600 animate-pulse" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-xl font-black text-amber-900 mb-1">Account Setup Required</h3>
+              <p className="text-amber-700 font-medium">Your account is not currently linked to a customer profile. Please contact customer service at <span className="font-bold underline">support@example.com</span> to complete your setup.</p>
+            </div>
+            <Button variant="outline" className="border-amber-300 text-amber-700 bg-white hover:bg-amber-100 font-bold rounded-xl px-8" asChild>
+              <a href="mailto:support@example.com">Contact Support</a>
+            </Button>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -230,7 +248,7 @@ export default function CustomerPortal() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Primary Contact</label>
-                    <p className="text-sm font-bold text-slate-700">{profile?.full_name || 'N/A'}</p>
+                    <p className="text-sm font-bold text-slate-700">{profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'N/A'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -286,8 +304,9 @@ export default function CustomerPortal() {
         />
 
         <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
-          <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
+          <DialogContent className="sm:max-w-[80vw] w-full max-h-[95vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none !shadow-none">
             <LTLRatingScreen 
+              className="w-full"
               customerId={profile?.customer_id}
               isCustomer={true}
               onQuoteSaved={() => {

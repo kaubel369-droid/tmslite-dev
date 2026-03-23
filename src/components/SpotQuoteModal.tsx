@@ -40,9 +40,10 @@ interface SpotQuoteModalProps {
     quoteId?: string;
     onSave: () => void;
     isCustomer?: boolean;
+    readOnly?: boolean;
 }
 
-export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, onSave, isCustomer }: SpotQuoteModalProps) {
+export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, onSave, isCustomer, readOnly }: SpotQuoteModalProps) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [locations, setLocations] = useState<ShipperConsignee[]>([]);
@@ -344,7 +345,7 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{quoteId ? 'Edit Spot Quote' : 'Create New Spot Quote'}</DialogTitle>
+                    <DialogTitle>{readOnly ? 'Quote Details' : (quoteId ? 'Edit Spot Quote' : 'Create New Spot Quote')}</DialogTitle>
                 </DialogHeader>
 
                 {loading ? (
@@ -356,13 +357,15 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-semibold text-slate-700">Shipper Location *</label>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setUseShipperZip(!useShipperZip)}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                                    >
-                                        {useShipperZip ? 'Or Select Location' : 'Or Use Zip Only'}
-                                    </button>
+                                    {!readOnly && (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setUseShipperZip(!useShipperZip)}
+                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                        >
+                                            {useShipperZip ? 'Or Select Location' : 'Or Use Zip Only'}
+                                        </button>
+                                    )}
                                 </div>
                                 {useShipperZip ? (
                                     <div className="flex gap-2">
@@ -372,7 +375,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             value={formData.shipper_zip} 
                                             onChange={handleInputChange} 
                                             placeholder="Zip Code"
-                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                            disabled={readOnly}
+                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white disabled:bg-slate-50 disabled:text-slate-500"
                                         />
                                         <input 
                                             type="text" 
@@ -389,20 +393,23 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             value={formData.shipper_location_id} 
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                            disabled={readOnly}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white disabled:bg-slate-50 disabled:text-slate-500"
                                         >
                                             <option value="">-- Select Shipper --</option>
                                             {locations.map(loc => (
                                                 <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
                                             ))}
                                         </select>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => openAddLocation('shipper')}
-                                            className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
-                                        >
-                                            <Plus className="h-2 w-2" /> New Shipper
-                                        </button>
+                                        {!readOnly && (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => openAddLocation('shipper')}
+                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                            >
+                                                <Plus className="h-2 w-2" /> New Shipper
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -435,7 +442,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     name="shipment_type" 
                                     value={formData.shipment_type} 
                                     onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm"
+                                    disabled={readOnly}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm disabled:bg-slate-50 disabled:text-slate-500"
                                 >
                                     <option value="LTL">LTL</option>
                                     <option value="Truckload">Truckload</option>
@@ -457,13 +465,15 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-semibold text-slate-700">Consignee Location</label>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setUseConsigneeZip(!useConsigneeZip)}
-                                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                                    >
-                                        {useConsigneeZip ? 'Or Select Location' : 'Or Use Zip Only'}
-                                    </button>
+                                    {!readOnly && (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setUseConsigneeZip(!useConsigneeZip)}
+                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                        >
+                                            {useConsigneeZip ? 'Or Select Location' : 'Or Use Zip Only'}
+                                        </button>
+                                    )}
                                 </div>
                                 {useConsigneeZip ? (
                                     <div className="flex gap-2">
@@ -473,7 +483,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             value={formData.consignee_zip} 
                                             onChange={handleInputChange} 
                                             placeholder="Zip Code"
-                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                            disabled={readOnly}
+                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white disabled:bg-slate-50 disabled:text-slate-500"
                                         />
                                         <input 
                                             type="text" 
@@ -490,20 +501,23 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             value={formData.consignee_location_id} 
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                                            disabled={readOnly}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white disabled:bg-slate-50 disabled:text-slate-500"
                                         >
                                             <option value="">-- Select Consignee --</option>
                                             {locations.map(loc => (
                                                 <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}, {loc.state}</option>
                                             ))}
                                         </select>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => openAddLocation('consignee')}
-                                            className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
-                                        >
-                                            <Plus className="h-2 w-2" /> New Consignee
-                                        </button>
+                                        {!readOnly && (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => openAddLocation('consignee')}
+                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                                            >
+                                                <Plus className="h-2 w-2" /> New Consignee
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -515,14 +529,16 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                         <div className="space-y-4 pt-4 border-t border-slate-100">
                             <div className="flex items-center justify-between">
                                 <label className="text-sm font-semibold text-slate-700">Product Line Items</label>
-                                <button 
-                                    type="button"
-                                    onClick={addProductLine}
-                                    disabled={formData.products_list.length >= 6}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Plus className="h-3.5 w-3.5" /> Add Line
-                                </button>
+                                {!readOnly && (
+                                    <button 
+                                        type="button"
+                                        onClick={addProductLine}
+                                        disabled={formData.products_list.length >= 6}
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" /> Add Line
+                                    </button>
+                                )}
                             </div>
 
                             <div className="overflow-x-auto rounded-lg border border-slate-200 shadow-sm">
@@ -545,10 +561,10 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                         {formData.products_list.map((item, idx) => (
                                             <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-2 py-2">
-                                                    <input type="number" value={item.pcs} onChange={(e) => updateProductLine(idx, 'pcs', parseInt(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="number" value={item.pcs} onChange={(e) => updateProductLine(idx, 'pcs', parseInt(e.target.value) || 0)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <select value={item.type || 'PLT'} onChange={(e) => updateProductLine(idx, 'type', e.target.value)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
+                                                    <select value={item.type || 'PLT'} onChange={(e) => updateProductLine(idx, 'type', e.target.value)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-500">
                                                         <option value="PLT">Pallets</option>
                                                         <option value="CTN">Cartons</option>
                                                         <option value="SKD">Skids</option>
@@ -557,39 +573,41 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                                     </select>
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <input type="number" value={item.weight} onChange={(e) => updateProductLine(idx, 'weight', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="number" value={item.weight} onChange={(e) => updateProductLine(idx, 'weight', parseFloat(e.target.value) || 0)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <select value={item.class} onChange={(e) => updateProductLine(idx, 'class', e.target.value)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
+                                                    <select value={item.class} onChange={(e) => updateProductLine(idx, 'class', e.target.value)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white disabled:bg-slate-50 disabled:text-slate-500">
                                                         {[50, 55, 60, 65, 70, 77.5, 85, 92.5, 100, 110, 125, 150, 175, 200, 250].map(c => (
                                                             <option key={c} value={c}>{c}</option>
                                                         ))}
                                                     </select>
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <input type="number" value={item.length} onChange={(e) => updateProductLine(idx, 'length', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="number" value={item.length} onChange={(e) => updateProductLine(idx, 'length', parseFloat(e.target.value) || 0)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <input type="number" value={item.width} onChange={(e) => updateProductLine(idx, 'width', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="number" value={item.width} onChange={(e) => updateProductLine(idx, 'width', parseFloat(e.target.value) || 0)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <input type="number" value={item.height} onChange={(e) => updateProductLine(idx, 'height', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="number" value={item.height} onChange={(e) => updateProductLine(idx, 'height', parseFloat(e.target.value) || 0)} disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-2 py-2">
-                                                    <input type="text" value={item.description || ''} onChange={(e) => updateProductLine(idx, 'description', e.target.value)} placeholder="Product description" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                                    <input type="text" value={item.description || ''} onChange={(e) => updateProductLine(idx, 'description', e.target.value)} placeholder="Product description" disabled={readOnly} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500" />
                                                 </td>
                                                 <td className="px-4 py-2 text-right font-medium text-slate-700 text-xs">
                                                     {item.cubic_feet}
                                                 </td>
                                                 <td className="px-2 py-2 text-right">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => removeProductLine(idx)}
-                                                        disabled={formData.products_list.length <= 1}
-                                                        className="text-slate-300 hover:text-red-500 transition-colors disabled:opacity-0"
-                                                    >
-                                                        <Plus className="h-4 w-4 rotate-45" />
-                                                    </button>
+                                                    {!readOnly && (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => removeProductLine(idx)}
+                                                            disabled={formData.products_list.length <= 1}
+                                                            className="text-slate-300 hover:text-red-500 transition-colors disabled:opacity-0"
+                                                        >
+                                                            <Plus className="h-4 w-4 rotate-45" />
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -601,34 +619,36 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                         {/* Accessorials Section */}
                         <div className="space-y-3 pt-4 border-t border-slate-100">
                             <label className="block text-sm font-semibold text-slate-700">Accessorials</label>
-                            <div className="flex gap-2">
-                                <select 
-                                    value={tempAccessorial}
-                                    onChange={(e) => setTempAccessorial(e.target.value)}
-                                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm"
-                                >
-                                    <option value="">Select Accessorial...</option>
-                                    {accessorialsOptions
-                                        .filter(opt => !selectedAccessorials.includes(opt.id))
-                                        .map(opt => (
-                                            <option key={opt.id} value={opt.id}>{opt.name}</option>
-                                        ))
-                                    }
-                                </select>
-                                <button 
-                                    type="button"
-                                    onClick={() => {
-                                        if (tempAccessorial && selectedAccessorials.length < 10) {
-                                            setSelectedAccessorials([...selectedAccessorials, tempAccessorial]);
-                                            setTempAccessorial("");
+                            {!readOnly && (
+                                <div className="flex gap-2">
+                                    <select 
+                                        value={tempAccessorial}
+                                        onChange={(e) => setTempAccessorial(e.target.value)}
+                                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm"
+                                    >
+                                        <option value="">Select Accessorial...</option>
+                                        {accessorialsOptions
+                                            .filter(opt => !selectedAccessorials.includes(opt.id))
+                                            .map(opt => (
+                                                <option key={opt.id} value={opt.id}>{opt.name}</option>
+                                            ))
                                         }
-                                    }}
-                                    disabled={!tempAccessorial || selectedAccessorials.length >= 10}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
-                                >
-                                    Add
-                                </button>
-                            </div>
+                                    </select>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            if (tempAccessorial && selectedAccessorials.length < 10) {
+                                                setSelectedAccessorials([...selectedAccessorials, tempAccessorial]);
+                                                setTempAccessorial("");
+                                            }
+                                        }}
+                                        disabled={!tempAccessorial || selectedAccessorials.length >= 10}
+                                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all disabled:opacity-50"
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                            )}
                             
                             <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                                 {selectedAccessorials.map(accId => {
@@ -636,13 +656,15 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     return (
                                         <div key={accId} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1.5 border border-indigo-100 group">
                                             {acc?.name || accId}
-                                            <button 
-                                                type="button"
-                                                onClick={() => setSelectedAccessorials(prev => prev.filter(id => id !== accId))}
-                                                className="hover:text-indigo-900"
-                                            >
-                                                <Plus className="h-3 w-3 rotate-45" />
-                                            </button>
+                                            {!readOnly && (
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setSelectedAccessorials(prev => prev.filter(id => id !== accId))}
+                                                    className="hover:text-indigo-900"
+                                                >
+                                                    <Plus className="h-3 w-3 rotate-45" />
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -698,7 +720,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                         name="carrier_id" 
                                         value={formData.carrier_id} 
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                                        disabled={readOnly}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-500"
                                     >
                                         <option value="">-- Select Carrier (Optional) --</option>
                                         {carriers.map(carrier => (
@@ -717,7 +740,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                             onChange={handleInputChange} 
                                             step="0.01" 
                                             placeholder="0.00"
-                                            className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500" 
+                                            disabled={readOnly}
+                                            className="w-full pl-7 pr-3 py-2 border border-slate-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-50 disabled:text-slate-500" 
                                         />
                                     </div>
                                 </div>
@@ -732,7 +756,8 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                 value={formData.additional_instructions} 
                                 onChange={handleInputChange} 
                                 rows={2}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white resize-none" 
+                                disabled={readOnly}
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white resize-none disabled:bg-slate-50 disabled:text-slate-500" 
                             />
                         </div>
 
@@ -746,17 +771,19 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     onClick={onClose} 
                                     className="px-4 py-2 text-slate-600 font-medium hover:text-slate-800"
                                 >
-                                    Cancel
+                                    {readOnly ? 'Close' : 'Cancel'}
                                 </button>
                             </div>
-                            <button 
-                                type="submit" 
-                                disabled={saving}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-70 flex items-center gap-2"
-                            >
-                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                                {quoteId ? 'Update Quote' : 'Create Quote'}
-                            </button>
+                            {!readOnly && (
+                                <button 
+                                    type="submit" 
+                                    disabled={saving}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-70 flex items-center gap-2"
+                                >
+                                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                                    {quoteId ? 'Update Quote' : 'Create Quote'}
+                                </button>
+                            )}
                         </DialogFooter>
                     </form>
                 )}

@@ -19,6 +19,9 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import SpotQuoteModal from '@/components/SpotQuoteModal';
+import LTLQuoteDetailsModal from '@/components/LTLQuoteDetailsModal';
+import PrintButton from '@/components/PrintButton';
 
 export default function SavedQuotesPage() {
   const router = useRouter();
@@ -28,6 +31,9 @@ export default function SavedQuotesPage() {
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  const [isLTLDetailsOpen, setIsLTLDetailsOpen] = useState(false);
+  const [isSpotDetailsOpen, setIsSpotDetailsOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -42,7 +48,7 @@ export default function SavedQuotesPage() {
         console.log('Fetching profile for User:', user.id);
         const { data: p, error: profileError } = await supabase
           .from('profiles')
-          .select('*, customers(*)')
+          .select('*, customers!profiles_customer_id_fkey(*)')
           .eq('id', user.id)
           .single();
         
@@ -282,8 +288,8 @@ export default function SavedQuotesPage() {
                   </div>
 
                   {/* Financial & Action */}
-                  <div className="bg-slate-50 md:w-1/4 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-slate-100 space-y-4">
-                    <div className="text-center">
+                  <div className="bg-slate-50 md:w-1/4 p-6 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-slate-100 space-y-3">
+                    <div className="text-center mb-2">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">Estimated Rate</p>
                       <p className={cn(
                         "text-3xl font-black",
@@ -292,11 +298,33 @@ export default function SavedQuotesPage() {
                         ${parseFloat(quote.customer_rate || quote.rate || 0).toFixed(2)}
                       </p>
                     </div>
+
+                    <div className="w-full grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="text-[10px] font-bold uppercase transition-all hover:bg-white"
+                        onClick={() => {
+                          setSelectedQuoteId(quote.id);
+                          if (activeTab === 'LTL') setIsLTLDetailsOpen(true);
+                          else setIsSpotDetailsOpen(true);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                      <PrintButton 
+                        id={quote.id} 
+                        type={activeTab === 'LTL' ? 'quote' : 'spot-quote'} 
+                        variant="outline"
+                        className="text-[10px] font-bold uppercase"
+                      />
+                    </div>
+
                     {activeTab === 'LTL' ? (
                       <Button 
                         onClick={() => handleAcceptQuote(quote)}
                         disabled={acceptingId === quote.id}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 text-sm"
                       >
                         {acceptingId === quote.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -314,7 +342,6 @@ export default function SavedQuotesPage() {
                         >
                           Enquire About Quote
                         </Button>
-                        <p className="text-[10px] text-slate-400 text-center font-medium italic italic leading-tight">Spot quotes require manual processing</p>
                       </div>
                     )}
                   </div>
@@ -323,6 +350,28 @@ export default function SavedQuotesPage() {
             ))
           )}
         </div>
+
+        <LTLQuoteDetailsModal 
+          isOpen={isLTLDetailsOpen}
+          onClose={() => {
+            setIsLTLDetailsOpen(false);
+            setSelectedQuoteId(null);
+          }}
+          quoteId={selectedQuoteId}
+        />
+
+        <SpotQuoteModal 
+          isOpen={isSpotDetailsOpen}
+          onClose={() => {
+            setIsSpotDetailsOpen(false);
+            setSelectedQuoteId(null);
+          }}
+          quoteId={selectedQuoteId || undefined}
+          customerId={profile?.customer_id}
+          onSave={() => {}} // Not needed for read-only
+          readOnly={true}
+          isCustomer={true}
+        />
       </div>
     </div>
   );

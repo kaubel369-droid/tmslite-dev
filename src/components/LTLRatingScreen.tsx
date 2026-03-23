@@ -34,9 +34,10 @@ interface LTLRatingScreenProps {
     initialData?: any;
     onQuoteSaved?: () => void;
     isCustomer?: boolean;
+    className?: string;
 }
 
-export default function LTLRatingScreen({ customerId, carrierId, initialData, onQuoteSaved, isCustomer }: LTLRatingScreenProps) {
+export default function LTLRatingScreen({ customerId, carrierId, initialData, onQuoteSaved, isCustomer, className }: LTLRatingScreenProps) {
     const [origin, setOrigin] = useState<Address>({ zip: '', city: '', state: '' });
     const [destination, setDestination] = useState<Address>({ zip: '', city: '', state: '' });
     const [items, setItems] = useState<ProductLine[]>([
@@ -299,7 +300,7 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
     };
 
     return (
-        <div id="ltl-rating-screen" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div id="ltl-rating-screen" className={cn("bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden", className)}>
             <div className="p-6 space-y-8">
                 {/* Header */}
                 <div id="screen-header" className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -459,11 +460,11 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                             <tbody className="divide-y divide-slate-100">
                                 {items.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-2 py-2">
-                                            <input type="number" value={item.pcs} onChange={(e) => updateItem(idx, 'pcs', parseInt(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                        <td className="px-2 py-3">
+                                            <input type="number" value={item.pcs} step="1" onChange={(e) => updateItem(idx, 'pcs', parseInt(e.target.value) || 0)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <select value={item.type || 'PLT'} onChange={(e) => updateItem(idx, 'type', e.target.value)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
+                                        <td className="px-2 py-3">
+                                            <select value={item.type || 'PLT'} onChange={(e) => updateItem(idx, 'type', e.target.value)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
                                                 <option value="PLT">Pallets</option>
                                                 <option value="CTN">Cartons</option>
                                                 <option value="SKD">Skids</option>
@@ -471,11 +472,11 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                                 <option value="PCS">Pieces</option>
                                             </select>
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <input type="number" value={item.weight} onChange={(e) => updateItem(idx, 'weight', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                        <td className="px-2 py-3">
+                                            <input type="number" value={item.weight} step="0.01" onChange={(e) => updateItem(idx, 'weight', parseFloat(e.target.value) || 0)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <select value={item.class} onChange={(e) => updateItem(idx, 'class', e.target.value)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
+                                        <td className="px-2 py-3">
+                                            <select value={item.class} onChange={(e) => updateItem(idx, 'class', e.target.value)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-white">
                                                 <option value="50">50</option>
                                                 <option value="55">55</option>
                                                 <option value="60">60</option>
@@ -493,14 +494,14 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                                 <option value="250">250</option>
                                             </select>
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <input type="number" value={item.length} onChange={(e) => updateItem(idx, 'length', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                        <td className="px-2 py-3">
+                                            <input type="number" value={item.length} step="0.1" onChange={(e) => updateItem(idx, 'length', parseFloat(e.target.value) || 0)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <input type="number" value={item.width} onChange={(e) => updateItem(idx, 'width', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                        <td className="px-2 py-3">
+                                            <input type="number" value={item.width} step="0.1" onChange={(e) => updateItem(idx, 'width', parseFloat(e.target.value) || 0)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                         </td>
-                                        <td className="px-2 py-2">
-                                            <input type="number" value={item.height} onChange={(e) => updateItem(idx, 'height', parseFloat(e.target.value) || 0)} className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                                        <td className="px-2 py-3">
+                                            <input type="number" value={item.height} step="0.1" onChange={(e) => updateItem(idx, 'height', parseFloat(e.target.value) || 0)} className="w-full h-10 border border-slate-200 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
                                         </td>
                                         <td className="px-4 py-2 text-right font-medium text-slate-700">
                                             {item.cubic_feet}
