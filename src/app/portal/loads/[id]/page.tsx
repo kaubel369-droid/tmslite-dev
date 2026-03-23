@@ -155,6 +155,16 @@ export default function LoadDetail() {
                   <p className="text-sm font-bold text-slate-800">{load.total_weight} lbs • {load.nmfc_class || 'General'}</p>
                 </div>
               </div>
+
+              <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl flex items-start gap-4">
+                <div className="bg-white p-2.5 rounded-xl shadow-sm border border-slate-200 text-indigo-600 shrink-0">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">Quoted Rate</p>
+                  <p className="text-sm font-black text-indigo-700">${parseFloat(load.customer_rate || 0).toFixed(2)}</p>
+                </div>
+              </div>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">

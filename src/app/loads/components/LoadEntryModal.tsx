@@ -20,9 +20,10 @@ interface LoadEntryModalProps {
     onClose: () => void;
     loadId: string | null;
     onSaveSuccess: () => void;
+    restrictedCustomerId?: string; // If provided, locks the customer to this ID
 }
 
-export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess }: LoadEntryModalProps) {
+export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess, restrictedCustomerId }: LoadEntryModalProps) {
     const [activeTab, setActiveTab] = useState<Tab>('Load Information');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -102,6 +103,9 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                     mileage: '',
                     products: [{ pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }]
                 });
+                if (restrictedCustomerId) {
+                    setFormData((prev: any) => ({ ...prev, customer_id: restrictedCustomerId, status: 'Not Dispatched' }));
+                }
                 setDocuments([]);
             }
             setActiveTab('Load Information');
@@ -514,9 +518,15 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">BOL Number</label>
                                             <input type="text" name="bol_number" value={formData.bol_number || ''} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none transition-all" placeholder="Enter BOL#" />
                                         </div>
-                                        <div id="field-status">
+                                         <div id="field-status">
                                             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Status</label>
-                                            <select name="status" value={formData.status} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-700">
+                                            <select 
+                                                name="status" 
+                                                value={formData.status} 
+                                                onChange={handleChange} 
+                                                disabled={!!restrictedCustomerId}
+                                                className={`w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium text-slate-700 ${restrictedCustomerId ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                                            >
                                                 <option value="Not Dispatched">Not Dispatched</option>
                                                 <option value="Dispatched">Dispatched</option>
                                                 <option value="In-Transit">In-Transit</option>
@@ -562,7 +572,13 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                     {/* Customer Selection */}
                                     <div id="field-customer">
                                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Customer</label>
-                                        <select name="customer_id" value={formData.customer_id} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                                        <select 
+                                            name="customer_id" 
+                                            value={formData.customer_id} 
+                                            onChange={handleChange} 
+                                            disabled={!!restrictedCustomerId}
+                                            className={`w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white ${restrictedCustomerId ? 'bg-slate-50 cursor-not-allowed' : ''}`}
+                                        >
                                             <option value="">Select Customer</option>
                                             {customers.map(c => (
                                                 <option key={c.id} value={c.id}>{c.company_name}</option>
@@ -777,17 +793,21 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess 
                                                     <input type="number" step="0.01" name="customer_rate" value={formData.customer_rate} onChange={handleChange} className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                                                 </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carrier Rate ($)</label>
-                                                <div className="relative">
-                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                                                    <input type="number" step="0.01" name="carrier_rate" value={formData.carrier_rate} onChange={handleChange} className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                             {!restrictedCustomerId && (
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carrier Rate ($)</label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                                                        <input type="number" step="0.01" name="carrier_rate" value={formData.carrier_rate} onChange={handleChange} className="w-full border border-slate-300 rounded-lg pl-7 pr-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Quote ID</label>
-                                                <input type="text" name="carrier_quote_id" value={formData.carrier_quote_id} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="OPTIONAL" />
-                                            </div>
+                                            )}
+                                            {!restrictedCustomerId && (
+                                                <div>
+                                                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Quote ID</label>
+                                                    <input type="text" name="carrier_quote_id" value={formData.carrier_quote_id} onChange={handleChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="OPTIONAL" />
+                                                </div>
+                                            )}
                                             <div>
                                                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mileage</label>
                                                 <div className="relative">

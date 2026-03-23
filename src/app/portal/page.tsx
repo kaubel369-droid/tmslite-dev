@@ -8,11 +8,22 @@ import {
   Clock, 
   ArrowUpRight, 
   FileText,
-  Search
+  Search,
+  Plus,
+  Zap,
+  User,
+  Building2,
+  Phone,
+  Mail,
+  MapPin
 } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import LoadEntryModal from '@/app/loads/components/LoadEntryModal';
+import LTLRatingScreen from '@/components/LTLRatingScreen';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 export default function CustomerPortal() {
   const router = useRouter();
@@ -24,6 +35,8 @@ export default function CustomerPortal() {
     invoiced: 0
   });
   const [loading, setLoading] = useState(true);
+  const [isPickupModalOpen, setIsPickupModalOpen] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -91,14 +104,19 @@ export default function CustomerPortal() {
             <p className="text-slate-500 font-medium text-sm">Track your shipments and view documentation in real-time.</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input 
-                type="text" 
-                placeholder="Track by Load #" 
-                className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-48 transition-all"
-              />
-            </div>
+            <Button 
+              onClick={() => setIsPickupModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-200"
+            >
+              <Plus className="h-4 w-4" /> Schedule Pickup
+            </Button>
+            <Button 
+              onClick={() => setIsQuoteModalOpen(true)}
+              variant="outline"
+              className="border-2 border-slate-200 hover:border-indigo-600 hover:text-indigo-600 font-bold rounded-xl flex items-center gap-2"
+            >
+              <Zap className="h-4 w-4" /> Get LTL Quote
+            </Button>
           </div>
         </div>
 
@@ -121,8 +139,9 @@ export default function CustomerPortal() {
         </div>
 
         {/* Content Area */}
-        <div className="grid grid-cols-1 gap-8">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Recent Shipments */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-800">Recent Shipments</h3>
               <Link href="/portal/loads" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
@@ -135,26 +154,21 @@ export default function CustomerPortal() {
                   <tr>
                     <th className="px-6 py-4 text-center">Load #</th>
                     <th className="px-6 py-4">Destination</th>
-                    <th className="px-6 py-4">Weight</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">ETA / Delivery</th>
+                    <th className="px-6 py-4 text-center">Weight</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-right">Delivery Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50 text-sm">
+                <tbody className="divide-y divide-slate-50 text-sm text-slate-600">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <Clock className="h-8 w-8 text-indigo-300 animate-pulse" />
-                          <span className="text-slate-400 font-medium">Fetching your loads...</span>
-                        </div>
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                        Loading...
                       </td>
                     </tr>
                   ) : recentLoads.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-slate-400 font-medium">
-                        No recent shipments found.
-                      </td>
+                      <td colSpan={5} className="px-6 py-12 text-center">No shipments found</td>
                     </tr>
                   ) : recentLoads.map((load) => (
                     <tr 
@@ -163,10 +177,10 @@ export default function CustomerPortal() {
                       onClick={() => router.push(`/portal/loads/${load.id}`)}
                     >
                       <td className="px-6 py-4 font-bold text-slate-700 text-center">#{load.load_number}</td>
-                      <td className="px-6 py-4 font-medium text-slate-600">{load.destination_zip}</td>
-                      <td className="px-6 py-4 text-slate-500 font-medium">{load.total_weight} lbs</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${
+                      <td className="px-6 py-4">{load.destination_zip}</td>
+                      <td className="px-6 py-4 text-center">{load.total_weight} lbs</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
                           load.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                           load.status === 'In-Transit' ? 'bg-blue-100 text-blue-700' :
                           'bg-slate-100 text-slate-600'
@@ -174,7 +188,7 @@ export default function CustomerPortal() {
                           {load.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-500 font-medium">
+                      <td className="px-6 py-4 text-right">
                         {load.delivery_date ? new Date(load.delivery_date).toLocaleDateString() : 'TBD'}
                       </td>
                     </tr>
@@ -183,7 +197,80 @@ export default function CustomerPortal() {
               </table>
             </div>
           </div>
+
+          {/* Business Info */}
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-6">
+                <Building2 className="h-5 w-5 text-indigo-600" />
+                Business Profile
+              </h3>
+              <div className="space-y-6">
+                <div className="flex items-start gap-3">
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <User className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Primary Contact</label>
+                    <p className="text-sm font-bold text-slate-700">{profile?.full_name || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <Mail className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Email Address</label>
+                    <p className="text-sm font-bold text-slate-700">{profile?.email || 'N/A'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-slate-50 p-2 rounded-lg">
+                    <Zap className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">Saved Quotes</label>
+                    <Link href="/portal/quotes" className="text-sm font-bold text-indigo-600 hover:underline">
+                      View Saved LTL Quotes
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-2xl text-white shadow-lg shadow-indigo-100">
+              <h4 className="font-bold mb-2">Need Support?</h4>
+              <p className="text-xs text-indigo-100 mb-4 leading-relaxed">Our dispatch team is available 24/7 to assist with your shipments.</p>
+              <button className="w-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2.5 rounded-xl transition-all border border-white/20">
+                Contact Dispatch
+              </button>
+            </div>
+          </div>
         </div>
+
+        {/* Modals */}
+        <LoadEntryModal 
+          isOpen={isPickupModalOpen}
+          onClose={() => setIsPickupModalOpen(false)}
+          loadId={null}
+          restrictedCustomerId={profile?.customer_id}
+          onSaveSuccess={() => {
+            setIsPickupModalOpen(false);
+            // Refresh logic could go here
+          }}
+        />
+
+        <Dialog open={isQuoteModalOpen} onOpenChange={setIsQuoteModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
+            <LTLRatingScreen 
+              customerId={profile?.customer_id}
+              isCustomer={true}
+              onQuoteSaved={() => {
+                // Optionally show a toast or refresh
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

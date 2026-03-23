@@ -33,9 +33,10 @@ interface LTLRatingScreenProps {
     carrierId?: string;
     initialData?: any;
     onQuoteSaved?: () => void;
+    isCustomer?: boolean;
 }
 
-export default function LTLRatingScreen({ customerId, carrierId, initialData, onQuoteSaved }: LTLRatingScreenProps) {
+export default function LTLRatingScreen({ customerId, carrierId, initialData, onQuoteSaved, isCustomer }: LTLRatingScreenProps) {
     const [origin, setOrigin] = useState<Address>({ zip: '', city: '', state: '' });
     const [destination, setDestination] = useState<Address>({ zip: '', city: '', state: '' });
     const [items, setItems] = useState<ProductLine[]>([
@@ -583,7 +584,7 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                 <span className="text-[10px] text-slate-400 italic">No accessorials selected</span>
                             )}
                         </div>
-                        <p className="text-[10px] text-slate-400">Total: {selectedAccessorials.length}/6</p>
+                        {!isCustomer && <p className="text-[10px] text-slate-400">Total: {selectedAccessorials.length}/6</p>}
                     </div>
 
                     <div className="flex flex-col items-end gap-4 w-full md:w-auto">
@@ -602,7 +603,10 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                             id="get-rates-btn"
                             onClick={handleGetRates}
                             disabled={loading || !origin.zip || !destination.zip}
-                            className="w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+                            className={cn(
+                                "w-full md:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed",
+                                isCustomer ? "md:w-full" : ""
+                            )}
                         >
                             {loading ? (
                                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -636,18 +640,17 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                 <thead className="bg-slate-50 border-b border-slate-200">
                                     <tr className="text-[10px] uppercase font-bold text-slate-400">
                                         <th className="px-6 py-4">Carrier</th>
-                                        <th className="px-6 py-4 text-right">Base Rate</th>
-                                        <th className="px-6 py-4 text-right">Accessorials</th>
-                                        <th className="px-6 py-4 text-right text-indigo-600">Carrier Total</th>
+                                        {!isCustomer && <th className="px-6 py-4 text-right">Base Rate</th>}
+                                        {!isCustomer && <th className="px-6 py-4 text-right">Accessorials</th>}
+                                        {!isCustomer && <th className="px-6 py-4 text-right text-indigo-600">Carrier Total</th>}
                                         <th className="px-6 py-4 text-center">Transit</th>
-                                        <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50/50">Customer Rate</th>
+                                        <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50/50">Rate</th>
                                         <th className="px-6 py-4"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {quotes.map((quote, idx) => (
-                                        <tr key={idx} className="hover:bg-indigo-50/20 transition-colors group">
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                        <tr key={idx} className="hover:bg-indigo-50/20 transition-colors group">                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 group-hover:border-indigo-200 transition-colors">
                                                         <Truck className="h-6 w-6 text-slate-400 group-hover:text-indigo-400" />
@@ -658,21 +661,28 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right text-slate-600 font-medium">
-                                                ${(quote.details?.baseRate || quote.totalCost * 0.8).toFixed(2)}
-                                            </td>
-                                            <td className="px-6 py-4 text-right text-slate-600 font-medium font-mono text-xs">
-                                                +${(quote.details?.fuelSurcharge || 0).toFixed(2)}
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-bold text-indigo-600">
-                                                ${quote.totalCost.toFixed(2)}
-                                            </td>
+                                            {!isCustomer && (
+                                                <td className="px-6 py-4 text-right text-slate-600 font-medium">
+                                                    ${(quote.details?.baseRate || quote.totalCost * 0.8).toFixed(2)}
+                                                </td>
+                                            )}
+                                            {!isCustomer && (
+                                                <td className="px-6 py-4 text-right text-slate-600 font-medium font-mono text-xs">
+                                                    +${(quote.details?.fuelSurcharge || 0).toFixed(2)}
+                                                </td>
+                                            )}
+                                            {!isCustomer && (
+                                                <td className="px-6 py-4 text-right font-bold text-indigo-600">
+                                                    ${quote.totalCost.toFixed(2)}
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4 text-center">
                                                 <div className="inline-flex flex-col items-center">
                                                     <span className="font-bold text-slate-800">{quote.transitDays}</span>
                                                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Days</span>
                                                 </div>
                                             </td>
+
                                             <td className="px-6 py-4 text-right font-black text-lg text-emerald-600 bg-emerald-50/30 group-hover:bg-emerald-100/40 transition-colors">
                                                 ${(quote.customerCost || quote.totalCost * 1.15).toFixed(2)}
                                             </td>
