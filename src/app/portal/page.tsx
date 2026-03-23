@@ -51,16 +51,24 @@ export default function CustomerPortal() {
           return;
         }
 
+        console.log('User ID:', user.id);
+        
         // Fetch profile to get customer_id
-        const { data: p } = await supabase
+        const { data: p, error: profileError } = await supabase
           .from('profiles')
-          .select('*, customers(company_name)')
+          .select('*, customers(*)')
           .eq('id', user.id)
           .single();
         
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+        }
+
+        console.log('Fetched Profile:', p);
         setProfile(p);
 
         if (p?.customer_id) {
+          console.log('Customer ID found:', p.customer_id);
           // Fetch loads using the secure view
           const { data: loads, error: loadsError } = await supabase
             .from('customer_portal_loads')

@@ -445,14 +445,14 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                         <table className="w-full text-sm text-left">
                             <thead className="text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-200">
                                 <tr>
-                                    <th className="px-4 py-3 w-16">Pcs</th>
-                                    <th className="px-4 py-3 w-28">Type</th>
-                                    <th className="px-4 py-3 w-24">Weight</th>
-                                    <th className="px-4 py-3 w-24">Class</th>
-                                    <th className="px-4 py-3 w-20">L(in)</th>
-                                    <th className="px-4 py-3 w-20">W(in)</th>
-                                    <th className="px-4 py-3 w-20">H(in)</th>
-                                    <th className="px-4 py-3 text-right">Cubic Ft</th>
+                                    <th className="px-4 py-3 w-20 text-center">Pcs</th>
+                                    <th className="px-4 py-3 w-32">Type</th>
+                                    <th className="px-4 py-3 w-32">Weight</th>
+                                    <th className="px-4 py-3 w-28">Class</th>
+                                    <th className="px-4 py-3 w-24">L(in)</th>
+                                    <th className="px-4 py-3 w-24">W(in)</th>
+                                    <th className="px-4 py-3 w-24">H(in)</th>
+                                    <th className="px-4 py-3 text-right whitespace-nowrap">Cubic Ft</th>
                                     <th className="px-4 py-3 w-10"></th>
                                 </tr>
                             </thead>

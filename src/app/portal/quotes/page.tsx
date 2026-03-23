@@ -39,15 +39,22 @@ export default function SavedQuotesPage() {
           return;
         }
 
-        const { data: p } = await supabase
+        console.log('Fetching profile for User:', user.id);
+        const { data: p, error: profileError } = await supabase
           .from('profiles')
-          .select('*, customers(org_id)')
+          .select('*, customers(*)')
           .eq('id', user.id)
           .single();
         
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+        }
+
+        console.log('Fetched Profile on Quotes Page:', p);
         setProfile(p);
 
         if (p?.customer_id) {
+          console.log('Loading quotes for Customer ID:', p.customer_id);
           const [ltlRes, spotRes] = await Promise.all([
             fetch(`/api/quotes?customerId=${p.customer_id}`),
             fetch(`/api/customers/${p.customer_id}/spot-quotes`)
@@ -55,12 +62,20 @@ export default function SavedQuotesPage() {
 
           if (ltlRes.ok) {
             const data = await ltlRes.json();
+            console.log('LTL Quotes fetched:', data.quotes?.length || 0);
             setQuotes(data.quotes || []);
+          } else {
+            console.error('LTL Quotes fetch failed:', await ltlRes.text());
           }
           if (spotRes.ok) {
             const data = await spotRes.json();
+            console.log('Spot Quotes fetched:', data.quotes?.length || 0);
             setSpotQuotes(data.quotes || []);
+          } else {
+            console.error('Spot Quotes fetch failed:', await spotRes.text());
           }
+        } else {
+          console.warn('No customer_id found in profile. Quotes cannot be loaded.');
         }
       } catch (error) {
         console.error('Error loading quotes:', error);

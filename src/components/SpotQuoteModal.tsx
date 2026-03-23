@@ -659,18 +659,19 @@ export default function SpotQuoteModal({ isOpen, onClose, customerId, quoteId, o
                                     <label className="block text-sm font-bold text-indigo-900 uppercase tracking-widest mb-3">Customer Rate (All-In)</label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-3.5 text-indigo-400 text-xl font-bold">$</span>
-                                        <input 
-                                            type="number" 
-                                            name="rate" 
-                                            value={formData.rate} 
-                                            onChange={handleInputChange} 
-                                            step="0.01" 
-                                            placeholder="0.00"
-                                            required
-                                            className="w-full pl-10 pr-4 py-4 border-2 border-indigo-200 rounded-xl bg-white text-2xl font-black text-indigo-700 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-indigo-100" 
-                                        />
+                                        <div className="w-full pl-10 pr-4 py-4 border-2 border-indigo-200 rounded-xl bg-white text-2xl font-black text-indigo-700">
+                                            {formData.rate && parseFloat(formData.rate) > 0 ? (
+                                                parseFloat(formData.rate).toLocaleString('en-US', { minimumFractionDigits: 2 })
+                                            ) : (
+                                                <span className="text-indigo-200">Pending Review</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-indigo-600 mt-2 font-medium italic">Please enter the total customer-facing rate for this spot quote.</p>
+                                    <p className="text-xs text-indigo-600 mt-2 font-medium italic">
+                                        {formData.rate && parseFloat(formData.rate) > 0 
+                                            ? "This is your finalized all-in rate for this shipment."
+                                            : "Our team is currently reviewing your request. You will be notified once a rate is assigned."}
+                                    </p>
                                 </div>
                             </div>
                         ) : (
