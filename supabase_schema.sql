@@ -1,5 +1,5 @@
 -- Supabase Database Schema Snapshot
--- Generated on 2026-03-20
+-- Generated on 2026-03-25
 
 -- 1. Extensions
 create extension if not exists "pgcrypto";
@@ -596,7 +596,7 @@ $$ language sql security definer;
 
 -- 6. Triggers
 
-create trigger sync_profile_email
+create trigger on_auth_user_updated
 after update of email on auth.users
 for each row execute function public.handle_sync_profile_email();
 
@@ -605,6 +605,8 @@ create trigger update_carriers_updated_at before update on public.carriers for e
 create trigger update_settings_updated_at before update on public.settings for each row execute function public.update_updated_at_column();
 create trigger update_loads_updated_at before update on public.loads for each row execute function public.update_updated_at_column();
 create trigger update_sales_leads_updated_at before update on public.sales_leads for each row execute function public.update_updated_at_column();
+create trigger update_document_templates_updated_at before update on public.document_templates for each row execute function public.update_updated_at_column();
+create trigger update_customer_spot_quotes_updated_at before update on public.customer_spot_quotes for each row execute function public.update_updated_at_column();
 
 -- 7. RLS Policies
 
@@ -697,6 +699,10 @@ create policy "Anyone can view role_permissions" on public.role_permissions for 
 
 insert into storage.buckets (id, name, public) values ('customer-documents', 'customer-documents', false) on conflict (id) do nothing;
 insert into storage.buckets (id, name, public) values ('carrier-documents', 'carrier-documents', false) on conflict (id) do nothing;
+insert into storage.buckets (id, name, public) values ('load-documents', 'load-documents', false) on conflict (id) do nothing;
+insert into storage.buckets (id, name, public) values ('logos', 'logos', true) on conflict (id) do nothing;
 
 create policy "Users can manage customer documents" on storage.objects for all using (bucket_id = 'customer-documents' and auth.role() = 'authenticated');
 create policy "Users can manage carrier documents for their organization" on storage.objects for all to authenticated using (bucket_id = 'carrier-documents' AND (storage.foldername(name))[1] = auth.jwt() ->> 'org_id');
+create policy "Users can manage load documents" on storage.objects for all using (bucket_id = 'load-documents' and auth.role() = 'authenticated');
+create policy "Public logos access" on storage.objects for select using (bucket_id = 'logos');
