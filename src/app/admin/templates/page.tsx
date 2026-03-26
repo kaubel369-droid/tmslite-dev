@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { FileText, Image as ImageIcon } from 'lucide-react';
 import LogoUploader from './components/LogoUploader';
+import CompanyNameEditor from './components/CompanyNameEditor';
 import TemplateList from './components/TemplateList';
 
 export const dynamic = 'force-dynamic';
@@ -8,9 +9,10 @@ export const dynamic = 'force-dynamic';
 export default async function AdminTemplatesPage() {
     const supabase = await createClient();
 
-    // Get organization ID
-    const { data: orgs } = await supabase.from('organizations').select('id').limit(1).single();
-    const orgId = orgs?.id;
+    // Get organization
+    const { data: org } = await supabase.from('organizations').select('id, name').limit(1).single();
+    const orgId = org?.id;
+    const companyName = org?.name || '';
 
     if (!orgId) {
         return <div className="p-8 text-center text-slate-500">Organization not found.</div>;
@@ -48,6 +50,7 @@ export default async function AdminTemplatesPage() {
                     <h2 className="text-lg font-semibold text-slate-800">Branding</h2>
                 </div>
                 <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <CompanyNameEditor initialName={companyName} orgId={orgId} />
                     <LogoUploader initialLogoUrl={logoUrl} orgId={orgId} />
                 </div>
             </section>
