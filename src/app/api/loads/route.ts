@@ -37,6 +37,7 @@ export async function GET() {
                 internal_notes,
                 bol_notes,
                 tracing_notes,
+                invoice_notes,
                 load_type,
                 mileage,
                 customer:customers(company_name),
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
             'carrier_rate', 'fuel_surcharge', 'carrier_quote_id',
             'carrier_pro_number', 'selected_carrier_id', 'pickup_date',
             'delivery_date', 'shipper_id', 'consignee_id', 'bol_number',
-            'internal_notes', 'bol_notes', 'tracing_notes', 'load_type', 'mileage'
+            'internal_notes', 'bol_notes', 'tracing_notes', 'invoice_notes', 'load_type', 'mileage'
         ];
 
         // Filter and map fields for insertion

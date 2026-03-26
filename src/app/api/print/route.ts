@@ -144,17 +144,18 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
 `,
     'customer-invoice': `
 <style>
-    body { font-family: Inter, sans-serif; padding: 40px; color: #334155; }
-    .inv-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-    .inv-title { font-size: 32px; font-weight: 800; color: #1e293b; }
-    .bill-to { margin-bottom: 40px; }
-    .bill-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px; font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
-    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #e2e8f0; font-size: 12px; text-transform: uppercase; color: #64748b; }
-    td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-    .total-box { margin-left: auto; width: 250px; background: #f8fafc; padding: 20px; border-radius: 12px; }
-    .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-    .total-grand { border-top: 1px solid #e2e8f0; padding-top: 10px; font-weight: 800; color: #0f172a; font-size: 18px; }
+    body { font-family: Inter, sans-serif; padding: 20px; color: #334155; font-size: 13px; line-height: 1.4; }
+    @media print { body { padding: 0; } }
+    .inv-header { display: flex; justify-content: space-between; margin-bottom: 25px; }
+    .inv-title { font-size: 28px; font-weight: 800; color: #1e293b; }
+    .bill-to { margin-bottom: 25px; }
+    .bill-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 4px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+    th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+    .total-box { margin-left: auto; width: 220px; background: #f8fafc; padding: 12px; border-radius: 12px; }
+    .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .total-grand { border-top: 1px solid #e2e8f0; padding-top: 6px; font-weight: 800; color: #0f172a; font-size: 15px; }
 </style>
 
 <div class="inv-header">
@@ -225,14 +226,17 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </tfoot>
 </table>
 
+{{#if invoice_notes}}
+<div style="margin-bottom: 15px; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 11px;">
+    <div style="font-weight: 800; text-transform: uppercase; font-size: 9px; color: #64748b; margin-bottom: 4px;">Invoice Notes</div>
+    <div style="color: #374151;">{{invoice_notes}}</div>
+</div>
+{{/if}}
+
 <div class="total-box">
     <div class="total-row">
         <span style="font-size: 12px; color: #64748b;">Subtotal</span>
         <span style="font-weight: 600;">{{customer_rate}}</span>
-    </div>
-    <div class="total-row">
-        <span style="font-size: 12px; color: #64748b;">Tax (0%)</span>
-        <span style="font-weight: 600;">$0.00</span>
     </div>
     <div class="total-row total-grand">
         <span>Total Due</span>
@@ -240,9 +244,10 @@ const DEFAULT_TEMPLATES: Record<string, string> = {
     </div>
 </div>
 
-<div style="margin-top: 60px; font-size: 12px; color: #64748b; line-height: 1.6;">
+<div style="margin-top: 25px; font-size: 10px; color: #64748b; line-height: 1.4;">
     <strong>Payment Terms:</strong> Net 30. Please make checks payable to {{company_name}}. Reference Invoice # INV-{{load_number}} on all payments.
 </div>
+
 `,
     'customer-rate-quote-ltl': `
 <style>
@@ -799,6 +804,7 @@ export async function GET(request: Request) {
             customer_rate: `$${Number(load.customer_rate || 0).toFixed(2)}`,
             carrier_rate: `$${Number(load.carrier_rate || 0).toFixed(2)}`,
             bol_notes: load.bol_notes || 'None',
+            invoice_notes: load.invoice_notes,
             standard_preamble: 'RECEIVED, subject to the classifications and tariffs in effect on the date of the issue of this Bill of Lading, the property described below, in apparent good order, except as noted (contents and condition of contents of packages unknown), marked, consigned, and destined as indicated below, which said carrier (the word carrier being understood throughout this contract as meaning any person or corporation in possession of the property under the contract) agrees to carry to its usual place of delivery at said destination...',
             shipper_certification: 'This is to certify that the above named materials are properly classified, described, packaged, marked and labeled, and are in proper condition for transportation according to the applicable regulations of the Department of Transportation.',
             liability_statement: 'Unless the shipper declares a higher value and pays the applicable surcharge, carrier liability for loss or damage is limited to $0.50 per pound per package.',

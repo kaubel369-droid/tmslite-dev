@@ -50,6 +50,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess,
         internal_notes: '',
         bol_notes: '',
         tracing_notes: '',
+        invoice_notes: '',
         load_type: 'LTL',
         mileage: '',
         products: [] as Product[]
@@ -99,6 +100,7 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess,
                     internal_notes: '',
                     bol_notes: '',
                     tracing_notes: '',
+                    invoice_notes: '',
                     load_type: 'LTL',
                     mileage: '',
                     products: [{ pallets: '', weight: '', description: '', nmfc: '', unit_type: 'PLT' }]
@@ -848,6 +850,17 @@ export default function LoadEntryModal({ isOpen, onClose, loadId, onSaveSuccess,
                                             rows={3}
                                             className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner"
                                             placeholder="Tracking and tracing updates..."
+                                        />
+                                    </div>
+                                    <div id="field-invoice-notes">
+                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Invoice Notes</label>
+                                        <textarea
+                                            name="invoice_notes"
+                                            value={formData.invoice_notes || ''}
+                                            onChange={handleChange}
+                                            rows={3}
+                                            className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner bg-amber-50/30"
+                                            placeholder="Notes to appear on the invoice..."
                                         />
                                     </div>
                                     <div id="field-internal-notes">
