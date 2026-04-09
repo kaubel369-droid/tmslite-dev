@@ -11,6 +11,14 @@ jobs:
     steps:
       - name: Ping Supabase API
         run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL secret is missing! Please add it to Settings > Secrets > Actions."
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is missing! Please add it to Settings > Secrets > Actions."
+            exit 1
+          fi
           curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/keep_alive?select=*" \
           -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
