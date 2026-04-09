@@ -11,14 +11,19 @@ jobs:
     steps:
       - name: Ping Supabase API
         run: |
-          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
-            echo "::error::SUPABASE_URL secret is missing! Please add it to Settings > Secrets > Actions."
+          # Use both secrets and vars to minimize setup confusion
+          URL="${{ secrets.SUPABASE_URL }}${{ vars.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}${{ vars.SUPABASE_ANON_KEY }}"
+
+          if [ -z "$URL" ]; then
+            echo "::error::SUPABASE_URL is missing! Ensure it is in 'Repository secrets' or 'Variables' (Settings > Secrets and variables > Actions)."
             exit 1
           fi
-          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            echo "::error::SUPABASE_ANON_KEY secret is missing! Please add it to Settings > Secrets > Actions."
+          if [ -z "$KEY" ]; then
+            echo "::error::SUPABASE_ANON_KEY is missing! Ensure it is in 'Repository secrets' or 'Variables' (Settings > Secrets and variables > Actions)."
             exit 1
           fi
-          curl -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/keep_alive?select=*" \
-          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+
+          curl -X GET "$URL/rest/v1/keep_alive?select=*" \
+          -H "apikey: $KEY" \
+          -H "Authorization: Bearer $KEY"
