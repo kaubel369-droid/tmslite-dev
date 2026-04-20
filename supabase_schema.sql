@@ -405,6 +405,7 @@ create table public.zip_codes (
     state_name text not null
 );
 alter table public.zip_codes enable row level security;
+create policy "Anyone can view zip codes" on public.zip_codes for select using (true);
 
 -- Accessorials
 create table public.accessorials (
@@ -546,20 +547,32 @@ alter table public.calendar_events enable row level security;
 
 -- Helper function to get current user's org_id
 create or replace function public.get_user_org_id() 
-returns uuid as $$
+returns uuid 
+language sql 
+security definer
+set search_path = public
+as $$
   select org_id from public.profiles where id = auth.uid() limit 1;
-$$ language sql security definer;
+$$;
 
 -- Encryption functions
 create or replace function public.encrypt_api_key(raw_key text, secret_key text) 
-returns text as $$
+returns text 
+language sql 
+security definer
+set search_path = public
+as $$
   select pgp_sym_encrypt(raw_key, secret_key)::text;
-$$ language sql security definer;
+$$;
 
 create or replace function public.decrypt_api_key(encrypted_key text, secret_key text) 
-returns text as $$
+returns text 
+language sql 
+security definer
+set search_path = public
+as $$
   select pgp_sym_decrypt(encrypted_key::bytea, secret_key);
-$$ language sql security definer;
+$$;
 
 -- Update updated_at trigger function
 create or replace function public.update_updated_at_column()
@@ -583,7 +596,11 @@ $$ language plpgsql;
 
 -- Public tracking info function
 create or replace function public.get_public_tracking_info(p_load_number text)
-returns table(load_number text, status load_status, origin_zip text, destination_zip text, last_updated timestamp with time zone) as $$
+returns table(load_number text, status load_status, origin_zip text, destination_zip text, last_updated timestamp with time zone) 
+language sql 
+security definer
+set search_path = public
+as $$
   SELECT 
     l.load_number, 
     l.status, 
@@ -592,7 +609,7 @@ returns table(load_number text, status load_status, origin_zip text, destination
     l.updated_at as last_updated
   FROM public.loads l
   WHERE l.load_number = p_load_number;
-$$ language sql security definer;
+$$;
 
 -- 6. Triggers
 
@@ -623,10 +640,10 @@ create policy "Org isolation for customer_contacts" on public.customer_contacts 
 create policy "Org isolation for customer_documents" on public.customer_documents for all using (customer_id in (select id from public.customers where org_id = get_user_org_id()));
 
 -- Carrier policies
-create policy "Users can view carriers in their organization" on public.carriers for select using ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Users can insert carriers in their organization" on public.carriers for insert with check ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Users can update carriers in their organization" on public.carriers for update using ((org_id)::text = (auth.jwt() ->> 'org_id'::text)) with check ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Users can delete carriers in their organization" on public.carriers for delete using ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
+create policy "Users can view carriers in their organization" on public.carriers for select using (org_id = get_user_org_id());
+create policy "Users can insert carriers in their organization" on public.carriers for insert with check (org_id = get_user_org_id());
+create policy "Users can update carriers in their organization" on public.carriers for update using (org_id = get_user_org_id()) with check (org_id = get_user_org_id());
+create policy "Users can delete carriers in their organization" on public.carriers for delete using (org_id = get_user_org_id());
 
 -- Carrier Account policies
 create policy "Org isolation for carrier_accounts" on public.carrier_accounts for all using (org_id = get_user_org_id());
@@ -653,13 +670,13 @@ create policy "Org isolation for documents" on public.documents for all using (
 );
 
 -- Carrier Document policies
-create policy "Users can view carrier documents in their organization" on public.carrier_documents for select using ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Users can insert carrier documents in their organization" on public.carrier_documents for insert with check ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Users can update carrier documents in their organization" on public.carrier_documents for update using ((org_id)::text = (auth.jwt() ->> 'org_id'::text)) with check ((org_id)::text = (auth.jwt() ->> 'org_id'::text));
-create policy "Only Supervisor or Admin can delete carrier documents" on public.carrier_documents for delete using (((org_id)::text = (auth.jwt() ->> 'org_id'::text)) AND (EXISTS (select 1 from profiles where profiles.id = auth.uid() and role in ('Admin', 'Supervisor'))));
+create policy "Users can view carrier documents in their organization" on public.carrier_documents for select using (org_id = get_user_org_id());
+create policy "Users can insert carrier documents in their organization" on public.carrier_documents for insert with check (org_id = get_user_org_id());
+create policy "Users can update carrier documents in their organization" on public.carrier_documents for update using (org_id = get_user_org_id()) with check (org_id = get_user_org_id());
+create policy "Only Supervisor or Admin can delete carrier documents" on public.carrier_documents for delete using (org_id = get_user_org_id() AND (EXISTS (select 1 from profiles where profiles.id = auth.uid() and role in ('Admin', 'Supervisor'))));
 
 -- Carrier Insurance policies
-create policy "Users can manage their organization's carrier insurance" on public.carrier_insurance for all using (org_id = ((auth.jwt() ->> 'org_id'::text))::uuid) with check (org_id = ((auth.jwt() ->> 'org_id'::text))::uuid);
+create policy "Users can manage their organization's carrier insurance" on public.carrier_insurance for all using (org_id = get_user_org_id()) with check (org_id = get_user_org_id());
 
 -- Sales Lead policies
 create policy "Admins and Supervisors have full access to sales leads in org" on public.sales_leads for all using ((org_id = get_user_org_id()) AND (EXISTS (select 1 from profiles where profiles.id = auth.uid() and profiles.role in ('Admin', 'Supervisor'))));
