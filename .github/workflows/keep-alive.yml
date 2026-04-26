@@ -12,8 +12,12 @@ jobs:
       - name: Ping Supabase API
         run: |
           # Use both secrets and vars to minimize setup confusion
-          URL="${{ secrets.SUPABASE_URL }}${{ vars.SUPABASE_URL }}"
-          KEY="${{ secrets.SUPABASE_ANON_KEY }}${{ vars.SUPABASE_ANON_KEY }}"
+          # Use existing URL/KEY if set, otherwise fallback to vars
+          URL="${{ secrets.SUPABASE_URL }}"
+          if [ -z "$URL" ]; then URL="${{ vars.SUPABASE_URL }}"; fi
+          
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$KEY" ]; then KEY="${{ vars.SUPABASE_ANON_KEY }}"; fi
 
           if [ -z "$URL" ]; then
             echo "::error::SUPABASE_URL is missing! Ensure it is in 'Repository secrets' or 'Variables' (Settings > Secrets and variables > Actions)."
@@ -24,6 +28,10 @@ jobs:
             exit 1
           fi
 
-          curl -X GET "$URL/rest/v1/keep_alive?select=*" \
+          # Use PATCH to update the timestamp. Targeting id=1 as it is the standard singleton row.
+          # Note: If using the anon key, you MUST have an RLS policy allowing UPDATE on this table.
+          curl -X PATCH "$URL/rest/v1/keep_alive?id=eq.1" \
           -H "apikey: $KEY" \
-          -H "Authorization: Bearer $KEY"
+          -H "Authorization: Bearer $KEY" \
+          -H "Content-Type: application/json" \
+          -d "{\"last_ping\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
