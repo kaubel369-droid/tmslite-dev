@@ -150,11 +150,15 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
     };
 
     const handleZipLookup = async (zip: string, type: 'origin' | 'destination') => {
-        if (zip.length < 5) return;
-        
         const setLoading = type === 'origin' ? setOriginLoading : setDestLoading;
         const setCities = type === 'origin' ? setOriginCities : setDestCities;
         const setAddr = type === 'origin' ? setOrigin : setDestination;
+
+        if (zip.length < 5) {
+            setCities([]);
+            setAddr(prev => ({ ...prev, city: '', state: '' }));
+            return;
+        }
 
         setLoading(true);
         try {
@@ -162,21 +166,41 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
             if (res.ok) {
                 const data = await res.json();
                 if (data.locations && data.locations.length > 0) {
-                    setCities(data.locations);
-                    if (data.locations.length === 1) {
+                    // Filter for unique city names to avoid duplicate dropdown options
+                    const uniqueLocations = data.locations.reduce((acc: any[], current: any) => {
+                        const x = acc.find(item => item.city === current.city);
+                        if (!x) {
+                            return acc.concat([current]);
+                        } else {
+                            return acc;
+                        }
+                    }, []);
+
+                    setCities(uniqueLocations);
+                    
+                    if (uniqueLocations.length === 1) {
                         setAddr(prev => ({ 
                             ...prev, 
                             zip, 
-                            city: data.locations[0].city, 
-                            state: data.locations[0].state_id 
+                            city: uniqueLocations[0].city, 
+                            state: uniqueLocations[0].state_id 
                         }));
                     } else {
-                        setAddr(prev => ({ ...prev, zip, city: '', state: data.locations[0].state_id }));
+                        // More than one city - force user to select
+                        setAddr(prev => ({ ...prev, zip, city: '', state: uniqueLocations[0].state_id }));
                     }
+                } else {
+                    setCities([]);
+                    setAddr(prev => ({ ...prev, city: '', state: '' }));
                 }
+            } else {
+                setCities([]);
+                setAddr(prev => ({ ...prev, city: '', state: '' }));
             }
         } catch (err) {
             console.error("Zip lookup failed", err);
+            setCities([]);
+            setAddr(prev => ({ ...prev, city: '', state: '' }));
         } finally {
             setLoading(false);
         }
@@ -333,12 +357,18 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                         type="text" 
                                         value={origin.zip} 
                                         onChange={(e) => {
-                                            const val = e.target.value;
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 5);
                                             setOrigin(prev => ({ ...prev, zip: val }));
-                                            if (val.length === 5) handleZipLookup(val, 'origin');
+                                            if (val.length === 5) {
+                                                handleZipLookup(val, 'origin');
+                                            } else {
+                                                setOriginCities([]);
+                                                setOrigin(prev => ({ ...prev, city: '', state: '' }));
+                                            }
                                         }}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm font-medium tracking-wider"
                                         placeholder="00000"
+                                        maxLength={5}
                                     />
                                     {originLoading && <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-indigo-500" />}
                                 </div>
@@ -349,9 +379,9 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                     <select 
                                         value={origin.city}
                                         onChange={(e) => setOrigin(prev => ({ ...prev, city: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm"
+                                        className="w-full border border-indigo-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm font-medium text-indigo-900 cursor-pointer animate-in fade-in slide-in-from-top-1 duration-200"
                                     >
-                                        <option value="">Select City</option>
+                                        <option value="" disabled>Select City</option>
                                         {originCities.map(c => <option key={c.city} value={c.city}>{c.city}</option>)}
                                     </select>
                                 ) : (
@@ -388,12 +418,18 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                         type="text" 
                                         value={destination.zip} 
                                         onChange={(e) => {
-                                            const val = e.target.value;
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 5);
                                             setDestination(prev => ({ ...prev, zip: val }));
-                                            if (val.length === 5) handleZipLookup(val, 'destination');
+                                            if (val.length === 5) {
+                                                handleZipLookup(val, 'destination');
+                                            } else {
+                                                setDestCities([]);
+                                                setDestination(prev => ({ ...prev, city: '', state: '' }));
+                                            }
                                         }}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm font-medium tracking-wider"
                                         placeholder="00000"
+                                        maxLength={5}
                                     />
                                     {destLoading && <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-indigo-500" />}
                                 </div>
@@ -404,9 +440,9 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                     <select 
                                         value={destination.city}
                                         onChange={(e) => setDestination(prev => ({ ...prev, city: e.target.value }))}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm"
+                                        className="w-full border border-indigo-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white shadow-sm font-medium text-indigo-900 cursor-pointer animate-in fade-in slide-in-from-top-1 duration-200"
                                     >
-                                        <option value="">Select City</option>
+                                        <option value="" disabled>Select City</option>
                                         {destCities.map(c => <option key={c.city} value={c.city}>{c.city}</option>)}
                                     </select>
                                 ) : (
