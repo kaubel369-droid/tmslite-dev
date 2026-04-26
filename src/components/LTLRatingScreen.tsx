@@ -50,6 +50,9 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
     const [error, setError] = useState<string | null>(null);
     const [isSavingQuote, setIsSavingQuote] = useState(false);
     const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [lastSavedQuoteNumber, setLastSavedQuoteNumber] = useState<string | null>(null);
+
 
     // Career Manage States
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -290,6 +293,8 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
 
             const data = await res.json();
             setSavedQuoteId(data.quote.id);
+            setLastSavedQuoteNumber(data.quote.quote_number);
+            setIsSuccessModalOpen(true);
             if (onQuoteSaved) onQuoteSaved();
         } catch (err: any) {
             console.error('Error saving quote:', err);
@@ -818,6 +823,33 @@ export default function LTLRatingScreen({ customerId, carrierId, initialData, on
                                 Save Settings
                             </Button>
                         </DialogFooter>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Quote Saved Success Modal */}
+            <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
+                <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl p-0 overflow-hidden rounded-2xl">
+                    <div className="p-10 flex flex-col items-center text-center space-y-6">
+                        <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center border-4 border-emerald-100/50 animate-in zoom-in duration-500">
+                            <CheckCircle2 className="h-10 w-10 text-emerald-500 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-200" />
+                        </div>
+                        
+                        <div className="space-y-3">
+                            <DialogTitle className="text-2xl font-bold text-slate-800 tracking-tight">Success!</DialogTitle>
+                            <DialogDescription className="text-slate-500 text-base leading-relaxed">
+                                Quote <span className="font-bold text-indigo-600 font-mono text-lg px-2 py-0.5 bg-indigo-50 rounded border border-indigo-100">#{lastSavedQuoteNumber}</span> has been saved to the database.
+                            </DialogDescription>
+                        </div>
+
+                        <div className="w-full pt-2">
+                            <Button 
+                                onClick={() => setIsSuccessModalOpen(false)}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-6 rounded-xl transition-all shadow-md hover:shadow-indigo-200 active:scale-95 border-0"
+                            >
+                                Continue
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
