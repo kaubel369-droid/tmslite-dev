@@ -17,13 +17,6 @@ COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 
 
-CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
-
-
-
-
-
-
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
 
 
@@ -1068,7 +1061,7 @@ ALTER TABLE ONLY "public"."shipper_consignees"
 
 
 ALTER TABLE ONLY "public"."zip_codes"
-    ADD CONSTRAINT "zip_codes_pkey" PRIMARY KEY ("zip");
+    ADD CONSTRAINT "zip_codes_pkey" PRIMARY KEY ("zip", "city");
 
 
 
@@ -1382,6 +1375,10 @@ CREATE POLICY "Admins can insert accessorials for their organization" ON "public
 CREATE POLICY "Admins can update accessorials for their organization" ON "public"."accessorials" FOR UPDATE USING (("auth"."uid"() IN ( SELECT "p"."id"
    FROM "public"."profiles" "p"
   WHERE (("p"."org_id" = "accessorials"."org_id") AND ("p"."role" = 'Admin'::"public"."user_role")))));
+
+
+
+CREATE POLICY "Allow anon to update keep_alive" ON "public"."keep_alive" FOR UPDATE TO "anon" USING (("id" = 1)) WITH CHECK (("id" = 1));
 
 
 
@@ -1718,9 +1715,6 @@ GRANT ALL ON SCHEMA "public" TO "service_role";
 GRANT ALL ON SCHEMA "public" TO "anon";
 GRANT ALL ON SCHEMA "public" TO "authenticated";
 GRANT ALL ON SCHEMA "public" TO PUBLIC;
-
-
-
 
 
 
