@@ -316,9 +316,12 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button className="w-full py-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-all border-t border-slate-100">
+              <Link 
+                href="/logs"
+                className="w-full py-4 text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-all border-t border-slate-100 flex justify-center items-center"
+              >
                 View Full Logs
-              </button>
+              </Link>
             </div>
           </div>
         </div>
