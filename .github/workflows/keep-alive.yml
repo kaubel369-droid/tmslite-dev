@@ -8,6 +8,7 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Ping Supabase API
         run: |
@@ -30,7 +31,8 @@ jobs:
 
           # Use PATCH to update the timestamp. Targeting id=1 as it is the standard singleton row.
           # Note: If using the anon key, you MUST have an RLS policy allowing UPDATE on this table.
-          curl -X PATCH "$URL/rest/v1/keep_alive?id=eq.1" \
+          curl -f --connect-timeout 10 --max-time 30 --retry 3 \
+          -X PATCH "$URL/rest/v1/keep_alive?id=eq.1" \
           -H "apikey: $KEY" \
           -H "Authorization: Bearer $KEY" \
           -H "Content-Type: application/json" \
